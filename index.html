@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>DILEMA</title>
 
   <style>
@@ -12,70 +14,81 @@
       padding: 0;
     }
 
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
     body {
       min-height: 100vh;
       background: #0b0b0b;
-      color: white;
+      color: #ffffff;
       font-family: Arial, Helvetica, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
 
     .app {
       width: 100%;
       max-width: 430px;
       min-height: 100vh;
-      padding: 40px 24px;
+      margin: 0 auto;
+      padding: 40px 24px 30px;
+
       display: flex;
       flex-direction: column;
+      align-items: center;
       justify-content: center;
+
       text-align: center;
     }
 
     .logo {
+      margin-bottom: 70px;
+
       font-size: 52px;
       font-weight: 900;
       letter-spacing: 4px;
     }
 
-    .claim {
-      margin-top: 8px;
-      margin-bottom: 70px;
-      font-size: 17px;
-      letter-spacing: 3px;
-      color: #aaaaaa;
+    .actions {
+      width: 100%;
     }
 
     .btn {
       width: 100%;
       padding: 18px;
       margin-bottom: 14px;
+
       border-radius: 14px;
-      border: none;
+
       font-size: 16px;
       font-weight: 800;
+      letter-spacing: 0.5px;
+
       cursor: pointer;
     }
 
-    .primary {
-      background: white;
-      color: black;
+    .btn-primary {
+      background: #ffffff;
+      color: #0b0b0b;
+      border: 1px solid #ffffff;
     }
 
-    .secondary {
+    .btn-secondary {
       background: transparent;
-      color: white;
-      border: 1px solid #444;
+      color: #ffffff;
+      border: 1px solid #444444;
     }
 
     .version {
-      position: absolute;
-      bottom: 22px;
+      position: fixed;
+      bottom: 20px;
       left: 0;
       right: 0;
-      color: #555;
-      font-size: 12px;
+
+      color: #555555;
+
+      font-size: 11px;
       letter-spacing: 2px;
     }
   </style>
@@ -85,16 +98,21 @@
 
   <main class="app">
 
-    <div class="logo">DILEMA</div>
-    <div class="claim">LA DESVERDAD</div>
+    <div class="logo">
+      DILEMA
+    </div>
 
-    <button class="btn primary">
-      CREAR PARTIDA
-    </button>
+    <div class="actions">
 
-    <button class="btn secondary">
-      UNIRME A UNA PARTIDA
-    </button>
+      <button class="btn btn-primary">
+        CREAR PARTIDA
+      </button>
+
+      <button class="btn btn-secondary">
+        UNIRME A UNA PARTIDA
+      </button>
+
+    </div>
 
     <div class="version">
       V0.0
@@ -103,4 +121,5 @@
   </main>
 
 </body>
+
 </html>
