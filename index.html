@@ -158,6 +158,10 @@
       border-color: #ffffff;
     }
 
+    #playerName {
+      text-transform: uppercase;
+    }
+
     .room-code-input {
       text-transform: uppercase;
       letter-spacing: 8px;
@@ -354,9 +358,11 @@
 <body>
 
   <main id="home" class="screen active center">
+
     <div class="logo">DILEMA</div>
 
     <div class="actions">
+
       <button class="btn btn-primary" onclick="startCreateFlow()">
         CREAR PARTIDA
       </button>
@@ -364,15 +370,18 @@
       <button class="btn btn-secondary" onclick="openJoinScreen()">
         UNIRME A UNA PARTIDA
       </button>
+
     </div>
 
     <div class="version">
-      V0.0.3A
+      V0.0.3B
     </div>
+
   </main>
 
 
   <section id="join" class="screen center">
+
     <button class="back" onclick="goHome()">←</button>
 
     <div class="title">
@@ -402,10 +411,12 @@
     >
       CONTINUAR
     </button>
+
   </section>
 
 
   <section id="profile" class="screen">
+
     <button class="back" onclick="backFromProfile()">←</button>
 
     <div class="title" id="profileTitle">
@@ -423,7 +434,7 @@
       maxlength="16"
       placeholder="TU NOMBRE"
       autocomplete="off"
-      oninput="checkProfile()"
+      oninput="normalizePlayerName(); checkProfile();"
     >
 
     <input
@@ -462,10 +473,12 @@
     >
       ABANDONAR SALA
     </button>
+
   </section>
 
 
   <section id="room" class="screen center">
+
     <div class="room-code-label">
       CÓDIGO DE PARTIDA
     </div>
@@ -489,10 +502,12 @@
       <br>
       Abre DILEMA en otro móvil y entra con este código.
     </div>
+
   </section>
 
 
   <script>
+
     const SUPABASE_URL =
       "https://cioydzndfvskzubyjcgs.supabase.co";
 
@@ -507,6 +522,7 @@
 
 
     const avatarCategories = {
+
       "CARAS": [
         "😈","🤡","🤬","🥴","🤪",
         "😎","🤯","🥸","🤠","👹"
@@ -536,6 +552,7 @@
         "💩","💣","🧨","🖕","🧠",
         "🦠","🪦","🚽","🩲","🔥"
       ]
+
     };
 
 
@@ -550,62 +567,105 @@
     let currentRoomHostId = null;
 
     let playersChannel = null;
+    let roomChannel = null;
 
     const localPlayerId =
       getOrCreateLocalPlayerId();
 
 
     function getOrCreateLocalPlayerId() {
+
       let id =
         localStorage.getItem(
           "dilema_local_player_id"
         );
 
       if (!id) {
+
         if (
           window.crypto &&
           crypto.randomUUID
         ) {
-          id = crypto.randomUUID();
+
+          id =
+            crypto.randomUUID();
+
         } else {
+
           id =
             Date.now().toString(36) +
             Math.random()
               .toString(36)
               .substring(2);
+
         }
 
         localStorage.setItem(
           "dilema_local_player_id",
           id
         );
+
       }
 
       return id;
     }
 
 
+    function normalizePlayerName() {
+
+      const input =
+        document.getElementById(
+          "playerName"
+        );
+
+      input.value =
+        input.value.toUpperCase();
+
+    }
+
+
     function showScreen(screenId) {
+
       document
         .querySelectorAll(".screen")
         .forEach(screen => {
-          screen.classList.remove("active");
+
+          screen.classList.remove(
+            "active"
+          );
+
         });
 
       document
         .getElementById(screenId)
-        .classList.add("active");
+        .classList.add(
+          "active"
+        );
+
     }
 
 
     function goHome() {
+
       flowMode = null;
       editingProfile = false;
 
-      document.getElementById("joinError").textContent = "";
-      document.getElementById("profileError").textContent = "";
+      document
+        .getElementById(
+          "joinError"
+        )
+        .textContent = "";
 
-      showScreen("home");
+      document
+        .getElementById(
+          "profileError"
+        )
+        .textContent = "";
+
+      showScreen(
+        "home"
+      );
+
     }
 
 
@@ -614,12 +674,16 @@
       loading,
       text
     ) {
+
       const button =
-        document.getElementById(buttonId);
+        document.getElementById(
+          buttonId
+        );
 
       if (!button) return;
 
       if (loading) {
+
         button.dataset.originalText =
           button.textContent;
 
@@ -627,17 +691,22 @@
           text || "ESPERA...";
 
         button.disabled = true;
+
       } else {
+
         button.textContent =
           button.dataset.originalText ||
           button.textContent;
 
         button.disabled = false;
+
       }
+
     }
 
 
     function renderAvatarTabs() {
+
       const tabs =
         document.getElementById(
           "avatarTabs"
@@ -667,19 +736,26 @@
           category;
 
         button.onclick = () => {
+
           selectedAvatarCategory =
             category;
 
           renderAvatarTabs();
           renderAvatars();
+
         };
 
-        tabs.appendChild(button);
+        tabs.appendChild(
+          button
+        );
+
       });
+
     }
 
 
     function renderAvatars() {
+
       const container =
         document.getElementById(
           "avatars"
@@ -689,60 +765,93 @@
 
       avatarCategories[
         selectedAvatarCategory
-      ].forEach(avatarValue => {
+      ].forEach(
+        avatarValue => {
 
-        const button =
-          document.createElement(
-            "button"
-          );
+          const button =
+            document.createElement(
+              "button"
+            );
 
-        button.className =
-          "avatar" +
-          (
-            avatarValue ===
-            selectedAvatar
-              ? " selected"
-              : ""
-          );
+          button.className =
+            "avatar" +
+            (
+              avatarValue ===
+              selectedAvatar
+                ? " selected"
+                : ""
+            );
 
-        button.textContent =
-          avatarValue;
-
-        button.onclick = () => {
-          selectedAvatar =
+          button.textContent =
             avatarValue;
 
-          renderAvatars();
-          checkProfile();
-        };
+          button.onclick = () => {
 
-        container.appendChild(button);
-      });
+            selectedAvatar =
+              avatarValue;
+
+            renderAvatars();
+
+            checkProfile();
+
+          };
+
+          container.appendChild(
+            button
+          );
+
+        }
+      );
+
     }
 
 
     function startCreateFlow() {
-      flowMode = "create";
-      editingProfile = false;
+
+      flowMode =
+        "create";
+
+      editingProfile =
+        false;
 
       resetProfile();
 
-      showScreen("profile");
+      showScreen(
+        "profile"
+      );
+
     }
 
 
     function openJoinScreen() {
-      flowMode = "join";
-      editingProfile = false;
 
-      document.getElementById("joinCode").value = "";
-      document.getElementById("joinError").textContent = "";
+      flowMode =
+        "join";
 
-      showScreen("join");
+      editingProfile =
+        false;
+
+      document
+        .getElementById(
+          "joinCode"
+        )
+        .value = "";
+
+      document
+        .getElementById(
+          "joinError"
+        )
+        .textContent = "";
+
+      showScreen(
+        "join"
+      );
+
     }
 
 
     function formatJoinCode() {
+
       const input =
         document.getElementById(
           "joinCode"
@@ -755,11 +864,16 @@
             /[^A-Z0-9]/g,
             ""
           )
-          .slice(0, 4);
+          .slice(
+            0,
+            4
+          );
+
     }
 
 
     async function findRoom() {
+
       const code =
         document
           .getElementById(
@@ -774,12 +888,19 @@
           "joinError"
         );
 
-      errorBox.textContent = "";
+      errorBox.textContent =
+        "";
 
-      if (code.length !== 4) {
+      if (
+        code.length !==
+        4
+      ) {
+
         errorBox.textContent =
           "Introduce un código de 4 caracteres.";
+
         return;
+
       }
 
       setLoading(
@@ -792,7 +913,9 @@
         data,
         error
       } = await sb
-        .from("rooms")
+        .from(
+          "rooms"
+        )
         .select(
           "id, code, status, host_id"
         )
@@ -808,17 +931,25 @@
       );
 
       if (error) {
-        console.error(error);
+
+        console.error(
+          error
+        );
 
         errorBox.textContent =
           "No se ha podido consultar la partida.";
+
         return;
+
       }
 
       if (!data) {
+
         errorBox.textContent =
           "Esa partida no existe.";
+
         return;
+
       }
 
       currentRoomId =
@@ -832,61 +963,121 @@
 
       resetProfile();
 
-      showScreen("profile");
+      showScreen(
+        "profile"
+      );
+
     }
 
 
     function resetProfile() {
-      selectedAvatar = "";
-      selectedAvatarCategory = "CARAS";
 
-      document.getElementById("playerName").value = "";
-      document.getElementById("playerMotto").value = "";
-      document.getElementById("profileError").textContent = "";
+      selectedAvatar =
+        "";
 
-      document.getElementById("profileTitle").textContent =
-        editingProfile
-          ? "EDITAR PERFIL"
-          : "¿QUIÉN ERES?";
+      selectedAvatarCategory =
+        "CARAS";
 
-      document.getElementById("profileSubtitle").textContent =
-        editingProfile
-          ? "Tu identidad en esta sala."
-          : "Tu identidad solo para esta partida.";
+      document
+        .getElementById(
+          "playerName"
+        )
+        .value = "";
 
-      document.getElementById("continueBtn").textContent =
-        editingProfile
-          ? "GUARDAR CAMBIOS"
-          : "CONTINUAR";
+      document
+        .getElementById(
+          "playerMotto"
+        )
+        .value = "";
 
-      document.getElementById("leaveRoomBtn").style.display =
-        editingProfile
-          ? "block"
-          : "none";
+      document
+        .getElementById(
+          "profileError"
+        )
+        .textContent = "";
+
+      document
+        .getElementById(
+          "profileTitle"
+        )
+        .textContent =
+          editingProfile
+            ? "EDITAR PERFIL"
+            : "¿QUIÉN ERES?";
+
+      document
+        .getElementById(
+          "profileSubtitle"
+        )
+        .textContent =
+          editingProfile
+            ? "Tu identidad en esta sala."
+            : "Tu identidad solo para esta partida.";
+
+      document
+        .getElementById(
+          "continueBtn"
+        )
+        .textContent =
+          editingProfile
+            ? "GUARDAR CAMBIOS"
+            : "CONTINUAR";
+
+      document
+        .getElementById(
+          "leaveRoomBtn"
+        )
+        .style.display =
+          editingProfile
+            ? "block"
+            : "none";
 
       renderAvatarTabs();
+
       renderAvatars();
 
       checkProfile();
+
     }
 
 
     function backFromProfile() {
-      if (editingProfile) {
-        editingProfile = false;
-        showScreen("room");
+
+      if (
+        editingProfile
+      ) {
+
+        editingProfile =
+          false;
+
+        showScreen(
+          "room"
+        );
+
         return;
+
       }
 
-      if (flowMode === "join") {
-        showScreen("join");
+      if (
+        flowMode ===
+        "join"
+      ) {
+
+        showScreen(
+          "join"
+        );
+
       } else {
+
         goHome();
+
       }
+
     }
 
 
     function checkProfile() {
+
       const playerName =
         document
           .getElementById(
@@ -900,31 +1091,51 @@
           "continueBtn"
         )
         .disabled =
-          playerName.length === 0 ||
-          selectedAvatar === "";
+          playerName.length ===
+          0 ||
+          selectedAvatar ===
+          "";
+
     }
 
 
     async function finishProfile() {
-      if (editingProfile) {
+
+      if (
+        editingProfile
+      ) {
+
         await updateCurrentPlayer();
+
         return;
+
       }
 
-      if (flowMode === "create") {
+      if (
+        flowMode ===
+        "create"
+      ) {
+
         await createRoom();
+
       } else {
+
         await joinCurrentRoom();
+
       }
+
     }
 
 
     async function openEditProfile() {
+
       const {
         data,
         error
       } = await sb
-        .from("players")
+        .from(
+          "players"
+        )
         .select(
           "name, avatar, motto"
         )
@@ -938,50 +1149,95 @@
         )
         .maybeSingle();
 
-      if (error || !data) {
-        console.error(error);
+      if (
+        error ||
+        !data
+      ) {
+
+        console.error(
+          error
+        );
+
         return;
+
       }
 
-      editingProfile = true;
+      editingProfile =
+        true;
 
-      document.getElementById("playerName").value =
-        data.name || "";
+      document
+        .getElementById(
+          "playerName"
+        )
+        .value =
+          (
+            data.name ||
+            ""
+          )
+          .toUpperCase();
 
-      document.getElementById("playerMotto").value =
-        data.motto || "";
+      document
+        .getElementById(
+          "playerMotto"
+        )
+        .value =
+          data.motto ||
+          "";
 
       selectedAvatar =
-        data.avatar || "";
+        data.avatar ||
+        "";
 
       selectedAvatarCategory =
         findAvatarCategory(
           selectedAvatar
         );
 
-      document.getElementById("profileTitle").textContent =
-        "EDITAR PERFIL";
+      document
+        .getElementById(
+          "profileTitle"
+        )
+        .textContent =
+          "EDITAR PERFIL";
 
-      document.getElementById("profileSubtitle").textContent =
-        "Tu identidad en esta sala.";
+      document
+        .getElementById(
+          "profileSubtitle"
+        )
+        .textContent =
+          "Tu identidad en esta sala.";
 
-      document.getElementById("continueBtn").textContent =
-        "GUARDAR CAMBIOS";
+      document
+        .getElementById(
+          "continueBtn"
+        )
+        .textContent =
+          "GUARDAR CAMBIOS";
 
-      document.getElementById("leaveRoomBtn").style.display =
-        "block";
+      document
+        .getElementById(
+          "leaveRoomBtn"
+        )
+        .style.display =
+          "block";
 
       renderAvatarTabs();
+
       renderAvatars();
+
       checkProfile();
 
-      showScreen("profile");
+      showScreen(
+        "profile"
+      );
+
     }
 
 
     function findAvatarCategory(
       avatar
     ) {
+
       for (
         const [
           category,
@@ -991,27 +1247,34 @@
           avatarCategories
         )
       ) {
+
         if (
           avatars.includes(
             avatar
           )
         ) {
+
           return category;
+
         }
+
       }
 
       return "CARAS";
+
     }
 
 
     async function updateCurrentPlayer() {
+
       const name =
         document
           .getElementById(
             "playerName"
           )
           .value
-          .trim();
+          .trim()
+          .toUpperCase();
 
       const motto =
         document
@@ -1026,7 +1289,8 @@
           "profileError"
         );
 
-      errorBox.textContent = "";
+      errorBox.textContent =
+        "";
 
       setLoading(
         "continueBtn",
@@ -1037,13 +1301,17 @@
       const {
         error
       } = await sb
-        .from("players")
+        .from(
+          "players"
+        )
         .update({
-          name: name,
+          name:
+            name,
           avatar:
             selectedAvatar,
           motto:
-            motto || null
+            motto ||
+            null
         })
         .eq(
           "room_id",
@@ -1060,32 +1328,44 @@
       );
 
       if (error) {
-        console.error(error);
+
+        console.error(
+          error
+        );
 
         errorBox.textContent =
           "No se ha podido actualizar el perfil.";
+
         return;
+
       }
 
-      editingProfile = false;
+      editingProfile =
+        false;
 
-      await loadPlayers();
+      await refreshRoomAndPlayers();
 
-      showScreen("room");
+      showScreen(
+        "room"
+      );
+
     }
 
 
     function randomRoomCode() {
+
       const chars =
         "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-      let code = "";
+      let code =
+        "";
 
       for (
         let i = 0;
         i < 4;
         i++
       ) {
+
         code +=
           chars[
             Math.floor(
@@ -1093,18 +1373,22 @@
               chars.length
             )
           ];
+
       }
 
       return code;
+
     }
 
 
     async function generateAvailableCode() {
+
       for (
         let attempt = 0;
         attempt < 10;
         attempt++
       ) {
+
         const code =
           randomRoomCode();
 
@@ -1112,8 +1396,12 @@
           data,
           error
         } = await sb
-          .from("rooms")
-          .select("id")
+          .from(
+            "rooms"
+          )
+          .select(
+            "id"
+          )
           .eq(
             "code",
             code
@@ -1121,27 +1409,35 @@
           .maybeSingle();
 
         if (error) {
+
           throw error;
+
         }
 
         if (!data) {
+
           return code;
+
         }
+
       }
 
       throw new Error(
         "No se pudo generar un código disponible."
       );
+
     }
 
 
     async function createRoom() {
+
       const errorBox =
         document.getElementById(
           "profileError"
         );
 
-      errorBox.textContent = "";
+      errorBox.textContent =
+        "";
 
       setLoading(
         "continueBtn",
@@ -1150,6 +1446,7 @@
       );
 
       try {
+
         const roomCode =
           await generateAvailableCode();
 
@@ -1157,7 +1454,9 @@
           data: room,
           error: roomError
         } = await sb
-          .from("rooms")
+          .from(
+            "rooms"
+          )
           .insert({
             code:
               roomCode,
@@ -1171,8 +1470,12 @@
           )
           .single();
 
-        if (roomError) {
+        if (
+          roomError
+        ) {
+
           throw roomError;
+
         }
 
         currentRoomId =
@@ -1189,29 +1492,37 @@
         await enterRoomScreen();
 
       } catch (error) {
-        console.error(error);
+
+        console.error(
+          error
+        );
 
         errorBox.textContent =
           "No se ha podido crear la partida.";
 
       } finally {
+
         setLoading(
           "continueBtn",
           false
         );
 
         checkProfile();
+
       }
+
     }
 
 
     async function joinCurrentRoom() {
+
       const errorBox =
         document.getElementById(
           "profileError"
         );
 
-      errorBox.textContent = "";
+      errorBox.textContent =
+        "";
 
       setLoading(
         "continueBtn",
@@ -1220,35 +1531,44 @@
       );
 
       try {
+
         await insertCurrentPlayer();
 
         await enterRoomScreen();
 
       } catch (error) {
-        console.error(error);
+
+        console.error(
+          error
+        );
 
         errorBox.textContent =
           "No se ha podido entrar en la partida.";
 
       } finally {
+
         setLoading(
           "continueBtn",
           false
         );
 
         checkProfile();
+
       }
+
     }
 
 
     async function insertCurrentPlayer() {
+
       const playerName =
         document
           .getElementById(
             "playerName"
           )
           .value
-          .trim();
+          .trim()
+          .toUpperCase();
 
       const playerMotto =
         document
@@ -1261,7 +1581,9 @@
       const {
         error
       } = await sb
-        .from("players")
+        .from(
+          "players"
+        )
         .insert({
           room_id:
             currentRoomId,
@@ -1272,16 +1594,23 @@
           avatar:
             selectedAvatar,
           motto:
-            playerMotto || null
+            playerMotto ||
+            null
         });
 
-      if (error) {
+      if (
+        error
+      ) {
+
         throw error;
+
       }
+
     }
 
 
     async function enterRoomScreen() {
+
       document
         .getElementById(
           "roomCodeDisplay"
@@ -1289,20 +1618,90 @@
         .textContent =
           currentRoomCode;
 
-      showScreen("room");
+      showScreen(
+        "room"
+      );
 
-      await loadPlayers();
+      await refreshRoomAndPlayers();
 
       subscribeToPlayers();
+
+      subscribeToRoom();
+
     }
 
 
-    async function loadPlayers() {
+    async function refreshRoom() {
+
+      if (
+        !currentRoomId
+      ) {
+        return false;
+      }
+
       const {
         data,
         error
       } = await sb
-        .from("players")
+        .from(
+          "rooms"
+        )
+        .select(
+          "id, code, status, host_id"
+        )
+        .eq(
+          "id",
+          currentRoomId
+        )
+        .maybeSingle();
+
+      if (
+        error
+      ) {
+
+        console.error(
+          error
+        );
+
+        return false;
+
+      }
+
+      if (
+        !data
+      ) {
+
+        return false;
+
+      }
+
+      currentRoomHostId =
+        data.host_id;
+
+      currentRoomCode =
+        data.code;
+
+      document
+        .getElementById(
+          "roomCodeDisplay"
+        )
+        .textContent =
+          data.code;
+
+      return true;
+
+    }
+
+
+    async function loadPlayers() {
+
+      const {
+        data,
+        error
+      } = await sb
+        .from(
+          "players"
+        )
         .select(
           "player_id, name, avatar, motto, created_at"
         )
@@ -1313,30 +1712,51 @@
         .order(
           "created_at",
           {
-            ascending: true
+            ascending:
+              true
           }
         );
 
-      if (error) {
-        console.error(error);
+      if (
+        error
+      ) {
+
+        console.error(
+          error
+        );
+
         return;
+
       }
 
       renderPlayers(
-        data || []
+        data ||
+        []
       );
+
+    }
+
+
+    async function refreshRoomAndPlayers() {
+
+      await refreshRoom();
+
+      await loadPlayers();
+
     }
 
 
     function renderPlayers(
       players
     ) {
+
       const list =
         document.getElementById(
           "playersList"
         );
 
-      list.innerHTML = "";
+      list.innerHTML =
+        "";
 
       players.forEach(
         player => {
@@ -1353,12 +1773,14 @@
             player.player_id ===
             localPlayerId
           ) {
+
             card.classList.add(
               "own-card"
             );
 
             card.onclick =
               openEditProfile;
+
           }
 
           const avatar =
@@ -1390,7 +1812,11 @@
             "player-name";
 
           name.textContent =
-            player.name;
+            (
+              player.name ||
+              ""
+            )
+            .toUpperCase();
 
           info.appendChild(
             name
@@ -1399,6 +1825,7 @@
           if (
             player.motto
           ) {
+
             const motto =
               document.createElement(
                 "div"
@@ -1413,6 +1840,7 @@
             info.appendChild(
               motto
             );
+
           }
 
           card.appendChild(
@@ -1435,6 +1863,7 @@
             player.player_id ===
             currentRoomHostId
           ) {
+
             const host =
               document.createElement(
                 "div"
@@ -1449,12 +1878,14 @@
             meta.appendChild(
               host
             );
+
           }
 
           if (
             player.player_id ===
             localPlayerId
           ) {
+
             const edit =
               document.createElement(
                 "div"
@@ -1469,6 +1900,7 @@
             meta.appendChild(
               edit
             );
+
           }
 
           card.appendChild(
@@ -1478,6 +1910,7 @@
           list.appendChild(
             card
           );
+
         }
       );
 
@@ -1487,20 +1920,25 @@
         )
         .textContent =
           `${players.length} ${
-            players.length === 1
+            players.length ===
+            1
               ? "JUGADOR"
               : "JUGADORES"
           }`;
+
     }
 
 
     function subscribeToPlayers() {
+
       if (
         playersChannel
       ) {
+
         sb.removeChannel(
           playersChannel
         );
+
       }
 
       playersChannel =
@@ -1511,42 +1949,100 @@
           .on(
             "postgres_changes",
             {
-              event: "*",
-              schema: "public",
-              table: "players",
+              event:
+                "*",
+              schema:
+                "public",
+              table:
+                "players",
               filter:
                 `room_id=eq.${currentRoomId}`
             },
-            () => {
-              loadPlayers();
+            async () => {
+
+              await refreshRoomAndPlayers();
+
             }
           )
           .subscribe();
+
+    }
+
+
+    function subscribeToRoom() {
+
+      if (
+        roomChannel
+      ) {
+
+        sb.removeChannel(
+          roomChannel
+        );
+
+      }
+
+      roomChannel =
+        sb
+          .channel(
+            `room-${currentRoomId}`
+          )
+          .on(
+            "postgres_changes",
+            {
+              event:
+                "UPDATE",
+              schema:
+                "public",
+              table:
+                "rooms",
+              filter:
+                `id=eq.${currentRoomId}`
+            },
+            async payload => {
+
+              currentRoomHostId =
+                payload.new.host_id;
+
+              await loadPlayers();
+
+            }
+          )
+          .subscribe();
+
     }
 
 
     async function confirmLeaveRoom() {
+
       const confirmed =
         window.confirm(
           "¿Abandonar la sala?"
         );
 
-      if (!confirmed) {
+      if (
+        !confirmed
+      ) {
+
         return;
+
       }
 
       await leaveRoom();
+
     }
 
 
     async function leaveRoom() {
+
       try {
+
         const {
           data: players,
-          error:
-            playersError
+          error: playersError
         } = await sb
-          .from("players")
+          .from(
+            "players"
+          )
           .select(
             "player_id, created_at"
           )
@@ -1557,32 +2053,89 @@
           .order(
             "created_at",
             {
-              ascending: true
+              ascending:
+                true
             }
           );
 
         if (
           playersError
         ) {
+
           throw playersError;
+
         }
 
+
         const remainingPlayers =
-          players.filter(
+          (
+            players ||
+            []
+          )
+          .filter(
             player =>
               player.player_id !==
               localPlayerId
           );
 
+
         const wasHost =
           currentRoomHostId ===
           localPlayerId;
 
+
+        /*
+          IMPORTANTE:
+          SI EL CREADOR SE VA,
+          PRIMERO TRANSFERIMOS EL MANDO.
+        */
+
+        if (
+          wasHost &&
+          remainingPlayers.length >
+          0
+        ) {
+
+          const newHost =
+            remainingPlayers[0];
+
+          const {
+            error: updateRoomError
+          } = await sb
+            .from(
+              "rooms"
+            )
+            .update({
+              host_id:
+                newHost.player_id
+            })
+            .eq(
+              "id",
+              currentRoomId
+            );
+
+          if (
+            updateRoomError
+          ) {
+
+            throw updateRoomError;
+
+          }
+
+        }
+
+
+        /*
+          AHORA ELIMINAMOS
+          AL JUGADOR QUE SE VA.
+        */
+
         const {
-          error:
-            deletePlayerError
+          error: deletePlayerError
         } = await sb
-          .from("players")
+          .from(
+            "players"
+          )
           .delete()
           .eq(
             "room_id",
@@ -1596,18 +2149,28 @@
         if (
           deletePlayerError
         ) {
+
           throw deletePlayerError;
+
         }
+
+
+        /*
+          SI NO QUEDA NADIE,
+          BORRAMOS LA SALA.
+        */
 
         if (
           remainingPlayers.length ===
           0
         ) {
+
           const {
-            error:
-              deleteRoomError
+            error: deleteRoomError
           } = await sb
-            .from("rooms")
+            .from(
+              "rooms"
+            )
             .delete()
             .eq(
               "id",
@@ -1617,46 +2180,16 @@
           if (
             deleteRoomError
           ) {
+
             throw deleteRoomError;
+
           }
 
-        } else if (
-          wasHost
-        ) {
-          const newHost =
-            remainingPlayers[0];
-
-          const {
-            error:
-              updateRoomError
-          } = await sb
-            .from("rooms")
-            .update({
-              host_id:
-                newHost.player_id
-            })
-            .eq(
-              "id",
-              currentRoomId
-            );
-
-          if (
-            updateRoomError
-          ) {
-            throw updateRoomError;
-          }
         }
 
-        if (
-          playersChannel
-        ) {
-          sb.removeChannel(
-            playersChannel
-          );
 
-          playersChannel =
-            null;
-        }
+        cleanupSubscriptions();
+
 
         currentRoomId =
           null;
@@ -1670,15 +2203,54 @@
         editingProfile =
           false;
 
+
         goHome();
 
+
       } catch (error) {
-        console.error(error);
+
+        console.error(
+          error
+        );
 
         alert(
           "No se ha podido abandonar la sala."
         );
+
       }
+
+    }
+
+
+    function cleanupSubscriptions() {
+
+      if (
+        playersChannel
+      ) {
+
+        sb.removeChannel(
+          playersChannel
+        );
+
+        playersChannel =
+          null;
+
+      }
+
+
+      if (
+        roomChannel
+      ) {
+
+        sb.removeChannel(
+          roomChannel
+        );
+
+        roomChannel =
+          null;
+
+      }
+
     }
 
   </script>
