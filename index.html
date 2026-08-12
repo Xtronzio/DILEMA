@@ -26,7 +26,7 @@
 
     body {
       min-height: 100vh;
-      color: #ffffff;
+      color: white;
       font-family: Arial, Helvetica, sans-serif;
     }
 
@@ -66,8 +66,19 @@
       letter-spacing: 4px;
     }
 
-    .actions {
-      width: 100%;
+    .title {
+      margin-bottom: 8px;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     .btn {
@@ -77,20 +88,19 @@
       border-radius: 14px;
       font-size: 16px;
       font-weight: 800;
-      letter-spacing: 0.5px;
       cursor: pointer;
     }
 
     .btn-primary {
-      background: #ffffff;
+      background: white;
       color: #0b0b0b;
-      border: 1px solid #ffffff;
+      border: 1px solid white;
     }
 
     .btn-secondary {
       background: transparent;
-      color: #ffffff;
-      border: 1px solid #444444;
+      color: white;
+      border: 1px solid #444;
     }
 
     .btn-danger {
@@ -104,50 +114,34 @@
       cursor: default;
     }
 
+    .back {
+      position: absolute;
+      top: 28px;
+      border: 0;
+      background: transparent;
+      color: #777;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
     .version {
       position: fixed;
       bottom: 20px;
       left: 0;
       right: 0;
       text-align: center;
-      color: #555555;
+      color: #555;
       font-size: 11px;
       letter-spacing: 2px;
-      pointer-events: none;
-    }
-
-    .back {
-      position: absolute;
-      top: 28px;
-      background: transparent;
-      border: 0;
-      color: #777777;
-      font-size: 28px;
-      cursor: pointer;
-    }
-
-    .title {
-      margin-bottom: 8px;
-      text-align: center;
-      font-size: 30px;
-      font-weight: 900;
-    }
-
-    .subtitle {
-      margin-bottom: 34px;
-      text-align: center;
-      color: #777777;
-      font-size: 14px;
-      line-height: 1.5;
     }
 
     .text-input {
       width: 100%;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
       padding: 17px;
       background: transparent;
-      color: #ffffff;
-      border: 1px solid #444444;
+      color: white;
+      border: 1px solid #444;
       border-radius: 14px;
       outline: none;
       text-align: center;
@@ -156,7 +150,7 @@
     }
 
     .text-input:focus {
-      border-color: #ffffff;
+      border-color: white;
     }
 
     #playerName {
@@ -170,21 +164,11 @@
       font-weight: 900;
     }
 
-    .avatar-label {
-      margin: 8px 0 14px;
-      text-align: center;
-      color: #777777;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
-    }
-
     .avatar-tabs {
       display: flex;
       gap: 8px;
       overflow-x: auto;
-      margin-bottom: 16px;
-      padding-bottom: 4px;
+      margin-bottom: 14px;
       scrollbar-width: none;
     }
 
@@ -196,25 +180,23 @@
       flex: 0 0 auto;
       padding: 9px 12px;
       border-radius: 999px;
-      border: 1px solid #333333;
+      border: 1px solid #333;
       background: #151515;
-      color: #777777;
-      font-size: 12px;
+      color: #777;
+      font-size: 11px;
       font-weight: 800;
-      cursor: pointer;
     }
 
     .avatar-tab.active {
-      background: #ffffff;
-      color: #0b0b0b;
-      border-color: #ffffff;
+      background: white;
+      color: black;
     }
 
     .avatars {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 10px;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .avatar {
@@ -222,189 +204,304 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #151515;
-      border: 1px solid #333333;
       border-radius: 50%;
+      border: 1px solid #333;
+      background: #151515;
       font-size: 28px;
-      cursor: pointer;
     }
 
     .avatar.selected {
-      background: #ffffff;
-      border-color: #ffffff;
+      background: white;
     }
 
-    .error {
-      min-height: 22px;
-      margin-bottom: 14px;
-      color: #999999;
-      text-align: center;
+    .profiles-list {
+      width: 100%;
+      margin-bottom: 22px;
+    }
+
+    .saved-profile {
+      width: 100%;
+      padding: 14px 4px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #151515;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      flex: 0 0 48px;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .profile-motto {
+      color: #777;
       font-size: 13px;
-      line-height: 1.4;
+      margin-top: 4px;
     }
 
-    .room-code-label {
-      margin-bottom: 8px;
-      color: #777777;
+    .profile-delete {
+      background: transparent;
+      border: 0;
+      color: #555;
+      font-size: 20px;
+      padding: 10px;
+    }
+
+    .room-code-label,
+    .players-title,
+    .small-label {
+      color: #777;
       font-size: 12px;
       font-weight: 700;
       letter-spacing: 2px;
     }
 
     .room-code {
-      margin-bottom: 38px;
+      margin: 8px 0 26px;
       font-size: 48px;
       font-weight: 900;
       letter-spacing: 10px;
     }
 
-    .room-status {
-      margin-bottom: 28px;
-      color: #777777;
+    .room-count {
+      margin-bottom: 8px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .room-state {
+      margin-bottom: 24px;
       font-size: 13px;
+      color: #777;
+    }
+
+    .room-state.ready {
+      color: white;
+      font-weight: 800;
+    }
+
+    .host-controls {
+      width: 100%;
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid #222;
+      border-radius: 14px;
+    }
+
+    .counter {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .counter button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #444;
+      background: transparent;
+      color: white;
+      font-size: 22px;
+    }
+
+    .counter-number {
+      min-width: 40px;
+      font-size: 26px;
+      font-weight: 900;
     }
 
     .players-title {
       width: 100%;
-      margin-bottom: 12px;
       text-align: left;
-      color: #777777;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 2px;
+      margin-bottom: 10px;
     }
 
     .players-list {
       width: 100%;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
     }
 
     .player-card {
       width: 100%;
       padding: 14px 4px;
-      border-bottom: 1px solid #222222;
+      border-bottom: 1px solid #222;
       display: flex;
-      align-items: center;
       gap: 14px;
+      align-items: center;
       text-align: left;
     }
 
-    .player-card.own-card {
+    .own-card {
       cursor: pointer;
-    }
-
-    .player-card.own-card:active {
-      opacity: 0.75;
     }
 
     .player-avatar {
       width: 48px;
       height: 48px;
+      border-radius: 50%;
       flex: 0 0 48px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 50%;
       background: #151515;
       font-size: 27px;
     }
 
     .player-info {
-      min-width: 0;
       flex: 1;
+      min-width: 0;
     }
 
     .player-name {
-      font-size: 17px;
       font-weight: 900;
+      font-size: 17px;
     }
 
     .player-motto {
       margin-top: 4px;
-      color: #777777;
+      color: #777;
       font-size: 13px;
-      overflow-wrap: anywhere;
     }
 
     .player-meta {
-      margin-left: auto;
       display: flex;
       align-items: center;
       gap: 10px;
     }
 
     .host-badge {
-      color: #555555;
+      color: #555;
       font-size: 10px;
       font-weight: 700;
       letter-spacing: 1px;
     }
 
     .edit-hint {
-      color: #888888;
+      color: #888;
       font-size: 22px;
-      line-height: 1;
+    }
+
+    .kick {
+      border: 0;
+      background: transparent;
+      color: #666;
+      font-size: 18px;
+      padding: 8px;
+      cursor: pointer;
     }
 
     .small-note {
       margin-top: 8px;
-      color: #555555;
+      text-align: center;
+      color: #555;
       font-size: 12px;
       line-height: 1.5;
+    }
+
+    .error {
+      min-height: 22px;
+      margin-bottom: 12px;
+      color: #999;
+      font-size: 13px;
       text-align: center;
+    }
+
+    .start-message {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 20px;
+    }
+
+    .start-code {
+      color: #777;
+      font-size: 13px;
+      letter-spacing: 3px;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- HOME -->
-
   <main id="home" class="screen active center">
+    <div class="logo">DILEMA</div>
 
-    <div class="logo">
-      DILEMA
-    </div>
+    <button class="btn btn-primary" onclick="openExpectedPlayers()">
+      CREAR PARTIDA
+    </button>
 
-    <div class="actions">
+    <button class="btn btn-secondary" onclick="openJoinScreen()">
+      UNIRME A UNA PARTIDA
+    </button>
 
-      <button
-        class="btn btn-primary"
-        onclick="startCreateFlow()"
-      >
-        CREAR PARTIDA
-      </button>
-
-      <button
-        class="btn btn-secondary"
-        onclick="openJoinScreen()"
-      >
-        UNIRME A UNA PARTIDA
-      </button>
-
-    </div>
-
-    <div class="version">
-      V0.0.3C
-    </div>
-
+    <div class="version">V0.0.4</div>
   </main>
 
 
-  <!-- JOIN -->
+  <section id="expected" class="screen center">
+    <button class="back" onclick="goHome()">←</button>
+
+    <div class="title">¿CUÁNTOS JUGÁIS?</div>
+
+    <div class="subtitle">
+      La sala tendrá que estar cuadrada para poder iniciar.
+    </div>
+
+    <div class="counter">
+      <button onclick="changeExpected(-1)">−</button>
+      <div id="expectedSetup" class="counter-number">4</div>
+      <button onclick="changeExpected(1)">+</button>
+    </div>
+
+    <br><br>
+
+    <button class="btn btn-primary" onclick="openProfileChoice('create')">
+      CONTINUAR
+    </button>
+  </section>
+
+
+  <section id="profileChoice" class="screen">
+    <button class="back" onclick="backFromProfileChoice()">←</button>
+
+    <div class="title">¿QUIÉN ERES HOY?</div>
+
+    <div class="subtitle">
+      Elige un perfil guardado o crea uno nuevo.
+    </div>
+
+    <div id="savedProfiles" class="profiles-list"></div>
+
+    <button class="btn btn-secondary" onclick="newProfile()">
+      + NUEVO PERFIL
+    </button>
+  </section>
+
 
   <section id="join" class="screen center">
+    <button class="back" onclick="goHome()">←</button>
 
-    <button
-      class="back"
-      onclick="goHome()"
-    >
-      ←
-    </button>
-
-    <div class="title">
-      ENTRAR
-    </div>
+    <div class="title">ENTRAR</div>
 
     <div class="subtitle">
       Introduce el código de la partida.
@@ -413,115 +510,65 @@
     <input
       id="joinCode"
       class="text-input room-code-input"
-      type="text"
       maxlength="4"
       placeholder="----"
-      autocomplete="off"
       oninput="normalizeJoinCode()"
     >
 
-    <div
-      id="joinError"
-      class="error"
-    ></div>
+    <div id="joinError" class="error"></div>
 
-    <button
-      id="findRoomBtn"
-      class="btn btn-primary"
-      onclick="findRoom()"
-    >
+    <button class="btn btn-primary" onclick="findRoom()">
       CONTINUAR
     </button>
-
   </section>
 
 
-  <!-- PROFILE -->
-
   <section id="profile" class="screen">
+    <button class="back" onclick="backFromProfile()">←</button>
 
-    <button
-      class="back"
-      onclick="backFromProfile()"
-    >
-      ←
-    </button>
+    <div id="profileTitle" class="title">NUEVO PERFIL</div>
 
-    <div
-      class="title"
-      id="profileTitle"
-    >
-      ¿QUIÉN ERES?
-    </div>
-
-    <div
-      class="subtitle"
-      id="profileSubtitle"
-    >
-      Tu identidad solo para esta partida.
+    <div class="subtitle">
+      Nombre, avatar y lema.
     </div>
 
     <input
       id="playerName"
       class="text-input"
-      type="text"
       maxlength="16"
       placeholder="TU NOMBRE"
-      autocomplete="off"
-      autocapitalize="characters"
       oninput="normalizePlayerName()"
     >
 
     <input
       id="playerMotto"
       class="text-input"
-      type="text"
       maxlength="50"
       placeholder="TU LEMA (OPCIONAL)"
-      autocomplete="off"
     >
 
-    <div class="avatar-label">
-      ELIGE AVATAR
-    </div>
+    <div class="small-label">ELIGE AVATAR</div>
+    <br>
 
-    <div
-      id="avatarTabs"
-      class="avatar-tabs"
-    ></div>
+    <div id="avatarTabs" class="avatar-tabs"></div>
+    <div id="avatars" class="avatars"></div>
 
-    <div
-      id="avatars"
-      class="avatars"
-    ></div>
+    <div id="profileError" class="error"></div>
 
-    <div
-      id="profileError"
-      class="error"
-    ></div>
-
-    <button
-      id="continueBtn"
-      class="btn btn-primary"
-      onclick="finishProfile()"
-      disabled
-    >
-      CONTINUAR
+    <button id="saveProfileBtn" class="btn btn-primary" onclick="saveAndUseProfile()">
+      GUARDAR Y CONTINUAR
     </button>
 
     <button
       id="leaveRoomBtn"
       class="btn btn-danger"
-      onclick="confirmLeaveRoom()"
       style="display:none;"
+      onclick="confirmLeaveRoom()"
     >
       ABANDONAR SALA
     </button>
-
   </section>
 
-
-  <!-- ROOM -->
 
   <section id="room" class="screen center">
 
@@ -529,2311 +576,2329 @@
       CÓDIGO DE PARTIDA
     </div>
 
-    <div
-      id="roomCodeDisplay"
-      class="room-code"
-    >
-      ----
-    </div>
+    <div id="roomCodeDisplay" class="room-code">----</div>
 
-    <div
-      id="roomStatus"
-      class="room-status"
-    >
-      ESPERANDO JUGADORES...
+    <div id="roomCount" class="room-count">0 / 0</div>
+    <div id="roomState" class="room-state">ESPERANDO...</div>
+
+    <div id="hostControls" class="host-controls" style="display:none;">
+      <div class="small-label">
+        JUGADORES PREVISTOS
+      </div>
+
+      <div class="counter">
+        <button onclick="changeLobbyExpected(-1)">−</button>
+        <div id="expectedLobby" class="counter-number">0</div>
+        <button onclick="changeLobbyExpected(1)">+</button>
+      </div>
     </div>
 
     <div class="players-title">
       JUGADORES
     </div>
 
-    <div
-      id="playersList"
-      class="players-list"
-    ></div>
+    <div id="playersList" class="players-list"></div>
 
-    <div class="small-note">
-      Toca tu ficha para editar perfil o abandonar la sala.
-      <br>
-      Abre DILEMA en otro móvil y entra con este código.
+    <button
+      id="startGameBtn"
+      class="btn btn-primary"
+      onclick="startGame()"
+      style="display:none;"
+    >
+      INICIAR PARTIDA
+    </button>
+
+    <div id="waitingHost" class="small-note">
+      ESPERANDO AL CREADOR...
     </div>
 
   </section>
 
 
-  <script>
+  <section id="started" class="screen center">
+    <div class="start-message">
+      PARTIDA<br>INICIADA
+    </div>
 
-    // ===================================================
-    // SUPABASE
-    // ===================================================
+    <div id="startedCode" class="start-code"></div>
+  </section>
 
-    const SUPABASE_URL =
-      "https://cioydzndfvskzubyjcgs.supabase.co";
 
-    const SUPABASE_KEY =
-      "sb_publishable_XrqG0cXWS2vlJIa3jw70Ng_33Gftqes";
+<script>
 
-    const sb =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-      );
+const SUPABASE_URL =
+  "https://cioydzndfvskzubyjcgs.supabase.co";
 
+const SUPABASE_KEY =
+  "sb_publishable_XrqG0cXWS2vlJIa3jw70Ng_33Gftqes";
 
-    // ===================================================
-    // AVATARES
-    // ===================================================
+const sb =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
 
-    const avatarCategories = {
 
-      "CARAS": [
-        "😈","🤡","🤬","🥴","🤪",
-        "😎","🤯","🥸","🤠","👹"
-      ],
+const avatarCategories = {
 
-      "ANIMALES": [
-        "🦍","🐸","🦆","🐒","🦄",
-        "🦖","🦈","🐙","🦝","🦥"
-      ],
+  "CARAS": [
+    "😈","🤡","🤬","🥴","🤪",
+    "😎","🤯","🥸","🤠","👹"
+  ],
 
-      "BICHOS": [
-        "👽","🤖","👾","💀","👻",
-        "🧟","🧛","🧌","🦹","🥷"
-      ],
+  "ANIMALES": [
+    "🦍","🐸","🦆","🐒","🦄",
+    "🦖","🦈","🐙","🦝","🦥"
+  ],
 
-      "COMIDA": [
-        "🍆","🍑","🌭","🍕","🍔",
-        "🍌","🥒","🌶️","🍩","🧀"
-      ],
+  "BICHOS": [
+    "👽","🤖","👾","💀","👻",
+    "🧟","🧛","🧌","🦹","🥷"
+  ],
 
-      "DEPORTE": [
-        "⚽","🏀","🏈","🎾","🥊",
-        "🏆","🏎️","🚴","🏄","🏋️"
-      ],
+  "COMIDA": [
+    "🍆","🍑","🌭","🍕","🍔",
+    "🍌","🥒","🌶️","🍩","🧀"
+  ],
 
-      "CAOS": [
-        "💩","💣","🧨","🖕","🧠",
-        "🦠","🪦","🚽","🩲","🔥"
-      ]
+  "DEPORTE": [
+    "⚽","🏀","🏈","🎾","🥊",
+    "🏆","🏎️","🚴","🏄","🏋️"
+  ],
 
-    };
+  "CAOS": [
+    "💩","💣","🧨","🖕","🧠",
+    "🦠","🪦","🚽","🩲","🔥"
+  ]
 
+};
 
-    // ===================================================
-    // ESTADO LOCAL
-    // ===================================================
 
-    let flowMode = null;
-    let editingProfile = false;
+let setupExpectedPlayers = 4;
 
-    let selectedAvatar = "";
-    let selectedAvatarCategory = "CARAS";
+let flowMode = null;
+let editingLobbyProfile = false;
 
-    let currentRoomId = null;
-    let currentRoomCode = null;
-    let currentRoomHostId = null;
+let selectedAvatar = "";
+let selectedAvatarCategory = "CARAS";
+let selectedSavedProfileId = null;
 
-    let playersChannel = null;
-    let roomChannel = null;
+let currentRoomId = null;
+let currentRoomCode = null;
+let currentRoomHostId = null;
+let currentExpectedPlayers = null;
+let currentRoomStatus = null;
 
-    let lobbyRefreshTimer = null;
-    let lobbyRefreshRunning = false;
+let playersChannel = null;
+let roomChannel = null;
 
-    const localPlayerId =
-      getOrCreateLocalPlayerId();
+let lobbyTimer = null;
+let refreshing = false;
 
+const localPlayerId =
+  getOrCreateLocalPlayerId();
 
-    // ===================================================
-    // IDENTIDAD LOCAL
-    // ===================================================
 
-    function getOrCreateLocalPlayerId() {
+function getOrCreateLocalPlayerId() {
 
-      let id =
-        localStorage.getItem(
-          "dilema_local_player_id"
-        );
+  let id =
+    localStorage.getItem(
+      "dilema_local_player_id"
+    );
 
-      if (!id) {
+  if (!id) {
 
-        if (
-          window.crypto &&
-          crypto.randomUUID
-        ) {
+    id =
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) +
+          Math.random().toString(36).slice(2);
 
-          id =
-            crypto.randomUUID();
+    localStorage.setItem(
+      "dilema_local_player_id",
+      id
+    );
 
-        } else {
+  }
 
-          id =
-            Date.now().toString(36) +
-            Math.random()
-              .toString(36)
-              .substring(2);
+  return id;
 
-        }
+}
 
-        localStorage.setItem(
-          "dilema_local_player_id",
-          id
-        );
 
-      }
+function getProfiles() {
 
-      return id;
-    }
+  try {
 
+    return JSON.parse(
+      localStorage.getItem(
+        "dilema_profiles"
+      ) || "[]"
+    );
 
-    // ===================================================
-    // SESIÓN DE SALA
-    // ===================================================
+  } catch {
 
-    function saveRoomSession() {
+    return [];
 
-      if (
-        !currentRoomId ||
-        !currentRoomCode
-      ) {
-        return;
-      }
+  }
 
-      localStorage.setItem(
-        "dilema_room_session",
-        JSON.stringify({
-          roomId:
-            currentRoomId,
+}
 
-          roomCode:
-            currentRoomCode
-        })
-      );
 
-    }
+function saveProfiles(
+  profiles
+) {
 
+  localStorage.setItem(
+    "dilema_profiles",
+    JSON.stringify(profiles)
+  );
 
-    function clearRoomSession() {
+}
 
-      localStorage.removeItem(
-        "dilema_room_session"
-      );
 
-    }
+function normalizePlayerName() {
 
+  const input =
+    document.getElementById(
+      "playerName"
+    );
 
-    function readRoomSession() {
+  input.value =
+    input.value.toLocaleUpperCase(
+      "es-ES"
+    );
 
-      const raw =
-        localStorage.getItem(
-          "dilema_room_session"
-        );
+}
 
-      if (!raw) {
-        return null;
-      }
 
-      try {
+function normalizeJoinCode() {
 
-        return JSON.parse(
-          raw
-        );
+  const input =
+    document.getElementById(
+      "joinCode"
+    );
 
-      } catch {
+  input.value =
+    input.value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0,4);
 
-        clearRoomSession();
+}
 
-        return null;
 
-      }
+function showScreen(
+  id
+) {
 
-    }
-
-
-    // ===================================================
-    // NORMALIZACIONES
-    // ===================================================
-
-    function normalizePlayerName() {
-
-      const input =
-        document.getElementById(
-          "playerName"
-        );
-
-      const position =
-        input.selectionStart;
-
-      input.value =
-        input.value
-          .toLocaleUpperCase(
-            "es-ES"
-          );
-
-      try {
-
-        input.setSelectionRange(
-          position,
-          position
-        );
-
-      } catch {
-        // algunos navegadores móviles
-      }
-
-      checkProfile();
-
-    }
-
-
-    function normalizeJoinCode() {
-
-      const input =
-        document.getElementById(
-          "joinCode"
-        );
-
-      input.value =
-        input.value
-          .toLocaleUpperCase(
-            "es-ES"
-          )
-          .replace(
-            /[^A-Z0-9]/g,
-            ""
-          )
-          .slice(
-            0,
-            4
-          );
-
-    }
-
-
-    // ===================================================
-    // NAVEGACIÓN
-    // ===================================================
-
-    function showScreen(
-      screenId
-    ) {
-
-      document
-        .querySelectorAll(
-          ".screen"
-        )
-        .forEach(
-          screen => {
-
-            screen.classList.remove(
-              "active"
-            );
-
-          }
-        );
-
-      document
-        .getElementById(
-          screenId
-        )
-        .classList.add(
+  document
+    .querySelectorAll(
+      ".screen"
+    )
+    .forEach(
+      screen =>
+        screen.classList.remove(
           "active"
+        )
+    );
+
+  document
+    .getElementById(id)
+    .classList.add(
+      "active"
+    );
+
+}
+
+
+function goHome() {
+
+  showScreen(
+    "home"
+  );
+
+}
+
+
+function openExpectedPlayers() {
+
+  setupExpectedPlayers =
+    4;
+
+  document
+    .getElementById(
+      "expectedSetup"
+    )
+    .textContent =
+      setupExpectedPlayers;
+
+  showScreen(
+    "expected"
+  );
+
+}
+
+
+function changeExpected(
+  change
+) {
+
+  setupExpectedPlayers =
+    Math.max(
+      2,
+      Math.min(
+        20,
+        setupExpectedPlayers +
+        change
+      )
+    );
+
+  document
+    .getElementById(
+      "expectedSetup"
+    )
+    .textContent =
+      setupExpectedPlayers;
+
+}
+
+
+function openJoinScreen() {
+
+  flowMode =
+    "join";
+
+  document
+    .getElementById(
+      "joinCode"
+    )
+    .value =
+      "";
+
+  document
+    .getElementById(
+      "joinError"
+    )
+    .textContent =
+      "";
+
+  showScreen(
+    "join"
+  );
+
+}
+
+
+function openProfileChoice(
+  mode
+) {
+
+  flowMode =
+    mode;
+
+  renderSavedProfiles();
+
+  showScreen(
+    "profileChoice"
+  );
+
+}
+
+
+function backFromProfileChoice() {
+
+  if (
+    flowMode ===
+    "create"
+  ) {
+
+    showScreen(
+      "expected"
+    );
+
+  } else {
+
+    showScreen(
+      "join"
+    );
+
+  }
+
+}
+
+
+function renderSavedProfiles() {
+
+  const container =
+    document.getElementById(
+      "savedProfiles"
+    );
+
+  const profiles =
+    getProfiles();
+
+  container.innerHTML =
+    "";
+
+  if (
+    profiles.length ===
+    0
+  ) {
+
+    container.innerHTML =
+      '<div class="small-note">NO HAY PERFILES GUARDADOS</div>';
+
+    return;
+
+  }
+
+
+  profiles.forEach(
+    profile => {
+
+      const row =
+        document.createElement(
+          "div"
         );
 
-    }
+      row.className =
+        "saved-profile";
 
 
-    function goHome() {
-
-      flowMode =
-        null;
-
-      editingProfile =
-        false;
-
-      document
-        .getElementById(
-          "joinError"
-        )
-        .textContent =
-          "";
-
-      document
-        .getElementById(
-          "profileError"
-        )
-        .textContent =
-          "";
-
-      showScreen(
-        "home"
-      );
-
-    }
-
-
-    // ===================================================
-    // LOADING
-    // ===================================================
-
-    function setLoading(
-      buttonId,
-      loading,
-      text
-    ) {
-
-      const button =
-        document.getElementById(
-          buttonId
+      row.onclick =
+        () => useSavedProfile(
+          profile.id
         );
 
-      if (!button) {
-        return;
-      }
 
-      if (loading) {
-
-        if (
-          !button.dataset
-            .originalText
-        ) {
-
-          button.dataset.originalText =
-            button.textContent;
-
-        }
-
-        button.textContent =
-          text ||
-          "ESPERA...";
-
-        button.disabled =
-          true;
-
-      } else {
-
-        button.textContent =
-          button.dataset.originalText ||
-          button.textContent;
-
-        button.disabled =
-          false;
-
-      }
-
-    }
-
-
-    // ===================================================
-    // AVATARES UI
-    // ===================================================
-
-    function renderAvatarTabs() {
-
-      const tabs =
-        document.getElementById(
-          "avatarTabs"
+      const avatar =
+        document.createElement(
+          "div"
         );
 
-      tabs.innerHTML =
-        "";
+      avatar.className =
+        "profile-avatar";
 
-      Object.keys(
-        avatarCategories
-      ).forEach(
-        category => {
-
-          const button =
-            document.createElement(
-              "button"
-            );
-
-          button.className =
-            "avatar-tab" +
-            (
-              category ===
-              selectedAvatarCategory
-                ? " active"
-                : ""
-            );
-
-          button.textContent =
-            category;
-
-          button.onclick =
-            () => {
-
-              selectedAvatarCategory =
-                category;
-
-              renderAvatarTabs();
-              renderAvatars();
-
-            };
-
-          tabs.appendChild(
-            button
-          );
-
-        }
-      );
-
-    }
+      avatar.textContent =
+        profile.avatar;
 
 
-    function renderAvatars() {
-
-      const container =
-        document.getElementById(
-          "avatars"
+      const info =
+        document.createElement(
+          "div"
         );
 
-      container.innerHTML =
-        "";
+      info.className =
+        "profile-info";
 
-      avatarCategories[
-        selectedAvatarCategory
-      ].forEach(
-        avatarValue => {
-
-          const button =
-            document.createElement(
-              "button"
-            );
-
-          button.className =
-            "avatar" +
-            (
-              avatarValue ===
-              selectedAvatar
-                ? " selected"
-                : ""
-            );
-
-          button.textContent =
-            avatarValue;
-
-          button.onclick =
-            () => {
-
-              selectedAvatar =
-                avatarValue;
-
-              renderAvatars();
-
-              checkProfile();
-
-            };
-
-          container.appendChild(
-            button
-          );
-
-        }
-      );
-
-    }
-
-
-    function findAvatarCategory(
-      avatar
-    ) {
-
-      for (
-        const [
-          category,
-          avatars
-        ]
-        of Object.entries(
-          avatarCategories
-        )
-      ) {
-
-        if (
-          avatars.includes(
-            avatar
-          )
-        ) {
-
-          return category;
-
-        }
-
-      }
-
-      return "CARAS";
-
-    }
-
-
-    // ===================================================
-    // CREAR / UNIRSE
-    // ===================================================
-
-    function startCreateFlow() {
-
-      flowMode =
-        "create";
-
-      editingProfile =
-        false;
-
-      resetProfile();
-
-      showScreen(
-        "profile"
-      );
-
-    }
-
-
-    function openJoinScreen() {
-
-      flowMode =
-        "join";
-
-      editingProfile =
-        false;
-
-      document
-        .getElementById(
-          "joinCode"
-        )
-        .value =
-          "";
-
-      document
-        .getElementById(
-          "joinError"
-        )
-        .textContent =
-          "";
-
-      showScreen(
-        "join"
-      );
-
-    }
-
-
-    async function findRoom() {
-
-      const code =
-        document
-          .getElementById(
-            "joinCode"
-          )
-          .value
-          .trim()
-          .toUpperCase();
-
-      const errorBox =
-        document.getElementById(
-          "joinError"
-        );
-
-      errorBox.textContent =
-        "";
-
-      if (
-        code.length !==
-        4
-      ) {
-
-        errorBox.textContent =
-          "Introduce un código de 4 caracteres.";
-
-        return;
-
-      }
-
-      setLoading(
-        "findRoomBtn",
-        true,
-        "BUSCANDO..."
-      );
-
-      const {
-        data,
-        error
-      } = await sb
-        .from(
-          "rooms"
-        )
-        .select(
-          "id, code, status, host_id"
-        )
-        .eq(
-          "code",
-          code
-        )
-        .maybeSingle();
-
-      setLoading(
-        "findRoomBtn",
-        false
-      );
-
-      if (error) {
-
-        console.error(
-          error
-        );
-
-        errorBox.textContent =
-          "No se ha podido consultar la partida.";
-
-        return;
-
-      }
-
-      if (!data) {
-
-        errorBox.textContent =
-          "Esa partida no existe.";
-
-        return;
-
-      }
-
-      currentRoomId =
-        data.id;
-
-      currentRoomCode =
-        data.code;
-
-      currentRoomHostId =
-        data.host_id;
-
-      resetProfile();
-
-      showScreen(
-        "profile"
-      );
-
-    }
-
-
-    // ===================================================
-    // PERFIL
-    // ===================================================
-
-    function resetProfile() {
-
-      selectedAvatar =
-        "";
-
-      selectedAvatarCategory =
-        "CARAS";
-
-      document
-        .getElementById(
-          "playerName"
-        )
-        .value =
-          "";
-
-      document
-        .getElementById(
-          "playerMotto"
-        )
-        .value =
-          "";
-
-      document
-        .getElementById(
-          "profileError"
-        )
-        .textContent =
-          "";
-
-      document
-        .getElementById(
-          "profileTitle"
-        )
-        .textContent =
-          editingProfile
-            ? "EDITAR PERFIL"
-            : "¿QUIÉN ERES?";
-
-      document
-        .getElementById(
-          "profileSubtitle"
-        )
-        .textContent =
-          editingProfile
-            ? "Tu identidad en esta sala."
-            : "Tu identidad solo para esta partida.";
-
-      document
-        .getElementById(
-          "continueBtn"
-        )
-        .textContent =
-          editingProfile
-            ? "GUARDAR CAMBIOS"
-            : "CONTINUAR";
-
-      document
-        .getElementById(
-          "leaveRoomBtn"
-        )
-        .style.display =
-          editingProfile
-            ? "block"
-            : "none";
-
-      renderAvatarTabs();
-      renderAvatars();
-
-      checkProfile();
-
-    }
-
-
-    function backFromProfile() {
-
-      if (
-        editingProfile
-      ) {
-
-        editingProfile =
-          false;
-
-        showScreen(
-          "room"
-        );
-
-        return;
-
-      }
-
-      if (
-        flowMode ===
-        "join"
-      ) {
-
-        showScreen(
-          "join"
-        );
-
-      } else {
-
-        goHome();
-
-      }
-
-    }
-
-
-    function checkProfile() {
-
-      const playerName =
-        document
-          .getElementById(
-            "playerName"
-          )
-          .value
-          .trim();
-
-      document
-        .getElementById(
-          "continueBtn"
-        )
-        .disabled =
-          playerName.length ===
-          0 ||
-          selectedAvatar ===
-          "";
-
-    }
-
-
-    async function finishProfile() {
-
-      if (
-        editingProfile
-      ) {
-
-        await updateCurrentPlayer();
-
-        return;
-
-      }
-
-      if (
-        flowMode ===
-        "create"
-      ) {
-
-        await createRoom();
-
-      } else {
-
-        await joinCurrentRoom();
-
-      }
-
-    }
-
-
-    async function openEditProfile() {
-
-      const {
-        data,
-        error
-      } = await sb
-        .from(
-          "players"
-        )
-        .select(
-          "name, avatar, motto"
-        )
-        .eq(
-          "room_id",
-          currentRoomId
-        )
-        .eq(
-          "player_id",
-          localPlayerId
-        )
-        .maybeSingle();
-
-      if (
-        error ||
-        !data
-      ) {
-
-        console.error(
-          error
-        );
-
-        return;
-
-      }
-
-      editingProfile =
-        true;
-
-      document
-        .getElementById(
-          "playerName"
-        )
-        .value =
-          (
-            data.name ||
-            ""
-          )
-          .toUpperCase();
-
-      document
-        .getElementById(
-          "playerMotto"
-        )
-        .value =
-          data.motto ||
-          "";
-
-      selectedAvatar =
-        data.avatar ||
-        "";
-
-      selectedAvatarCategory =
-        findAvatarCategory(
-          selectedAvatar
-        );
-
-      document
-        .getElementById(
-          "profileTitle"
-        )
-        .textContent =
-          "EDITAR PERFIL";
-
-      document
-        .getElementById(
-          "profileSubtitle"
-        )
-        .textContent =
-          "Tu identidad en esta sala.";
-
-      document
-        .getElementById(
-          "continueBtn"
-        )
-        .textContent =
-          "GUARDAR CAMBIOS";
-
-      document
-        .getElementById(
-          "leaveRoomBtn"
-        )
-        .style.display =
-          "block";
-
-      renderAvatarTabs();
-      renderAvatars();
-
-      checkProfile();
-
-      showScreen(
-        "profile"
-      );
-
-    }
-
-
-    async function updateCurrentPlayer() {
 
       const name =
-        document
-          .getElementById(
-            "playerName"
-          )
-          .value
-          .trim()
-          .toUpperCase();
-
-      const motto =
-        document
-          .getElementById(
-            "playerMotto"
-          )
-          .value
-          .trim();
-
-      const errorBox =
-        document.getElementById(
-          "profileError"
+        document.createElement(
+          "div"
         );
 
-      errorBox.textContent =
-        "";
+      name.className =
+        "profile-name";
 
-      setLoading(
-        "continueBtn",
-        true,
-        "GUARDANDO..."
+      name.textContent =
+        profile.name;
+
+
+      info.appendChild(
+        name
       );
 
-      const {
-        error
-      } = await sb
-        .from(
-          "players"
-        )
-        .update({
-          name:
-            name,
 
-          avatar:
-            selectedAvatar,
+      if (
+        profile.motto
+      ) {
 
-          motto:
-            motto ||
-            null
-        })
-        .eq(
-          "room_id",
-          currentRoomId
-        )
-        .eq(
-          "player_id",
-          localPlayerId
+        const motto =
+          document.createElement(
+            "div"
+          );
+
+        motto.className =
+          "profile-motto";
+
+        motto.textContent =
+          `“${profile.motto}”`;
+
+        info.appendChild(
+          motto
         );
-
-      setLoading(
-        "continueBtn",
-        false
-      );
-
-      if (error) {
-
-        console.error(
-          error
-        );
-
-        errorBox.textContent =
-          "No se ha podido actualizar el perfil.";
-
-        return;
 
       }
 
-      editingProfile =
-        false;
 
-      await refreshLobby();
+      const remove =
+        document.createElement(
+          "button"
+        );
 
-      showScreen(
-        "room"
+      remove.className =
+        "profile-delete";
+
+      remove.textContent =
+        "×";
+
+      remove.onclick =
+        event => {
+
+          event.stopPropagation();
+
+          deleteSavedProfile(
+            profile.id
+          );
+
+        };
+
+
+      row.appendChild(
+        avatar
+      );
+
+      row.appendChild(
+        info
+      );
+
+      row.appendChild(
+        remove
+      );
+
+      container.appendChild(
+        row
       );
 
     }
+  );
+
+}
 
 
-    // ===================================================
-    // CÓDIGOS
-    // ===================================================
+function deleteSavedProfile(
+  id
+) {
 
-    function randomRoomCode() {
+  const profiles =
+    getProfiles()
+      .filter(
+        profile =>
+          profile.id !==
+          id
+      );
 
-      const chars =
-        "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  saveProfiles(
+    profiles
+  );
 
-      let code =
-        "";
+  renderSavedProfiles();
 
-      for (
-        let i = 0;
-        i < 4;
-        i++
-      ) {
-
-        code +=
-          chars[
-            Math.floor(
-              Math.random() *
-              chars.length
-            )
-          ];
-
-      }
-
-      return code;
-
-    }
+}
 
 
-    async function generateAvailableCode() {
+function newProfile() {
 
-      for (
-        let attempt = 0;
-        attempt < 10;
-        attempt++
-      ) {
+  editingLobbyProfile =
+    false;
 
-        const code =
-          randomRoomCode();
+  selectedSavedProfileId =
+    null;
 
-        const {
-          data,
-          error
-        } = await sb
-          .from(
-            "rooms"
-          )
-          .select(
-            "id"
-          )
-          .eq(
-            "code",
-            code
-          )
-          .maybeSingle();
+  selectedAvatar =
+    "";
 
-        if (error) {
-          throw error;
-        }
+  selectedAvatarCategory =
+    "CARAS";
 
-        if (!data) {
-          return code;
-        }
+  document
+    .getElementById(
+      "playerName"
+    )
+    .value =
+      "";
 
-      }
+  document
+    .getElementById(
+      "playerMotto"
+    )
+    .value =
+      "";
 
-      throw new Error(
-        "No se pudo generar un código disponible."
+  document
+    .getElementById(
+      "profileTitle"
+    )
+    .textContent =
+      "NUEVO PERFIL";
+
+  document
+    .getElementById(
+      "saveProfileBtn"
+    )
+    .textContent =
+      "GUARDAR Y CONTINUAR";
+
+  document
+    .getElementById(
+      "leaveRoomBtn"
+    )
+    .style.display =
+      "none";
+
+  renderAvatarTabs();
+  renderAvatars();
+
+  showScreen(
+    "profile"
+  );
+
+}
+
+
+function useSavedProfile(
+  id
+) {
+
+  const profile =
+    getProfiles()
+      .find(
+        p =>
+          p.id === id
+      );
+
+  if (!profile) {
+    return;
+  }
+
+  selectedSavedProfileId =
+    id;
+
+  selectedAvatar =
+    profile.avatar;
+
+  selectedAvatarCategory =
+    findAvatarCategory(
+      profile.avatar
+    );
+
+  document
+    .getElementById(
+      "playerName"
+    )
+    .value =
+      profile.name;
+
+  document
+    .getElementById(
+      "playerMotto"
+    )
+    .value =
+      profile.motto ||
+      "";
+
+  continueWithProfile(
+    profile
+  );
+
+}
+
+
+function saveAndUseProfile() {
+
+  const name =
+    document
+      .getElementById(
+        "playerName"
+      )
+      .value
+      .trim()
+      .toUpperCase();
+
+  const motto =
+    document
+      .getElementById(
+        "playerMotto"
+      )
+      .value
+      .trim();
+
+
+  if (
+    !name ||
+    !selectedAvatar
+  ) {
+
+    document
+      .getElementById(
+        "profileError"
+      )
+      .textContent =
+        "Nombre y avatar son obligatorios.";
+
+    return;
+
+  }
+
+
+  if (
+    editingLobbyProfile
+  ) {
+
+    updateLobbyProfile(
+      name,
+      motto,
+      selectedAvatar
+    );
+
+    return;
+
+  }
+
+
+  let profiles =
+    getProfiles();
+
+
+  const profile = {
+
+    id:
+      selectedSavedProfileId ||
+      crypto.randomUUID(),
+
+    name:
+      name,
+
+    avatar:
+      selectedAvatar,
+
+    motto:
+      motto
+
+  };
+
+
+  const existingIndex =
+    profiles.findIndex(
+      p =>
+        p.id ===
+        profile.id
+    );
+
+
+  if (
+    existingIndex >=
+    0
+  ) {
+
+    profiles[
+      existingIndex
+    ] =
+      profile;
+
+  } else {
+
+    profiles.push(
+      profile
+    );
+
+  }
+
+
+  saveProfiles(
+    profiles
+  );
+
+
+  continueWithProfile(
+    profile
+  );
+
+}
+
+
+async function continueWithProfile(
+  profile
+) {
+
+  if (
+    flowMode ===
+    "create"
+  ) {
+
+    await createRoom(
+      profile
+    );
+
+  } else {
+
+    await joinRoomWithProfile(
+      profile
+    );
+
+  }
+
+}
+
+
+function renderAvatarTabs() {
+
+  const tabs =
+    document.getElementById(
+      "avatarTabs"
+    );
+
+  tabs.innerHTML =
+    "";
+
+
+  Object.keys(
+    avatarCategories
+  ).forEach(
+    category => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "avatar-tab" +
+        (
+          category ===
+          selectedAvatarCategory
+            ? " active"
+            : ""
+        );
+
+      button.textContent =
+        category;
+
+      button.onclick =
+        () => {
+
+          selectedAvatarCategory =
+            category;
+
+          renderAvatarTabs();
+
+          renderAvatars();
+
+        };
+
+      tabs.appendChild(
+        button
       );
 
     }
+  );
+
+}
 
 
-    // ===================================================
-    // CREAR SALA
-    // ===================================================
+function renderAvatars() {
 
-    async function createRoom() {
+  const container =
+    document.getElementById(
+      "avatars"
+    );
 
-      const errorBox =
-        document.getElementById(
-          "profileError"
+  container.innerHTML =
+    "";
+
+
+  avatarCategories[
+    selectedAvatarCategory
+  ].forEach(
+    emoji => {
+
+      const button =
+        document.createElement(
+          "button"
         );
 
-      errorBox.textContent =
-        "";
-
-      setLoading(
-        "continueBtn",
-        true,
-        "CREANDO..."
-      );
-
-      try {
-
-        const roomCode =
-          await generateAvailableCode();
-
-        const {
-          data: room,
-          error: roomError
-        } = await sb
-          .from(
-            "rooms"
-          )
-          .insert({
-            code:
-              roomCode,
-
-            status:
-              "waiting",
-
-            host_id:
-              localPlayerId
-          })
-          .select(
-            "id, code, status, host_id"
-          )
-          .single();
-
-        if (
-          roomError
-        ) {
-
-          throw roomError;
-
-        }
-
-        currentRoomId =
-          room.id;
-
-        currentRoomCode =
-          room.code;
-
-        currentRoomHostId =
-          room.host_id;
-
-        await insertCurrentPlayer();
-
-        saveRoomSession();
-
-        await enterRoomScreen();
-
-      } catch (
-        error
-      ) {
-
-        console.error(
-          error
+      button.className =
+        "avatar" +
+        (
+          emoji ===
+          selectedAvatar
+            ? " selected"
+            : ""
         );
 
-        errorBox.textContent =
-          "No se ha podido crear la partida.";
+      button.textContent =
+        emoji;
 
-      } finally {
+      button.onclick =
+        () => {
 
-        setLoading(
-          "continueBtn",
-          false
-        );
+          selectedAvatar =
+            emoji;
 
-        checkProfile();
+          renderAvatars();
 
-      }
+        };
 
-    }
-
-
-    // ===================================================
-    // ENTRAR EN SALA
-    // ===================================================
-
-    async function joinCurrentRoom() {
-
-      const errorBox =
-        document.getElementById(
-          "profileError"
-        );
-
-      errorBox.textContent =
-        "";
-
-      setLoading(
-        "continueBtn",
-        true,
-        "ENTRANDO..."
-      );
-
-      try {
-
-        await insertCurrentPlayer();
-
-        saveRoomSession();
-
-        await enterRoomScreen();
-
-      } catch (
-        error
-      ) {
-
-        console.error(
-          error
-        );
-
-        errorBox.textContent =
-          "No se ha podido entrar en la partida.";
-
-      } finally {
-
-        setLoading(
-          "continueBtn",
-          false
-        );
-
-        checkProfile();
-
-      }
-
-    }
-
-
-    async function insertCurrentPlayer() {
-
-      const playerName =
-        document
-          .getElementById(
-            "playerName"
-          )
-          .value
-          .trim()
-          .toUpperCase();
-
-      const playerMotto =
-        document
-          .getElementById(
-            "playerMotto"
-          )
-          .value
-          .trim();
-
-      const {
-        error
-      } = await sb
-        .from(
-          "players"
-        )
-        .insert({
-          room_id:
-            currentRoomId,
-
-          player_id:
-            localPlayerId,
-
-          name:
-            playerName,
-
-          avatar:
-            selectedAvatar,
-
-          motto:
-            playerMotto ||
-            null
-        });
-
-      if (
-        error
-      ) {
-
-        throw error;
-
-      }
-
-    }
-
-
-    // ===================================================
-    // ENTRADA LOBBY
-    // ===================================================
-
-    async function enterRoomScreen() {
-
-      document
-        .getElementById(
-          "roomCodeDisplay"
-        )
-        .textContent =
-          currentRoomCode;
-
-      showScreen(
-        "room"
-      );
-
-      await refreshLobby();
-
-      subscribeToRealtime();
-
-      startLobbySafetyRefresh();
-
-    }
-
-
-    // ===================================================
-    // RESTAURAR AL RECARGAR
-    // ===================================================
-
-    async function restoreRoomSession() {
-
-      const session =
-        readRoomSession();
-
-      if (
-        !session ||
-        !session.roomId
-      ) {
-
-        return;
-
-      }
-
-      currentRoomId =
-        session.roomId;
-
-      currentRoomCode =
-        session.roomCode ||
-        null;
-
-      const {
-        data: room,
-        error: roomError
-      } = await sb
-        .from(
-          "rooms"
-        )
-        .select(
-          "id, code, status, host_id"
-        )
-        .eq(
-          "id",
-          currentRoomId
-        )
-        .maybeSingle();
-
-      if (
-        roomError ||
-        !room
-      ) {
-
-        clearRoomSession();
-
-        currentRoomId =
-          null;
-
-        return;
-
-      }
-
-      const {
-        data: player,
-        error: playerError
-      } = await sb
-        .from(
-          "players"
-        )
-        .select(
-          "player_id"
-        )
-        .eq(
-          "room_id",
-          currentRoomId
-        )
-        .eq(
-          "player_id",
-          localPlayerId
-        )
-        .maybeSingle();
-
-      if (
-        playerError ||
-        !player
-      ) {
-
-        clearRoomSession();
-
-        currentRoomId =
-          null;
-
-        return;
-
-      }
-
-      currentRoomCode =
-        room.code;
-
-      currentRoomHostId =
-        room.host_id;
-
-      await enterRoomScreen();
-
-    }
-
-
-    // ===================================================
-    // REFRESCAR SALA
-    // ===================================================
-
-    async function loadRoom() {
-
-      if (
-        !currentRoomId
-      ) {
-
-        return null;
-
-      }
-
-      const {
-        data,
-        error
-      } = await sb
-        .from(
-          "rooms"
-        )
-        .select(
-          "id, code, status, host_id"
-        )
-        .eq(
-          "id",
-          currentRoomId
-        )
-        .maybeSingle();
-
-      if (
-        error
-      ) {
-
-        console.error(
-          "ROOM ERROR:",
-          error
-        );
-
-        return null;
-
-      }
-
-      if (
-        !data
-      ) {
-
-        return null;
-
-      }
-
-      currentRoomHostId =
-        data.host_id;
-
-      currentRoomCode =
-        data.code;
-
-      document
-        .getElementById(
-          "roomCodeDisplay"
-        )
-        .textContent =
-          data.code;
-
-      return data;
-
-    }
-
-
-    async function loadPlayers() {
-
-      if (
-        !currentRoomId
-      ) {
-
-        return [];
-
-      }
-
-      const {
-        data,
-        error
-      } = await sb
-        .from(
-          "players"
-        )
-        .select(
-          "player_id, name, avatar, motto, created_at"
-        )
-        .eq(
-          "room_id",
-          currentRoomId
-        )
-        .order(
-          "created_at",
-          {
-            ascending:
-              true
-          }
-        );
-
-      if (
-        error
-      ) {
-
-        console.error(
-          "PLAYERS ERROR:",
-          error
-        );
-
-        return [];
-
-      }
-
-      renderPlayers(
-        data ||
-        []
-      );
-
-      return (
-        data ||
-        []
+      container.appendChild(
+        button
       );
 
     }
+  );
+
+}
 
 
-    async function refreshLobby() {
+function findAvatarCategory(
+  avatar
+) {
 
-      if (
-        lobbyRefreshRunning ||
-        !currentRoomId
-      ) {
+  for (
+    const [
+      category,
+      values
+    ]
+    of Object.entries(
+      avatarCategories
+    )
+  ) {
 
-        return;
-
-      }
-
-      lobbyRefreshRunning =
-        true;
-
-      try {
-
-        const room =
-          await loadRoom();
-
-        if (
-          !room
-        ) {
-
-          clearRoomSession();
-
-          cleanupRoomState();
-
-          goHome();
-
-          return;
-
-        }
-
-        await loadPlayers();
-
-      } finally {
-
-        lobbyRefreshRunning =
-          false;
-
-      }
-
-    }
-
-
-    // ===================================================
-    // RENDER JUGADORES
-    // ===================================================
-
-    function renderPlayers(
-      players
+    if (
+      values.includes(
+        avatar
+      )
     ) {
 
-      const list =
-        document.getElementById(
-          "playersList"
-        );
+      return category;
 
-      list.innerHTML =
-        "";
+    }
 
-      players.forEach(
-        player => {
+  }
 
-          const card =
-            document.createElement(
-              "div"
-            );
+  return "CARAS";
 
-          card.className =
-            "player-card";
+}
 
 
-          if (
-            player.player_id ===
-            localPlayerId
-          ) {
+async function findRoom() {
 
-            card.classList.add(
-              "own-card"
-            );
-
-            card.onclick =
-              openEditProfile;
-
-          }
+  const code =
+    document
+      .getElementById(
+        "joinCode"
+      )
+      .value
+      .trim()
+      .toUpperCase();
 
 
-          const avatar =
-            document.createElement(
-              "div"
-            );
-
-          avatar.className =
-            "player-avatar";
-
-          avatar.textContent =
-            player.avatar ||
-            "❓";
-
-
-          const info =
-            document.createElement(
-              "div"
-            );
-
-          info.className =
-            "player-info";
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "code",
+      code
+    )
+    .maybeSingle();
 
 
-          const name =
-            document.createElement(
-              "div"
-            );
+  if (
+    error ||
+    !data
+  ) {
 
-          name.className =
-            "player-name";
+    document
+      .getElementById(
+        "joinError"
+      )
+      .textContent =
+        "Esa partida no existe.";
 
-          name.textContent =
-            (
-              player.name ||
-              ""
-            )
-            .toUpperCase();
+    return;
 
-          info.appendChild(
-            name
-          );
+  }
 
 
-          if (
-            player.motto
-          ) {
+  if (
+    data.status !==
+    "waiting"
+  ) {
 
-            const motto =
-              document.createElement(
-                "div"
-              );
+    document
+      .getElementById(
+        "joinError"
+      )
+      .textContent =
+        "ESTA PARTIDA YA HA COMENZADO.";
 
-            motto.className =
-              "player-motto";
+    return;
 
-            motto.textContent =
-              `“${player.motto}”`;
-
-            info.appendChild(
-              motto
-            );
-
-          }
+  }
 
 
-          card.appendChild(
-            avatar
-          );
+  currentRoomId =
+    data.id;
 
-          card.appendChild(
-            info
-          );
+  currentRoomCode =
+    data.code;
 
+  currentRoomHostId =
+    data.host_id;
 
-          const meta =
-            document.createElement(
-              "div"
-            );
+  currentExpectedPlayers =
+    data.expected_players;
 
-          meta.className =
-            "player-meta";
+  openProfileChoice(
+    "join"
+  );
 
-
-          if (
-            player.player_id ===
-            currentRoomHostId
-          ) {
-
-            const host =
-              document.createElement(
-                "div"
-              );
-
-            host.className =
-              "host-badge";
-
-            host.textContent =
-              "CREADOR";
-
-            meta.appendChild(
-              host
-            );
-
-          }
+}
 
 
-          if (
-            player.player_id ===
-            localPlayerId
-          ) {
+function randomRoomCode() {
 
-            const edit =
-              document.createElement(
-                "div"
-              );
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-            edit.className =
-              "edit-hint";
+  let code =
+    "";
 
-            edit.textContent =
-              "⋯";
+  for (
+    let i = 0;
+    i < 4;
+    i++
+  ) {
 
-            meta.appendChild(
-              edit
-            );
-
-          }
-
-
-          card.appendChild(
-            meta
-          );
-
-          list.appendChild(
-            card
-          );
-
-        }
-      );
-
-
-      document
-        .getElementById(
-          "roomStatus"
+    code +=
+      chars[
+        Math.floor(
+          Math.random() *
+          chars.length
         )
-        .textContent =
-          `${players.length} ${
-            players.length ===
-            1
-              ? "JUGADOR"
-              : "JUGADORES"
-          }`;
+      ];
 
-    }
+  }
+
+  return code;
+
+}
 
 
-    // ===================================================
-    // REALTIME
-    // ===================================================
+async function createRoom(
+  profile
+) {
 
-    function subscribeToRealtime() {
-
-      cleanupSubscriptions();
-
-
-      playersChannel =
-        sb
-          .channel(
-            `dilema-players-${currentRoomId}`
-          )
-          .on(
-            "postgres_changes",
-            {
-              event:
-                "*",
-
-              schema:
-                "public",
-
-              table:
-                "players",
-
-              filter:
-                `room_id=eq.${currentRoomId}`
-            },
-            async payload => {
-
-              console.log(
-                "REALTIME PLAYERS",
-                payload.eventType
-              );
-
-              await refreshLobby();
-
-            }
-          )
-          .subscribe(
-            (
-              status,
-              error
-            ) => {
-
-              console.log(
-                "PLAYERS CHANNEL:",
-                status
-              );
-
-              if (
-                error
-              ) {
-
-                console.error(
-                  error
-                );
-
-              }
-
-            }
-          );
+  const code =
+    randomRoomCode();
 
 
-      roomChannel =
-        sb
-          .channel(
-            `dilema-room-${currentRoomId}`
-          )
-          .on(
-            "postgres_changes",
-            {
-              event:
-                "*",
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .insert({
 
-              schema:
-                "public",
+      code:
+        code,
 
-              table:
-                "rooms",
+      status:
+        "waiting",
 
-              filter:
-                `id=eq.${currentRoomId}`
-            },
-            async payload => {
+      host_id:
+        localPlayerId,
 
-              console.log(
-                "REALTIME ROOM",
-                payload.eventType
-              );
+      expected_players:
+        setupExpectedPlayers
 
-              if (
-                payload.eventType ===
-                "DELETE"
-              ) {
-
-                clearRoomSession();
-
-                cleanupRoomState();
-
-                goHome();
-
-                return;
-
-              }
-
-              await refreshLobby();
-
-            }
-          )
-          .subscribe(
-            (
-              status,
-              error
-            ) => {
-
-              console.log(
-                "ROOM CHANNEL:",
-                status
-              );
-
-              if (
-                error
-              ) {
-
-                console.error(
-                  error
-                );
-
-              }
-
-            }
-          );
-
-    }
+    })
+    .select()
+    .single();
 
 
-    // ===================================================
-    // REFRESCO DE SEGURIDAD
-    // ===================================================
+  if (
+    error
+  ) {
 
-    function startLobbySafetyRefresh() {
+    alert(
+      "No se pudo crear la sala."
+    );
 
-      stopLobbySafetyRefresh();
+    return;
+
+  }
 
 
-      lobbyRefreshTimer =
-        setInterval(
-          () => {
+  currentRoomId =
+    data.id;
 
-            if (
-              currentRoomId &&
-              document.visibilityState ===
-              "visible"
-            ) {
+  currentRoomCode =
+    data.code;
 
-              refreshLobby();
+  currentRoomHostId =
+    data.host_id;
 
-            }
+  currentExpectedPlayers =
+    data.expected_players;
 
-          },
-          1000
+  currentRoomStatus =
+    data.status;
+
+
+  await insertPlayer(
+    profile
+  );
+
+  saveRoomSession();
+
+  await enterRoom();
+
+}
+
+
+async function joinRoomWithProfile(
+  profile
+) {
+
+  const room =
+    await getRoom();
+
+  if (
+    !room ||
+    room.status !==
+    "waiting"
+  ) {
+
+    alert(
+      "La partida ya ha comenzado."
+    );
+
+    return;
+
+  }
+
+
+  await insertPlayer(
+    profile
+  );
+
+  saveRoomSession();
+
+  await enterRoom();
+
+}
+
+
+async function insertPlayer(
+  profile
+) {
+
+  await sb
+    .from(
+      "players"
+    )
+    .insert({
+
+      room_id:
+        currentRoomId,
+
+      player_id:
+        localPlayerId,
+
+      name:
+        profile.name,
+
+      avatar:
+        profile.avatar,
+
+      motto:
+        profile.motto ||
+        null
+
+    });
+
+}
+
+
+async function enterRoom() {
+
+  showScreen(
+    "room"
+  );
+
+  await refreshLobby();
+
+  subscribeRealtime();
+
+  startSafetyRefresh();
+
+}
+
+
+async function getRoom() {
+
+  const {
+    data
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "id",
+      currentRoomId
+    )
+    .maybeSingle();
+
+  return data;
+
+}
+
+
+async function refreshLobby() {
+
+  if (
+    refreshing ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+  refreshing =
+    true;
+
+
+  const room =
+    await getRoom();
+
+
+  if (
+    !room
+  ) {
+
+    cleanupRoom();
+
+    goHome();
+
+    refreshing =
+      false;
+
+    return;
+
+  }
+
+
+  currentRoomCode =
+    room.code;
+
+  currentRoomHostId =
+    room.host_id;
+
+  currentExpectedPlayers =
+    room.expected_players;
+
+  currentRoomStatus =
+    room.status;
+
+
+  if (
+    room.status ===
+    "playing"
+  ) {
+
+    document
+      .getElementById(
+        "startedCode"
+      )
+      .textContent =
+        room.code;
+
+    showScreen(
+      "started"
+    );
+
+    refreshing =
+      false;
+
+    return;
+
+  }
+
+
+  const {
+    data: players
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .order(
+      "created_at",
+      {
+        ascending:
+          true
+      }
+    );
+
+
+  renderLobby(
+    room,
+    players || []
+  );
+
+
+  refreshing =
+    false;
+
+}
+
+
+function renderLobby(
+  room,
+  players
+) {
+
+  document
+    .getElementById(
+      "roomCodeDisplay"
+    )
+    .textContent =
+      room.code;
+
+
+  document
+    .getElementById(
+      "roomCount"
+    )
+    .textContent =
+      `${players.length} / ${room.expected_players}`;
+
+
+  const state =
+    document.getElementById(
+      "roomState"
+    );
+
+
+  if (
+    players.length ===
+    room.expected_players
+  ) {
+
+    state.textContent =
+      "SALA CUADRADA ✓";
+
+    state.className =
+      "room-state ready";
+
+  } else if (
+    players.length <
+    room.expected_players
+  ) {
+
+    const missing =
+      room.expected_players -
+      players.length;
+
+    state.textContent =
+      `FALTAN ${missing} ${
+        missing === 1
+          ? "JUGADOR"
+          : "JUGADORES"
+      }`;
+
+    state.className =
+      "room-state";
+
+  } else {
+
+    state.textContent =
+      `SOBRAN ${
+        players.length -
+        room.expected_players
+      }`;
+
+    state.className =
+      "room-state";
+
+  }
+
+
+  const isHost =
+    room.host_id ===
+    localPlayerId;
+
+
+  document
+    .getElementById(
+      "hostControls"
+    )
+    .style.display =
+      isHost
+        ? "block"
+        : "none";
+
+
+  document
+    .getElementById(
+      "expectedLobby"
+    )
+    .textContent =
+      room.expected_players;
+
+
+  const start =
+    document.getElementById(
+      "startGameBtn"
+    );
+
+
+  const waiting =
+    document.getElementById(
+      "waitingHost"
+    );
+
+
+  if (
+    isHost
+  ) {
+
+    start.style.display =
+      "block";
+
+    waiting.style.display =
+      "none";
+
+    start.disabled =
+      players.length !==
+      room.expected_players;
+
+  } else {
+
+    start.style.display =
+      "none";
+
+    waiting.style.display =
+      "block";
+
+  }
+
+
+  renderPlayers(
+    players,
+    isHost
+  );
+
+}
+
+
+function renderPlayers(
+  players,
+  isHost
+) {
+
+  const list =
+    document.getElementById(
+      "playersList"
+    );
+
+  list.innerHTML =
+    "";
+
+
+  players.forEach(
+    player => {
+
+      const row =
+        document.createElement(
+          "div"
         );
 
-    }
+      row.className =
+        "player-card";
 
-
-    function stopLobbySafetyRefresh() {
 
       if (
-        lobbyRefreshTimer
+        player.player_id ===
+        localPlayerId
       ) {
 
-        clearInterval(
-          lobbyRefreshTimer
+        row.classList.add(
+          "own-card"
         );
 
-        lobbyRefreshTimer =
-          null;
+        row.onclick =
+          openLobbyProfile;
 
       }
 
+
+      const avatar =
+        document.createElement(
+          "div"
+        );
+
+      avatar.className =
+        "player-avatar";
+
+      avatar.textContent =
+        player.avatar;
+
+
+      const info =
+        document.createElement(
+          "div"
+        );
+
+      info.className =
+        "player-info";
+
+
+      const name =
+        document.createElement(
+          "div"
+        );
+
+      name.className =
+        "player-name";
+
+      name.textContent =
+        player.name;
+
+
+      info.appendChild(
+        name
+      );
+
+
+      if (
+        player.motto
+      ) {
+
+        const motto =
+          document.createElement(
+            "div"
+          );
+
+        motto.className =
+          "player-motto";
+
+        motto.textContent =
+          `“${player.motto}”`;
+
+        info.appendChild(
+          motto
+        );
+
+      }
+
+
+      const meta =
+        document.createElement(
+          "div"
+        );
+
+      meta.className =
+        "player-meta";
+
+
+      if (
+        player.player_id ===
+        currentRoomHostId
+      ) {
+
+        const badge =
+          document.createElement(
+            "div"
+          );
+
+        badge.className =
+          "host-badge";
+
+        badge.textContent =
+          "CREADOR";
+
+        meta.appendChild(
+          badge
+        );
+
+      }
+
+
+      if (
+        player.player_id ===
+        localPlayerId
+      ) {
+
+        const edit =
+          document.createElement(
+            "div"
+          );
+
+        edit.className =
+          "edit-hint";
+
+        edit.textContent =
+          "⋯";
+
+        meta.appendChild(
+          edit
+        );
+
+      }
+
+
+      if (
+        isHost &&
+        player.player_id !==
+        localPlayerId
+      ) {
+
+        const kick =
+          document.createElement(
+            "button"
+          );
+
+        kick.className =
+          "kick";
+
+        kick.textContent =
+          "×";
+
+        kick.onclick =
+          event => {
+
+            event.stopPropagation();
+
+            kickPlayer(
+              player.player_id
+            );
+
+          };
+
+        meta.appendChild(
+          kick
+        );
+
+      }
+
+
+      row.appendChild(
+        avatar
+      );
+
+      row.appendChild(
+        info
+      );
+
+      row.appendChild(
+        meta
+      );
+
+      list.appendChild(
+        row
+      );
+
     }
+  );
+
+}
 
 
-    document.addEventListener(
-      "visibilitychange",
+async function changeLobbyExpected(
+  change
+) {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const next =
+    Math.max(
+      2,
+      Math.min(
+        20,
+        currentExpectedPlayers +
+        change
+      )
+    );
+
+
+  await sb
+    .from(
+      "rooms"
+    )
+    .update({
+
+      expected_players:
+        next
+
+    })
+    .eq(
+      "id",
+      currentRoomId
+    );
+
+}
+
+
+async function kickPlayer(
+  playerId
+) {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      "¿Expulsar a este jugador de la sala?"
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  await sb
+    .from(
+      "players"
+    )
+    .delete()
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      playerId
+    );
+
+}
+
+
+async function openLobbyProfile() {
+
+  const {
+    data
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    )
+    .maybeSingle();
+
+
+  if (!data) {
+    return;
+  }
+
+
+  editingLobbyProfile =
+    true;
+
+  selectedAvatar =
+    data.avatar;
+
+  selectedAvatarCategory =
+    findAvatarCategory(
+      data.avatar
+    );
+
+
+  document
+    .getElementById(
+      "playerName"
+    )
+    .value =
+      data.name;
+
+
+  document
+    .getElementById(
+      "playerMotto"
+    )
+    .value =
+      data.motto ||
+      "";
+
+
+  document
+    .getElementById(
+      "profileTitle"
+    )
+    .textContent =
+      "EDITAR PERFIL";
+
+
+  document
+    .getElementById(
+      "saveProfileBtn"
+    )
+    .textContent =
+      "GUARDAR CAMBIOS";
+
+
+  document
+    .getElementById(
+      "leaveRoomBtn"
+    )
+    .style.display =
+      "block";
+
+
+  renderAvatarTabs();
+  renderAvatars();
+
+  showScreen(
+    "profile"
+  );
+
+}
+
+
+async function updateLobbyProfile(
+  name,
+  motto,
+  avatar
+) {
+
+  await sb
+    .from(
+      "players"
+    )
+    .update({
+
+      name:
+        name,
+
+      motto:
+        motto ||
+        null,
+
+      avatar:
+        avatar
+
+    })
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    );
+
+
+  editingLobbyProfile =
+    false;
+
+  showScreen(
+    "room"
+  );
+
+  refreshLobby();
+
+}
+
+
+function backFromProfile() {
+
+  if (
+    editingLobbyProfile
+  ) {
+
+    editingLobbyProfile =
+      false;
+
+    showScreen(
+      "room"
+    );
+
+  } else {
+
+    showScreen(
+      "profileChoice"
+    );
+
+  }
+
+}
+
+
+async function startGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const {
+    count
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*",
+      {
+        count:
+          "exact",
+        head:
+          true
+      }
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    );
+
+
+  if (
+    count !==
+    currentExpectedPlayers
+  ) {
+
+    alert(
+      "La sala no está cuadrada."
+    );
+
+    return;
+
+  }
+
+
+  await sb
+    .from(
+      "rooms"
+    )
+    .update({
+
+      status:
+        "playing"
+
+    })
+    .eq(
+      "id",
+      currentRoomId
+    );
+
+}
+
+
+async function confirmLeaveRoom() {
+
+  if (
+    confirm(
+      "¿Abandonar la sala?"
+    )
+  ) {
+
+    await leaveRoom();
+
+  }
+
+}
+
+
+async function leaveRoom() {
+
+  const {
+    data: players
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "player_id, created_at"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .order(
+      "created_at"
+    );
+
+
+  const remaining =
+    players.filter(
+      player =>
+        player.player_id !==
+        localPlayerId
+    );
+
+
+  if (
+    currentRoomHostId ===
+    localPlayerId &&
+    remaining.length
+  ) {
+
+    await sb
+      .from(
+        "rooms"
+      )
+      .update({
+
+        host_id:
+          remaining[0]
+            .player_id
+
+      })
+      .eq(
+        "id",
+        currentRoomId
+      );
+
+  }
+
+
+  await sb
+    .from(
+      "players"
+    )
+    .delete()
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    );
+
+
+  if (
+    remaining.length ===
+    0
+  ) {
+
+    await sb
+      .from(
+        "rooms"
+      )
+      .delete()
+      .eq(
+        "id",
+        currentRoomId
+      );
+
+  }
+
+
+  cleanupRoom();
+
+  goHome();
+
+}
+
+
+function subscribeRealtime() {
+
+  cleanupChannels();
+
+
+  playersChannel =
+    sb
+      .channel(
+        `players-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "players",
+          filter:
+            `room_id=eq.${currentRoomId}`
+        },
+        refreshLobby
+      )
+      .subscribe();
+
+
+  roomChannel =
+    sb
+      .channel(
+        `room-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "rooms",
+          filter:
+            `id=eq.${currentRoomId}`
+        },
+        refreshLobby
+      )
+      .subscribe();
+
+}
+
+
+function startSafetyRefresh() {
+
+  clearInterval(
+    lobbyTimer
+  );
+
+
+  lobbyTimer =
+    setInterval(
       () => {
 
         if (
+          currentRoomId &&
           document.visibilityState ===
-          "visible" &&
-          currentRoomId
+          "visible"
         ) {
 
           refreshLobby();
 
         }
 
-      }
+      },
+      1000
     );
 
+}
 
-    // ===================================================
-    // ABANDONAR SALA
-    // ===================================================
 
-    async function confirmLeaveRoom() {
+function saveRoomSession() {
 
-      const confirmed =
-        window.confirm(
-          "¿Abandonar la sala?"
-        );
+  localStorage.setItem(
+    "dilema_room_session",
+    JSON.stringify({
 
-      if (
-        !confirmed
-      ) {
+      roomId:
+        currentRoomId,
 
-        return;
+      roomCode:
+        currentRoomCode
 
-      }
+    })
+  );
 
-      await leaveRoom();
+}
 
-    }
 
+async function restoreRoomSession() {
 
-    async function leaveRoom() {
-
-      try {
-
-        const {
-          data: players,
-          error:
-            playersError
-        } = await sb
-          .from(
-            "players"
-          )
-          .select(
-            "player_id, created_at"
-          )
-          .eq(
-            "room_id",
-            currentRoomId
-          )
-          .order(
-            "created_at",
-            {
-              ascending:
-                true
-            }
-          );
-
-
-        if (
-          playersError
-        ) {
-
-          throw playersError;
-
-        }
-
-
-        const remainingPlayers =
-          (
-            players ||
-            []
-          )
-          .filter(
-            player =>
-              player.player_id !==
-              localPlayerId
-          );
-
-
-        const wasHost =
-          currentRoomHostId ===
-          localPlayerId;
-
-
-        /*
-          SI EL CREADOR SE VA Y QUEDA ALGUIEN:
-          PRIMERO TRANSFERIMOS EL CREADOR.
-        */
-
-        if (
-          wasHost &&
-          remainingPlayers.length >
-          0
-        ) {
-
-          const newHost =
-            remainingPlayers[0];
-
-          const {
-            error:
-              updateRoomError
-          } = await sb
-            .from(
-              "rooms"
-            )
-            .update({
-              host_id:
-                newHost.player_id
-            })
-            .eq(
-              "id",
-              currentRoomId
-            );
-
-
-          if (
-            updateRoomError
-          ) {
-
-            throw updateRoomError;
-
-          }
-
-        }
-
-
-        /*
-          DESPUÉS ELIMINAMOS AL JUGADOR.
-        */
-
-        const {
-          error:
-            deletePlayerError
-        } = await sb
-          .from(
-            "players"
-          )
-          .delete()
-          .eq(
-            "room_id",
-            currentRoomId
-          )
-          .eq(
-            "player_id",
-            localPlayerId
-          );
-
-
-        if (
-          deletePlayerError
-        ) {
-
-          throw deletePlayerError;
-
-        }
-
-
-        /*
-          SI ERA EL ÚLTIMO:
-          ELIMINAMOS TAMBIÉN LA SALA.
-        */
-
-        if (
-          remainingPlayers.length ===
-          0
-        ) {
-
-          const {
-            error:
-              deleteRoomError
-          } = await sb
-            .from(
-              "rooms"
-            )
-            .delete()
-            .eq(
-              "id",
-              currentRoomId
-            );
-
-
-          if (
-            deleteRoomError
-          ) {
-
-            throw deleteRoomError;
-
-          }
-
-        }
-
-
-        clearRoomSession();
-
-        cleanupRoomState();
-
-        goHome();
-
-
-      } catch (
-        error
-      ) {
-
-        console.error(
-          error
-        );
-
-        alert(
-          "No se ha podido abandonar la sala."
-        );
-
-      }
-
-    }
-
-
-    // ===================================================
-    // LIMPIEZA
-    // ===================================================
-
-    function cleanupSubscriptions() {
-
-      if (
-        playersChannel
-      ) {
-
-        sb.removeChannel(
-          playersChannel
-        );
-
-        playersChannel =
-          null;
-
-      }
-
-
-      if (
-        roomChannel
-      ) {
-
-        sb.removeChannel(
-          roomChannel
-        );
-
-        roomChannel =
-          null;
-
-      }
-
-    }
-
-
-    function cleanupRoomState() {
-
-      cleanupSubscriptions();
-
-      stopLobbySafetyRefresh();
-
-      currentRoomId =
-        null;
-
-      currentRoomCode =
-        null;
-
-      currentRoomHostId =
-        null;
-
-      editingProfile =
-        false;
-
-    }
-
-
-    // ===================================================
-    // ARRANQUE
-    // ===================================================
-
-    window.addEventListener(
-      "DOMContentLoaded",
-      async () => {
-
-        renderAvatarTabs();
-        renderAvatars();
-
-        await restoreRoomSession();
-
-      }
+  const raw =
+    localStorage.getItem(
+      "dilema_room_session"
     );
 
-  </script>
+  if (!raw) {
+    return;
+  }
+
+
+  try {
+
+    const session =
+      JSON.parse(raw);
+
+
+    currentRoomId =
+      session.roomId;
+
+
+    const room =
+      await getRoom();
+
+
+    if (!room) {
+
+      cleanupRoom();
+
+      return;
+
+    }
+
+
+    const {
+      data: player
+    } = await sb
+      .from(
+        "players"
+      )
+      .select(
+        "player_id"
+      )
+      .eq(
+        "room_id",
+        currentRoomId
+      )
+      .eq(
+        "player_id",
+        localPlayerId
+      )
+      .maybeSingle();
+
+
+    if (!player) {
+
+      cleanupRoom();
+
+      return;
+
+    }
+
+
+    currentRoomCode =
+      room.code;
+
+    currentRoomHostId =
+      room.host_id;
+
+    currentExpectedPlayers =
+      room.expected_players;
+
+    currentRoomStatus =
+      room.status;
+
+
+    await enterRoom();
+
+
+  } catch {
+
+    cleanupRoom();
+
+  }
+
+}
+
+
+function cleanupChannels() {
+
+  if (
+    playersChannel
+  ) {
+
+    sb.removeChannel(
+      playersChannel
+    );
+
+    playersChannel =
+      null;
+
+  }
+
+
+  if (
+    roomChannel
+  ) {
+
+    sb.removeChannel(
+      roomChannel
+    );
+
+    roomChannel =
+      null;
+
+  }
+
+}
+
+
+function cleanupRoom() {
+
+  cleanupChannels();
+
+  clearInterval(
+    lobbyTimer
+  );
+
+  lobbyTimer =
+    null;
+
+  currentRoomId =
+    null;
+
+  currentRoomCode =
+    null;
+
+  currentRoomHostId =
+    null;
+
+  currentExpectedPlayers =
+    null;
+
+  currentRoomStatus =
+    null;
+
+  localStorage.removeItem(
+    "dilema_room_session"
+  );
+
+}
+
+
+window.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    renderAvatarTabs();
+
+    renderAvatars();
+
+    await restoreRoomSession();
+
+  }
+);
+
+</script>
 
 </body>
 </html>
