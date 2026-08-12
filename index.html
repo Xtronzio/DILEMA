@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -357,32 +358,49 @@
 
 <body>
 
+  <!-- HOME -->
+
   <main id="home" class="screen active center">
 
-    <div class="logo">DILEMA</div>
+    <div class="logo">
+      DILEMA
+    </div>
 
     <div class="actions">
 
-      <button class="btn btn-primary" onclick="startCreateFlow()">
+      <button
+        class="btn btn-primary"
+        onclick="startCreateFlow()"
+      >
         CREAR PARTIDA
       </button>
 
-      <button class="btn btn-secondary" onclick="openJoinScreen()">
+      <button
+        class="btn btn-secondary"
+        onclick="openJoinScreen()"
+      >
         UNIRME A UNA PARTIDA
       </button>
 
     </div>
 
     <div class="version">
-      V0.0.3B
+      V0.0.3C
     </div>
 
   </main>
 
 
+  <!-- JOIN -->
+
   <section id="join" class="screen center">
 
-    <button class="back" onclick="goHome()">←</button>
+    <button
+      class="back"
+      onclick="goHome()"
+    >
+      ←
+    </button>
 
     <div class="title">
       ENTRAR
@@ -399,10 +417,13 @@
       maxlength="4"
       placeholder="----"
       autocomplete="off"
-      oninput="formatJoinCode()"
+      oninput="normalizeJoinCode()"
     >
 
-    <div id="joinError" class="error"></div>
+    <div
+      id="joinError"
+      class="error"
+    ></div>
 
     <button
       id="findRoomBtn"
@@ -415,15 +436,28 @@
   </section>
 
 
+  <!-- PROFILE -->
+
   <section id="profile" class="screen">
 
-    <button class="back" onclick="backFromProfile()">←</button>
+    <button
+      class="back"
+      onclick="backFromProfile()"
+    >
+      ←
+    </button>
 
-    <div class="title" id="profileTitle">
+    <div
+      class="title"
+      id="profileTitle"
+    >
       ¿QUIÉN ERES?
     </div>
 
-    <div class="subtitle" id="profileSubtitle">
+    <div
+      class="subtitle"
+      id="profileSubtitle"
+    >
       Tu identidad solo para esta partida.
     </div>
 
@@ -434,7 +468,8 @@
       maxlength="16"
       placeholder="TU NOMBRE"
       autocomplete="off"
-      oninput="normalizePlayerName(); checkProfile();"
+      autocapitalize="characters"
+      oninput="normalizePlayerName()"
     >
 
     <input
@@ -450,11 +485,20 @@
       ELIGE AVATAR
     </div>
 
-    <div id="avatarTabs" class="avatar-tabs"></div>
+    <div
+      id="avatarTabs"
+      class="avatar-tabs"
+    ></div>
 
-    <div id="avatars" class="avatars"></div>
+    <div
+      id="avatars"
+      class="avatars"
+    ></div>
 
-    <div id="profileError" class="error"></div>
+    <div
+      id="profileError"
+      class="error"
+    ></div>
 
     <button
       id="continueBtn"
@@ -477,17 +521,25 @@
   </section>
 
 
+  <!-- ROOM -->
+
   <section id="room" class="screen center">
 
     <div class="room-code-label">
       CÓDIGO DE PARTIDA
     </div>
 
-    <div id="roomCodeDisplay" class="room-code">
+    <div
+      id="roomCodeDisplay"
+      class="room-code"
+    >
       ----
     </div>
 
-    <div id="roomStatus" class="room-status">
+    <div
+      id="roomStatus"
+      class="room-status"
+    >
       ESPERANDO JUGADORES...
     </div>
 
@@ -495,7 +547,10 @@
       JUGADORES
     </div>
 
-    <div id="playersList" class="players-list"></div>
+    <div
+      id="playersList"
+      class="players-list"
+    ></div>
 
     <div class="small-note">
       Toca tu ficha para editar perfil o abandonar la sala.
@@ -507,6 +562,10 @@
 
 
   <script>
+
+    // ===================================================
+    // SUPABASE
+    // ===================================================
 
     const SUPABASE_URL =
       "https://cioydzndfvskzubyjcgs.supabase.co";
@@ -520,6 +579,10 @@
         SUPABASE_KEY
       );
 
+
+    // ===================================================
+    // AVATARES
+    // ===================================================
 
     const avatarCategories = {
 
@@ -556,6 +619,10 @@
     };
 
 
+    // ===================================================
+    // ESTADO LOCAL
+    // ===================================================
+
     let flowMode = null;
     let editingProfile = false;
 
@@ -569,9 +636,16 @@
     let playersChannel = null;
     let roomChannel = null;
 
+    let lobbyRefreshTimer = null;
+    let lobbyRefreshRunning = false;
+
     const localPlayerId =
       getOrCreateLocalPlayerId();
 
+
+    // ===================================================
+    // IDENTIDAD LOCAL
+    // ===================================================
 
     function getOrCreateLocalPlayerId() {
 
@@ -611,6 +685,74 @@
     }
 
 
+    // ===================================================
+    // SESIÓN DE SALA
+    // ===================================================
+
+    function saveRoomSession() {
+
+      if (
+        !currentRoomId ||
+        !currentRoomCode
+      ) {
+        return;
+      }
+
+      localStorage.setItem(
+        "dilema_room_session",
+        JSON.stringify({
+          roomId:
+            currentRoomId,
+
+          roomCode:
+            currentRoomCode
+        })
+      );
+
+    }
+
+
+    function clearRoomSession() {
+
+      localStorage.removeItem(
+        "dilema_room_session"
+      );
+
+    }
+
+
+    function readRoomSession() {
+
+      const raw =
+        localStorage.getItem(
+          "dilema_room_session"
+        );
+
+      if (!raw) {
+        return null;
+      }
+
+      try {
+
+        return JSON.parse(
+          raw
+        );
+
+      } catch {
+
+        clearRoomSession();
+
+        return null;
+
+      }
+
+    }
+
+
+    // ===================================================
+    // NORMALIZACIONES
+    // ===================================================
+
     function normalizePlayerName() {
 
       const input =
@@ -618,26 +760,81 @@
           "playerName"
         );
 
+      const position =
+        input.selectionStart;
+
       input.value =
-        input.value.toUpperCase();
+        input.value
+          .toLocaleUpperCase(
+            "es-ES"
+          );
+
+      try {
+
+        input.setSelectionRange(
+          position,
+          position
+        );
+
+      } catch {
+        // algunos navegadores móviles
+      }
+
+      checkProfile();
 
     }
 
 
-    function showScreen(screenId) {
+    function normalizeJoinCode() {
 
-      document
-        .querySelectorAll(".screen")
-        .forEach(screen => {
+      const input =
+        document.getElementById(
+          "joinCode"
+        );
 
-          screen.classList.remove(
-            "active"
+      input.value =
+        input.value
+          .toLocaleUpperCase(
+            "es-ES"
+          )
+          .replace(
+            /[^A-Z0-9]/g,
+            ""
+          )
+          .slice(
+            0,
+            4
           );
 
-        });
+    }
+
+
+    // ===================================================
+    // NAVEGACIÓN
+    // ===================================================
+
+    function showScreen(
+      screenId
+    ) {
 
       document
-        .getElementById(screenId)
+        .querySelectorAll(
+          ".screen"
+        )
+        .forEach(
+          screen => {
+
+            screen.classList.remove(
+              "active"
+            );
+
+          }
+        );
+
+      document
+        .getElementById(
+          screenId
+        )
         .classList.add(
           "active"
         );
@@ -647,20 +844,25 @@
 
     function goHome() {
 
-      flowMode = null;
-      editingProfile = false;
+      flowMode =
+        null;
+
+      editingProfile =
+        false;
 
       document
         .getElementById(
           "joinError"
         )
-        .textContent = "";
+        .textContent =
+          "";
 
       document
         .getElementById(
           "profileError"
         )
-        .textContent = "";
+        .textContent =
+          "";
 
       showScreen(
         "home"
@@ -668,6 +870,10 @@
 
     }
 
+
+    // ===================================================
+    // LOADING
+    // ===================================================
 
     function setLoading(
       buttonId,
@@ -680,17 +886,28 @@
           buttonId
         );
 
-      if (!button) return;
+      if (!button) {
+        return;
+      }
 
       if (loading) {
 
-        button.dataset.originalText =
-          button.textContent;
+        if (
+          !button.dataset
+            .originalText
+        ) {
+
+          button.dataset.originalText =
+            button.textContent;
+
+        }
 
         button.textContent =
-          text || "ESPERA...";
+          text ||
+          "ESPERA...";
 
-        button.disabled = true;
+        button.disabled =
+          true;
 
       } else {
 
@@ -698,12 +915,17 @@
           button.dataset.originalText ||
           button.textContent;
 
-        button.disabled = false;
+        button.disabled =
+          false;
 
       }
 
     }
 
+
+    // ===================================================
+    // AVATARES UI
+    // ===================================================
 
     function renderAvatarTabs() {
 
@@ -712,44 +934,48 @@
           "avatarTabs"
         );
 
-      tabs.innerHTML = "";
+      tabs.innerHTML =
+        "";
 
       Object.keys(
         avatarCategories
-      ).forEach(category => {
+      ).forEach(
+        category => {
 
-        const button =
-          document.createElement(
-            "button"
-          );
+          const button =
+            document.createElement(
+              "button"
+            );
 
-        button.className =
-          "avatar-tab" +
-          (
-            category ===
-            selectedAvatarCategory
-              ? " active"
-              : ""
-          );
+          button.className =
+            "avatar-tab" +
+            (
+              category ===
+              selectedAvatarCategory
+                ? " active"
+                : ""
+            );
 
-        button.textContent =
-          category;
-
-        button.onclick = () => {
-
-          selectedAvatarCategory =
+          button.textContent =
             category;
 
-          renderAvatarTabs();
-          renderAvatars();
+          button.onclick =
+            () => {
 
-        };
+              selectedAvatarCategory =
+                category;
 
-        tabs.appendChild(
-          button
-        );
+              renderAvatarTabs();
+              renderAvatars();
 
-      });
+            };
+
+          tabs.appendChild(
+            button
+          );
+
+        }
+      );
 
     }
 
@@ -761,7 +987,8 @@
           "avatars"
         );
 
-      container.innerHTML = "";
+      container.innerHTML =
+        "";
 
       avatarCategories[
         selectedAvatarCategory
@@ -785,16 +1012,17 @@
           button.textContent =
             avatarValue;
 
-          button.onclick = () => {
+          button.onclick =
+            () => {
 
-            selectedAvatar =
-              avatarValue;
+              selectedAvatar =
+                avatarValue;
 
-            renderAvatars();
+              renderAvatars();
 
-            checkProfile();
+              checkProfile();
 
-          };
+            };
 
           container.appendChild(
             button
@@ -805,6 +1033,41 @@
 
     }
 
+
+    function findAvatarCategory(
+      avatar
+    ) {
+
+      for (
+        const [
+          category,
+          avatars
+        ]
+        of Object.entries(
+          avatarCategories
+        )
+      ) {
+
+        if (
+          avatars.includes(
+            avatar
+          )
+        ) {
+
+          return category;
+
+        }
+
+      }
+
+      return "CARAS";
+
+    }
+
+
+    // ===================================================
+    // CREAR / UNIRSE
+    // ===================================================
 
     function startCreateFlow() {
 
@@ -835,39 +1098,19 @@
         .getElementById(
           "joinCode"
         )
-        .value = "";
+        .value =
+          "";
 
       document
         .getElementById(
           "joinError"
         )
-        .textContent = "";
+        .textContent =
+          "";
 
       showScreen(
         "join"
       );
-
-    }
-
-
-    function formatJoinCode() {
-
-      const input =
-        document.getElementById(
-          "joinCode"
-        );
-
-      input.value =
-        input.value
-          .toUpperCase()
-          .replace(
-            /[^A-Z0-9]/g,
-            ""
-          )
-          .slice(
-            0,
-            4
-          );
 
     }
 
@@ -970,6 +1213,10 @@
     }
 
 
+    // ===================================================
+    // PERFIL
+    // ===================================================
+
     function resetProfile() {
 
       selectedAvatar =
@@ -982,19 +1229,22 @@
         .getElementById(
           "playerName"
         )
-        .value = "";
+        .value =
+          "";
 
       document
         .getElementById(
           "playerMotto"
         )
-        .value = "";
+        .value =
+          "";
 
       document
         .getElementById(
           "profileError"
         )
-        .textContent = "";
+        .textContent =
+          "";
 
       document
         .getElementById(
@@ -1033,7 +1283,6 @@
             : "none";
 
       renderAvatarTabs();
-
       renderAvatars();
 
       checkProfile();
@@ -1222,7 +1471,6 @@
           "block";
 
       renderAvatarTabs();
-
       renderAvatars();
 
       checkProfile();
@@ -1230,37 +1478,6 @@
       showScreen(
         "profile"
       );
-
-    }
-
-
-    function findAvatarCategory(
-      avatar
-    ) {
-
-      for (
-        const [
-          category,
-          avatars
-        ]
-        of Object.entries(
-          avatarCategories
-        )
-      ) {
-
-        if (
-          avatars.includes(
-            avatar
-          )
-        ) {
-
-          return category;
-
-        }
-
-      }
-
-      return "CARAS";
 
     }
 
@@ -1307,8 +1524,10 @@
         .update({
           name:
             name,
+
           avatar:
             selectedAvatar,
+
           motto:
             motto ||
             null
@@ -1343,7 +1562,7 @@
       editingProfile =
         false;
 
-      await refreshRoomAndPlayers();
+      await refreshLobby();
 
       showScreen(
         "room"
@@ -1351,6 +1570,10 @@
 
     }
 
+
+    // ===================================================
+    // CÓDIGOS
+    // ===================================================
 
     function randomRoomCode() {
 
@@ -1409,15 +1632,11 @@
           .maybeSingle();
 
         if (error) {
-
           throw error;
-
         }
 
         if (!data) {
-
           return code;
-
         }
 
       }
@@ -1428,6 +1647,10 @@
 
     }
 
+
+    // ===================================================
+    // CREAR SALA
+    // ===================================================
 
     async function createRoom() {
 
@@ -1460,8 +1683,10 @@
           .insert({
             code:
               roomCode,
+
             status:
               "waiting",
+
             host_id:
               localPlayerId
           })
@@ -1489,9 +1714,13 @@
 
         await insertCurrentPlayer();
 
+        saveRoomSession();
+
         await enterRoomScreen();
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           error
@@ -1514,6 +1743,10 @@
     }
 
 
+    // ===================================================
+    // ENTRAR EN SALA
+    // ===================================================
+
     async function joinCurrentRoom() {
 
       const errorBox =
@@ -1534,9 +1767,13 @@
 
         await insertCurrentPlayer();
 
+        saveRoomSession();
+
         await enterRoomScreen();
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           error
@@ -1587,12 +1824,16 @@
         .insert({
           room_id:
             currentRoomId,
+
           player_id:
             localPlayerId,
+
           name:
             playerName,
+
           avatar:
             selectedAvatar,
+
           motto:
             playerMotto ||
             null
@@ -1609,6 +1850,10 @@
     }
 
 
+    // ===================================================
+    // ENTRADA LOBBY
+    // ===================================================
+
     async function enterRoomScreen() {
 
       document
@@ -1622,21 +1867,127 @@
         "room"
       );
 
-      await refreshRoomAndPlayers();
+      await refreshLobby();
 
-      subscribeToPlayers();
+      subscribeToRealtime();
 
-      subscribeToRoom();
+      startLobbySafetyRefresh();
 
     }
 
 
-    async function refreshRoom() {
+    // ===================================================
+    // RESTAURAR AL RECARGAR
+    // ===================================================
+
+    async function restoreRoomSession() {
+
+      const session =
+        readRoomSession();
+
+      if (
+        !session ||
+        !session.roomId
+      ) {
+
+        return;
+
+      }
+
+      currentRoomId =
+        session.roomId;
+
+      currentRoomCode =
+        session.roomCode ||
+        null;
+
+      const {
+        data: room,
+        error: roomError
+      } = await sb
+        .from(
+          "rooms"
+        )
+        .select(
+          "id, code, status, host_id"
+        )
+        .eq(
+          "id",
+          currentRoomId
+        )
+        .maybeSingle();
+
+      if (
+        roomError ||
+        !room
+      ) {
+
+        clearRoomSession();
+
+        currentRoomId =
+          null;
+
+        return;
+
+      }
+
+      const {
+        data: player,
+        error: playerError
+      } = await sb
+        .from(
+          "players"
+        )
+        .select(
+          "player_id"
+        )
+        .eq(
+          "room_id",
+          currentRoomId
+        )
+        .eq(
+          "player_id",
+          localPlayerId
+        )
+        .maybeSingle();
+
+      if (
+        playerError ||
+        !player
+      ) {
+
+        clearRoomSession();
+
+        currentRoomId =
+          null;
+
+        return;
+
+      }
+
+      currentRoomCode =
+        room.code;
+
+      currentRoomHostId =
+        room.host_id;
+
+      await enterRoomScreen();
+
+    }
+
+
+    // ===================================================
+    // REFRESCAR SALA
+    // ===================================================
+
+    async function loadRoom() {
 
       if (
         !currentRoomId
       ) {
-        return false;
+
+        return null;
+
       }
 
       const {
@@ -1660,10 +2011,11 @@
       ) {
 
         console.error(
+          "ROOM ERROR:",
           error
         );
 
-        return false;
+        return null;
 
       }
 
@@ -1671,7 +2023,7 @@
         !data
       ) {
 
-        return false;
+        return null;
 
       }
 
@@ -1688,12 +2040,20 @@
         .textContent =
           data.code;
 
-      return true;
+      return data;
 
     }
 
 
     async function loadPlayers() {
+
+      if (
+        !currentRoomId
+      ) {
+
+        return [];
+
+      }
 
       const {
         data,
@@ -1722,10 +2082,11 @@
       ) {
 
         console.error(
+          "PLAYERS ERROR:",
           error
         );
 
-        return;
+        return [];
 
       }
 
@@ -1734,17 +2095,62 @@
         []
       );
 
-    }
-
-
-    async function refreshRoomAndPlayers() {
-
-      await refreshRoom();
-
-      await loadPlayers();
+      return (
+        data ||
+        []
+      );
 
     }
 
+
+    async function refreshLobby() {
+
+      if (
+        lobbyRefreshRunning ||
+        !currentRoomId
+      ) {
+
+        return;
+
+      }
+
+      lobbyRefreshRunning =
+        true;
+
+      try {
+
+        const room =
+          await loadRoom();
+
+        if (
+          !room
+        ) {
+
+          clearRoomSession();
+
+          cleanupRoomState();
+
+          goHome();
+
+          return;
+
+        }
+
+        await loadPlayers();
+
+      } finally {
+
+        lobbyRefreshRunning =
+          false;
+
+      }
+
+    }
+
+
+    // ===================================================
+    // RENDER JUGADORES
+    // ===================================================
 
     function renderPlayers(
       players
@@ -1769,6 +2175,7 @@
           card.className =
             "player-card";
 
+
           if (
             player.player_id ===
             localPlayerId
@@ -1783,6 +2190,7 @@
 
           }
 
+
           const avatar =
             document.createElement(
               "div"
@@ -1795,6 +2203,7 @@
             player.avatar ||
             "❓";
 
+
           const info =
             document.createElement(
               "div"
@@ -1802,6 +2211,7 @@
 
           info.className =
             "player-info";
+
 
           const name =
             document.createElement(
@@ -1821,6 +2231,7 @@
           info.appendChild(
             name
           );
+
 
           if (
             player.motto
@@ -1843,6 +2254,7 @@
 
           }
 
+
           card.appendChild(
             avatar
           );
@@ -1851,6 +2263,7 @@
             info
           );
 
+
           const meta =
             document.createElement(
               "div"
@@ -1858,6 +2271,7 @@
 
           meta.className =
             "player-meta";
+
 
           if (
             player.player_id ===
@@ -1881,6 +2295,7 @@
 
           }
 
+
           if (
             player.player_id ===
             localPlayerId
@@ -1903,6 +2318,7 @@
 
           }
 
+
           card.appendChild(
             meta
           );
@@ -1913,6 +2329,7 @@
 
         }
       );
+
 
       document
         .getElementById(
@@ -1929,88 +2346,213 @@
     }
 
 
-    function subscribeToPlayers() {
+    // ===================================================
+    // REALTIME
+    // ===================================================
 
-      if (
-        playersChannel
-      ) {
+    function subscribeToRealtime() {
 
-        sb.removeChannel(
-          playersChannel
-        );
+      cleanupSubscriptions();
 
-      }
 
       playersChannel =
         sb
           .channel(
-            `room-${currentRoomId}-players`
+            `dilema-players-${currentRoomId}`
           )
           .on(
             "postgres_changes",
             {
               event:
                 "*",
+
               schema:
                 "public",
+
               table:
                 "players",
+
               filter:
                 `room_id=eq.${currentRoomId}`
             },
-            async () => {
+            async payload => {
 
-              await refreshRoomAndPlayers();
+              console.log(
+                "REALTIME PLAYERS",
+                payload.eventType
+              );
+
+              await refreshLobby();
 
             }
           )
-          .subscribe();
+          .subscribe(
+            (
+              status,
+              error
+            ) => {
 
-    }
+              console.log(
+                "PLAYERS CHANNEL:",
+                status
+              );
 
+              if (
+                error
+              ) {
 
-    function subscribeToRoom() {
+                console.error(
+                  error
+                );
 
-      if (
-        roomChannel
-      ) {
+              }
 
-        sb.removeChannel(
-          roomChannel
-        );
+            }
+          );
 
-      }
 
       roomChannel =
         sb
           .channel(
-            `room-${currentRoomId}`
+            `dilema-room-${currentRoomId}`
           )
           .on(
             "postgres_changes",
             {
               event:
-                "UPDATE",
+                "*",
+
               schema:
                 "public",
+
               table:
                 "rooms",
+
               filter:
                 `id=eq.${currentRoomId}`
             },
             async payload => {
 
-              currentRoomHostId =
-                payload.new.host_id;
+              console.log(
+                "REALTIME ROOM",
+                payload.eventType
+              );
 
-              await loadPlayers();
+              if (
+                payload.eventType ===
+                "DELETE"
+              ) {
+
+                clearRoomSession();
+
+                cleanupRoomState();
+
+                goHome();
+
+                return;
+
+              }
+
+              await refreshLobby();
 
             }
           )
-          .subscribe();
+          .subscribe(
+            (
+              status,
+              error
+            ) => {
+
+              console.log(
+                "ROOM CHANNEL:",
+                status
+              );
+
+              if (
+                error
+              ) {
+
+                console.error(
+                  error
+                );
+
+              }
+
+            }
+          );
 
     }
 
+
+    // ===================================================
+    // REFRESCO DE SEGURIDAD
+    // ===================================================
+
+    function startLobbySafetyRefresh() {
+
+      stopLobbySafetyRefresh();
+
+
+      lobbyRefreshTimer =
+        setInterval(
+          () => {
+
+            if (
+              currentRoomId &&
+              document.visibilityState ===
+              "visible"
+            ) {
+
+              refreshLobby();
+
+            }
+
+          },
+          1000
+        );
+
+    }
+
+
+    function stopLobbySafetyRefresh() {
+
+      if (
+        lobbyRefreshTimer
+      ) {
+
+        clearInterval(
+          lobbyRefreshTimer
+        );
+
+        lobbyRefreshTimer =
+          null;
+
+      }
+
+    }
+
+
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+
+        if (
+          document.visibilityState ===
+          "visible" &&
+          currentRoomId
+        ) {
+
+          refreshLobby();
+
+        }
+
+      }
+    );
+
+
+    // ===================================================
+    // ABANDONAR SALA
+    // ===================================================
 
     async function confirmLeaveRoom() {
 
@@ -2038,7 +2580,8 @@
 
         const {
           data: players,
-          error: playersError
+          error:
+            playersError
         } = await sb
           .from(
             "players"
@@ -2057,6 +2600,7 @@
                 true
             }
           );
+
 
         if (
           playersError
@@ -2085,9 +2629,8 @@
 
 
         /*
-          IMPORTANTE:
-          SI EL CREADOR SE VA,
-          PRIMERO TRANSFERIMOS EL MANDO.
+          SI EL CREADOR SE VA Y QUEDA ALGUIEN:
+          PRIMERO TRANSFERIMOS EL CREADOR.
         */
 
         if (
@@ -2100,7 +2643,8 @@
             remainingPlayers[0];
 
           const {
-            error: updateRoomError
+            error:
+              updateRoomError
           } = await sb
             .from(
               "rooms"
@@ -2114,6 +2658,7 @@
               currentRoomId
             );
 
+
           if (
             updateRoomError
           ) {
@@ -2126,12 +2671,12 @@
 
 
         /*
-          AHORA ELIMINAMOS
-          AL JUGADOR QUE SE VA.
+          DESPUÉS ELIMINAMOS AL JUGADOR.
         */
 
         const {
-          error: deletePlayerError
+          error:
+            deletePlayerError
         } = await sb
           .from(
             "players"
@@ -2146,6 +2691,7 @@
             localPlayerId
           );
 
+
         if (
           deletePlayerError
         ) {
@@ -2156,8 +2702,8 @@
 
 
         /*
-          SI NO QUEDA NADIE,
-          BORRAMOS LA SALA.
+          SI ERA EL ÚLTIMO:
+          ELIMINAMOS TAMBIÉN LA SALA.
         */
 
         if (
@@ -2166,7 +2712,8 @@
         ) {
 
           const {
-            error: deleteRoomError
+            error:
+              deleteRoomError
           } = await sb
             .from(
               "rooms"
@@ -2176,6 +2723,7 @@
               "id",
               currentRoomId
             );
+
 
           if (
             deleteRoomError
@@ -2188,26 +2736,16 @@
         }
 
 
-        cleanupSubscriptions();
+        clearRoomSession();
 
-
-        currentRoomId =
-          null;
-
-        currentRoomCode =
-          null;
-
-        currentRoomHostId =
-          null;
-
-        editingProfile =
-          false;
-
+        cleanupRoomState();
 
         goHome();
 
 
-      } catch (error) {
+      } catch (
+        error
+      ) {
 
         console.error(
           error
@@ -2221,6 +2759,10 @@
 
     }
 
+
+    // ===================================================
+    // LIMPIEZA
+    // ===================================================
 
     function cleanupSubscriptions() {
 
@@ -2252,6 +2794,44 @@
       }
 
     }
+
+
+    function cleanupRoomState() {
+
+      cleanupSubscriptions();
+
+      stopLobbySafetyRefresh();
+
+      currentRoomId =
+        null;
+
+      currentRoomCode =
+        null;
+
+      currentRoomHostId =
+        null;
+
+      editingProfile =
+        false;
+
+    }
+
+
+    // ===================================================
+    // ARRANQUE
+    // ===================================================
+
+    window.addEventListener(
+      "DOMContentLoaded",
+      async () => {
+
+        renderAvatarTabs();
+        renderAvatars();
+
+        await restoreRoomSession();
+
+      }
+    );
 
   </script>
 
