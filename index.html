@@ -92,6 +92,12 @@
       border: 1px solid #444444;
     }
 
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #4a2222;
+    }
+
     .btn:disabled {
       opacity: 0.25;
       cursor: default;
@@ -127,7 +133,7 @@
     }
 
     .subtitle {
-      margin-bottom: 38px;
+      margin-bottom: 34px;
       text-align: center;
       color: #777777;
       font-size: 14px;
@@ -160,7 +166,7 @@
     }
 
     .avatar-label {
-      margin: 10px 0 18px;
+      margin: 8px 0 14px;
       text-align: center;
       color: #777777;
       font-size: 12px;
@@ -168,11 +174,42 @@
       letter-spacing: 2px;
     }
 
+    .avatar-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .avatar-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .avatar-tab {
+      flex: 0 0 auto;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid #333333;
+      background: #151515;
+      color: #777777;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .avatar-tab.active {
+      background: #ffffff;
+      color: #0b0b0b;
+      border-color: #ffffff;
+    }
+
     .avatars {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 30px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
     }
 
     .avatar {
@@ -183,7 +220,7 @@
       background: #151515;
       border: 1px solid #333333;
       border-radius: 50%;
-      font-size: 31px;
+      font-size: 28px;
       cursor: pointer;
     }
 
@@ -247,6 +284,14 @@
       text-align: left;
     }
 
+    .player-card.own-card {
+      cursor: pointer;
+    }
+
+    .player-card.own-card:active {
+      opacity: 0.75;
+    }
+
     .player-avatar {
       width: 48px;
       height: 48px;
@@ -261,6 +306,7 @@
 
     .player-info {
       min-width: 0;
+      flex: 1;
     }
 
     .player-name {
@@ -283,12 +329,46 @@
       letter-spacing: 1px;
     }
 
+    .edit-hint {
+      margin-left: auto;
+      color: #555555;
+      font-size: 18px;
+    }
+
     .small-note {
       margin-top: 8px;
       color: #555555;
       font-size: 12px;
       line-height: 1.5;
       text-align: center;
+    }
+
+    .profile-preview {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .profile-preview-avatar {
+      font-size: 58px;
+      margin-bottom: 10px;
+    }
+
+    .profile-preview-name {
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .profile-preview-motto {
+      margin-top: 5px;
+      color: #777777;
+      font-size: 13px;
+    }
+
+    .divider {
+      width: 100%;
+      height: 1px;
+      margin: 16px 0 20px;
+      background: #222222;
     }
   </style>
 </head>
@@ -314,7 +394,7 @@
     </div>
 
     <div class="version">
-      V0.0.2
+      V0.0.3
     </div>
 
   </main>
@@ -363,11 +443,11 @@
 
     <button class="back" onclick="backFromProfile()">←</button>
 
-    <div class="title">
+    <div class="title" id="profileTitle">
       ¿QUIÉN ERES?
     </div>
 
-    <div class="subtitle">
+    <div class="subtitle" id="profileSubtitle">
       Tu identidad solo para esta partida.
     </div>
 
@@ -394,19 +474,9 @@
       ELIGE AVATAR
     </div>
 
-    <div class="avatars">
+    <div id="avatarTabs" class="avatar-tabs"></div>
 
-      <button class="avatar" onclick="selectAvatar(this, '😈')">😈</button>
-      <button class="avatar" onclick="selectAvatar(this, '🤡')">🤡</button>
-      <button class="avatar" onclick="selectAvatar(this, '💀')">💀</button>
-      <button class="avatar" onclick="selectAvatar(this, '👽')">👽</button>
-
-      <button class="avatar" onclick="selectAvatar(this, '🦍')">🦍</button>
-      <button class="avatar" onclick="selectAvatar(this, '🐸')">🐸</button>
-      <button class="avatar" onclick="selectAvatar(this, '🦆')">🦆</button>
-      <button class="avatar" onclick="selectAvatar(this, '🦄')">🦄</button>
-
-    </div>
+    <div id="avatars" class="avatars"></div>
 
     <div id="profileError" class="error"></div>
 
@@ -417,6 +487,15 @@
       disabled
     >
       CONTINUAR
+    </button>
+
+    <button
+      id="leaveRoomBtn"
+      class="btn btn-danger"
+      onclick="confirmLeaveRoom()"
+      style="display:none;"
+    >
+      ABANDONAR SALA
     </button>
 
   </section>
@@ -445,6 +524,8 @@
     <div id="playersList" class="players-list"></div>
 
     <div class="small-note">
+      Toca tu perfil para editarlo.
+      <br>
       Abre DILEMA en otro móvil y entra con este código.
     </div>
 
@@ -470,12 +551,51 @@
 
 
     // ---------------------------------------------------
+    // AVATARES
+    // ---------------------------------------------------
+
+    const avatarCategories = {
+      "CARAS": [
+        "😈","🤡","🤬","🥴","🤪",
+        "😎","🤯","🥸","🤠","👹"
+      ],
+
+      "ANIMALES": [
+        "🦍","🐸","🦆","🐒","🦄",
+        "🦖","🦈","🐙","🦝","🦥"
+      ],
+
+      "BICHOS": [
+        "👽","🤖","👾","💀","👻",
+        "🧟","🧛","🧌","🦹","🥷"
+      ],
+
+      "COMIDA": [
+        "🍆","🍑","🌭","🍕","🍔",
+        "🍌","🥒","🌶️","🍩","🧀"
+      ],
+
+      "DEPORTE": [
+        "⚽","🏀","🏈","🎾","🥊",
+        "🏆","🏎️","🚴","🏄","🏋️"
+      ],
+
+      "CAOS": [
+        "💩","💣","🧨","🖕","🧠",
+        "🦠","🪦","🚽","🩲","🔥"
+      ]
+    };
+
+
+    // ---------------------------------------------------
     // ESTADO LOCAL
     // ---------------------------------------------------
 
     let flowMode = null;
+    let editingProfile = false;
 
     let selectedAvatar = "";
+    let selectedAvatarCategory = "CARAS";
 
     let currentRoomId = null;
     let currentRoomCode = null;
@@ -484,22 +604,40 @@
     let playersChannel = null;
 
     const localPlayerId =
-      createPlayerId();
+      getOrCreateLocalPlayerId();
 
 
     // ---------------------------------------------------
     // UTILIDADES
     // ---------------------------------------------------
 
-    function createPlayerId() {
-      if (window.crypto && crypto.randomUUID) {
-        return crypto.randomUUID();
+    function getOrCreateLocalPlayerId() {
+      let id =
+        localStorage.getItem(
+          "dilema_local_player_id"
+        );
+
+      if (!id) {
+        if (
+          window.crypto &&
+          crypto.randomUUID
+        ) {
+          id = crypto.randomUUID();
+        } else {
+          id =
+            Date.now().toString(36) +
+            Math.random()
+              .toString(36)
+              .substring(2);
+        }
+
+        localStorage.setItem(
+          "dilema_local_player_id",
+          id
+        );
       }
 
-      return (
-        Date.now().toString(36) +
-        Math.random().toString(36).substring(2)
-      );
+      return id;
     }
 
 
@@ -518,6 +656,7 @@
 
     function goHome() {
       flowMode = null;
+      editingProfile = false;
 
       document.getElementById("joinError").textContent = "";
       document.getElementById("profileError").textContent = "";
@@ -526,7 +665,11 @@
     }
 
 
-    function setLoading(buttonId, loading, text) {
+    function setLoading(
+      buttonId,
+      loading,
+      text
+    ) {
       const button =
         document.getElementById(buttonId);
 
@@ -536,7 +679,9 @@
         button.dataset.originalText =
           button.textContent;
 
-        button.textContent = text || "ESPERA...";
+        button.textContent =
+          text || "ESPERA...";
+
         button.disabled = true;
       } else {
         button.textContent =
@@ -549,22 +694,114 @@
 
 
     // ---------------------------------------------------
+    // AVATARES UI
+    // ---------------------------------------------------
+
+    function renderAvatarTabs() {
+      const tabs =
+        document.getElementById(
+          "avatarTabs"
+        );
+
+      tabs.innerHTML = "";
+
+      Object.keys(
+        avatarCategories
+      ).forEach(category => {
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+        button.className =
+          "avatar-tab" +
+          (
+            category ===
+            selectedAvatarCategory
+              ? " active"
+              : ""
+          );
+
+        button.textContent =
+          category;
+
+        button.onclick = () => {
+          selectedAvatarCategory =
+            category;
+
+          renderAvatarTabs();
+          renderAvatars();
+        };
+
+        tabs.appendChild(button);
+      });
+    }
+
+
+    function renderAvatars() {
+      const container =
+        document.getElementById(
+          "avatars"
+        );
+
+      container.innerHTML = "";
+
+      avatarCategories[
+        selectedAvatarCategory
+      ].forEach(avatarValue => {
+
+        const button =
+          document.createElement(
+            "button"
+          );
+
+        button.className =
+          "avatar" +
+          (
+            avatarValue ===
+            selectedAvatar
+              ? " selected"
+              : ""
+          );
+
+        button.textContent =
+          avatarValue;
+
+        button.onclick = () => {
+          selectedAvatar =
+            avatarValue;
+
+          renderAvatars();
+          checkProfile();
+        };
+
+        container.appendChild(button);
+      });
+    }
+
+
+    // ---------------------------------------------------
     // CREAR PARTIDA
     // ---------------------------------------------------
 
     function startCreateFlow() {
       flowMode = "create";
+      editingProfile = false;
+
       resetProfile();
+
       showScreen("profile");
     }
 
 
     // ---------------------------------------------------
-    // UNIRSE A PARTIDA
+    // UNIRSE
     // ---------------------------------------------------
 
     function openJoinScreen() {
       flowMode = "join";
+      editingProfile = false;
 
       document.getElementById("joinCode").value = "";
       document.getElementById("joinError").textContent = "";
@@ -575,12 +812,17 @@
 
     function formatJoinCode() {
       const input =
-        document.getElementById("joinCode");
+        document.getElementById(
+          "joinCode"
+        );
 
       input.value =
         input.value
           .toUpperCase()
-          .replace(/[^A-Z0-9]/g, "")
+          .replace(
+            /[^A-Z0-9]/g,
+            ""
+          )
           .slice(0, 4);
     }
 
@@ -588,13 +830,17 @@
     async function findRoom() {
       const code =
         document
-          .getElementById("joinCode")
+          .getElementById(
+            "joinCode"
+          )
           .value
           .trim()
           .toUpperCase();
 
       const errorBox =
-        document.getElementById("joinError");
+        document.getElementById(
+          "joinError"
+        );
 
       errorBox.textContent = "";
 
@@ -615,8 +861,13 @@
         error
       } = await sb
         .from("rooms")
-        .select("id, code, status, host_id")
-        .eq("code", code)
+        .select(
+          "id, code, status, host_id"
+        )
+        .eq(
+          "code",
+          code
+        )
         .maybeSingle();
 
       setLoading(
@@ -638,9 +889,14 @@
         return;
       }
 
-      currentRoomId = data.id;
-      currentRoomCode = data.code;
-      currentRoomHostId = data.host_id;
+      currentRoomId =
+        data.id;
+
+      currentRoomCode =
+        data.code;
+
+      currentRoomHostId =
+        data.host_id;
 
       resetProfile();
 
@@ -654,22 +910,46 @@
 
     function resetProfile() {
       selectedAvatar = "";
+      selectedAvatarCategory = "CARAS";
 
       document.getElementById("playerName").value = "";
       document.getElementById("playerMotto").value = "";
       document.getElementById("profileError").textContent = "";
 
-      document
-        .querySelectorAll(".avatar")
-        .forEach(item => {
-          item.classList.remove("selected");
-        });
+      document.getElementById("profileTitle").textContent =
+        editingProfile
+          ? "EDITAR PERFIL"
+          : "¿QUIÉN ERES?";
+
+      document.getElementById("profileSubtitle").textContent =
+        editingProfile
+          ? "Tu identidad en esta sala."
+          : "Tu identidad solo para esta partida.";
+
+      document.getElementById("continueBtn").textContent =
+        editingProfile
+          ? "GUARDAR CAMBIOS"
+          : "CONTINUAR";
+
+      document.getElementById("leaveRoomBtn").style.display =
+        editingProfile
+          ? "block"
+          : "none";
+
+      renderAvatarTabs();
+      renderAvatars();
 
       checkProfile();
     }
 
 
     function backFromProfile() {
+      if (editingProfile) {
+        editingProfile = false;
+        showScreen("room");
+        return;
+      }
+
       if (flowMode === "join") {
         showScreen("join");
       } else {
@@ -678,30 +958,19 @@
     }
 
 
-    function selectAvatar(button, avatar) {
-      selectedAvatar = avatar;
-
-      document
-        .querySelectorAll(".avatar")
-        .forEach(item => {
-          item.classList.remove("selected");
-        });
-
-      button.classList.add("selected");
-
-      checkProfile();
-    }
-
-
     function checkProfile() {
       const playerName =
         document
-          .getElementById("playerName")
+          .getElementById(
+            "playerName"
+          )
           .value
           .trim();
 
       document
-        .getElementById("continueBtn")
+        .getElementById(
+          "continueBtn"
+        )
         .disabled =
           playerName.length === 0 ||
           selectedAvatar === "";
@@ -709,6 +978,11 @@
 
 
     async function finishProfile() {
+      if (editingProfile) {
+        await updateCurrentPlayer();
+        return;
+      }
+
       if (flowMode === "create") {
         await createRoom();
       } else {
@@ -717,8 +991,164 @@
     }
 
 
+    async function openEditProfile() {
+      const {
+        data,
+        error
+      } = await sb
+        .from("players")
+        .select(
+          "name, avatar, motto"
+        )
+        .eq(
+          "room_id",
+          currentRoomId
+        )
+        .eq(
+          "player_id",
+          localPlayerId
+        )
+        .maybeSingle();
+
+      if (error || !data) {
+        console.error(error);
+        return;
+      }
+
+      editingProfile = true;
+
+      document.getElementById("playerName").value =
+        data.name || "";
+
+      document.getElementById("playerMotto").value =
+        data.motto || "";
+
+      selectedAvatar =
+        data.avatar || "";
+
+      selectedAvatarCategory =
+        findAvatarCategory(
+          selectedAvatar
+        );
+
+      document.getElementById("profileTitle").textContent =
+        "EDITAR PERFIL";
+
+      document.getElementById("profileSubtitle").textContent =
+        "Tu identidad en esta sala.";
+
+      document.getElementById("continueBtn").textContent =
+        "GUARDAR CAMBIOS";
+
+      document.getElementById("leaveRoomBtn").style.display =
+        "block";
+
+      renderAvatarTabs();
+      renderAvatars();
+      checkProfile();
+
+      showScreen("profile");
+    }
+
+
+    function findAvatarCategory(
+      avatar
+    ) {
+      for (
+        const [
+          category,
+          avatars
+        ]
+        of Object.entries(
+          avatarCategories
+        )
+      ) {
+        if (
+          avatars.includes(
+            avatar
+          )
+        ) {
+          return category;
+        }
+      }
+
+      return "CARAS";
+    }
+
+
+    async function updateCurrentPlayer() {
+      const name =
+        document
+          .getElementById(
+            "playerName"
+          )
+          .value
+          .trim();
+
+      const motto =
+        document
+          .getElementById(
+            "playerMotto"
+          )
+          .value
+          .trim();
+
+      const errorBox =
+        document.getElementById(
+          "profileError"
+        );
+
+      errorBox.textContent = "";
+
+      setLoading(
+        "continueBtn",
+        true,
+        "GUARDANDO..."
+      );
+
+      const {
+        error
+      } = await sb
+        .from("players")
+        .update({
+          name: name,
+          avatar:
+            selectedAvatar,
+          motto:
+            motto || null
+        })
+        .eq(
+          "room_id",
+          currentRoomId
+        )
+        .eq(
+          "player_id",
+          localPlayerId
+        );
+
+      setLoading(
+        "continueBtn",
+        false
+      );
+
+      if (error) {
+        console.error(error);
+
+        errorBox.textContent =
+          "No se ha podido actualizar el perfil.";
+        return;
+      }
+
+      editingProfile = false;
+
+      await loadPlayers();
+
+      showScreen("room");
+    }
+
+
     // ---------------------------------------------------
-    // GENERAR CÓDIGO DE SALA
+    // SALA
     // ---------------------------------------------------
 
     function randomRoomCode() {
@@ -727,11 +1157,16 @@
 
       let code = "";
 
-      for (let i = 0; i < 4; i++) {
+      for (
+        let i = 0;
+        i < 4;
+        i++
+      ) {
         code +=
           chars[
             Math.floor(
-              Math.random() * chars.length
+              Math.random() *
+              chars.length
             )
           ];
       }
@@ -741,8 +1176,11 @@
 
 
     async function generateAvailableCode() {
-      for (let attempt = 0; attempt < 10; attempt++) {
-
+      for (
+        let attempt = 0;
+        attempt < 10;
+        attempt++
+      ) {
         const code =
           randomRoomCode();
 
@@ -752,7 +1190,10 @@
         } = await sb
           .from("rooms")
           .select("id")
-          .eq("code", code)
+          .eq(
+            "code",
+            code
+          )
           .maybeSingle();
 
         if (error) {
@@ -770,13 +1211,11 @@
     }
 
 
-    // ---------------------------------------------------
-    // CREAR SALA
-    // ---------------------------------------------------
-
     async function createRoom() {
       const errorBox =
-        document.getElementById("profileError");
+        document.getElementById(
+          "profileError"
+        );
 
       errorBox.textContent = "";
 
@@ -787,7 +1226,6 @@
       );
 
       try {
-
         const roomCode =
           await generateAvailableCode();
 
@@ -797,34 +1235,42 @@
         } = await sb
           .from("rooms")
           .insert({
-            code: roomCode,
-            status: "waiting",
-            host_id: localPlayerId
+            code:
+              roomCode,
+            status:
+              "waiting",
+            host_id:
+              localPlayerId
           })
-          .select("id, code, status, host_id")
+          .select(
+            "id, code, status, host_id"
+          )
           .single();
 
         if (roomError) {
           throw roomError;
         }
 
-        currentRoomId = room.id;
-        currentRoomCode = room.code;
-        currentRoomHostId = room.host_id;
+        currentRoomId =
+          room.id;
+
+        currentRoomCode =
+          room.code;
+
+        currentRoomHostId =
+          room.host_id;
 
         await insertCurrentPlayer();
 
         await enterRoomScreen();
 
       } catch (error) {
-
         console.error(error);
 
         errorBox.textContent =
           "No se ha podido crear la partida.";
 
       } finally {
-
         setLoading(
           "continueBtn",
           false
@@ -835,13 +1281,11 @@
     }
 
 
-    // ---------------------------------------------------
-    // UNIRSE A SALA
-    // ---------------------------------------------------
-
     async function joinCurrentRoom() {
       const errorBox =
-        document.getElementById("profileError");
+        document.getElementById(
+          "profileError"
+        );
 
       errorBox.textContent = "";
 
@@ -852,20 +1296,17 @@
       );
 
       try {
-
         await insertCurrentPlayer();
 
         await enterRoomScreen();
 
       } catch (error) {
-
         console.error(error);
 
         errorBox.textContent =
           "No se ha podido entrar en la partida.";
 
       } finally {
-
         setLoading(
           "continueBtn",
           false
@@ -879,13 +1320,17 @@
     async function insertCurrentPlayer() {
       const playerName =
         document
-          .getElementById("playerName")
+          .getElementById(
+            "playerName"
+          )
           .value
           .trim();
 
       const playerMotto =
         document
-          .getElementById("playerMotto")
+          .getElementById(
+            "playerMotto"
+          )
           .value
           .trim();
 
@@ -894,11 +1339,16 @@
       } = await sb
         .from("players")
         .insert({
-          room_id: currentRoomId,
-          player_id: localPlayerId,
-          name: playerName,
-          avatar: selectedAvatar,
-          motto: playerMotto || null
+          room_id:
+            currentRoomId,
+          player_id:
+            localPlayerId,
+          name:
+            playerName,
+          avatar:
+            selectedAvatar,
+          motto:
+            playerMotto || null
         });
 
       if (error) {
@@ -907,13 +1357,11 @@
     }
 
 
-    // ---------------------------------------------------
-    // SALA
-    // ---------------------------------------------------
-
     async function enterRoomScreen() {
       document
-        .getElementById("roomCodeDisplay")
+        .getElementById(
+          "roomCodeDisplay"
+        )
         .textContent =
           currentRoomCode;
 
@@ -940,7 +1388,9 @@
         )
         .order(
           "created_at",
-          { ascending: true }
+          {
+            ascending: true
+          }
         );
 
       if (error) {
@@ -954,85 +1404,149 @@
     }
 
 
-    function renderPlayers(players) {
+    function renderPlayers(
+      players
+    ) {
       const list =
-        document.getElementById("playersList");
+        document.getElementById(
+          "playersList"
+        );
 
       list.innerHTML = "";
 
-      players.forEach(player => {
+      players.forEach(
+        player => {
 
-        const card =
-          document.createElement("div");
+          const card =
+            document.createElement(
+              "div"
+            );
 
-        card.className =
-          "player-card";
+          card.className =
+            "player-card";
 
-        const avatar =
-          document.createElement("div");
+          if (
+            player.player_id ===
+            localPlayerId
+          ) {
+            card.classList.add(
+              "own-card"
+            );
 
-        avatar.className =
-          "player-avatar";
+            card.onclick =
+              openEditProfile;
+          }
 
-        avatar.textContent =
-          player.avatar || "❓";
+          const avatar =
+            document.createElement(
+              "div"
+            );
 
-        const info =
-          document.createElement("div");
+          avatar.className =
+            "player-avatar";
 
-        info.className =
-          "player-info";
+          avatar.textContent =
+            player.avatar ||
+            "❓";
 
-        const name =
-          document.createElement("div");
+          const info =
+            document.createElement(
+              "div"
+            );
 
-        name.className =
-          "player-name";
+          info.className =
+            "player-info";
 
-        name.textContent =
-          player.name;
+          const name =
+            document.createElement(
+              "div"
+            );
 
-        info.appendChild(name);
+          name.className =
+            "player-name";
 
-        if (player.motto) {
+          name.textContent =
+            player.name;
 
-          const motto =
-            document.createElement("div");
+          info.appendChild(
+            name
+          );
 
-          motto.className =
-            "player-motto";
+          if (
+            player.motto
+          ) {
+            const motto =
+              document.createElement(
+                "div"
+              );
 
-          motto.textContent =
-            `“${player.motto}”`;
+            motto.className =
+              "player-motto";
 
-          info.appendChild(motto);
+            motto.textContent =
+              `“${player.motto}”`;
+
+            info.appendChild(
+              motto
+            );
+          }
+
+          card.appendChild(
+            avatar
+          );
+
+          card.appendChild(
+            info
+          );
+
+          if (
+            player.player_id ===
+            currentRoomHostId
+          ) {
+            const host =
+              document.createElement(
+                "div"
+              );
+
+            host.className =
+              "host-badge";
+
+            host.textContent =
+              "CREADOR";
+
+            card.appendChild(
+              host
+            );
+          } else if (
+            player.player_id ===
+            localPlayerId
+          ) {
+            const edit =
+              document.createElement(
+                "div"
+              );
+
+            edit.className =
+              "edit-hint";
+
+            edit.textContent =
+              "⋯";
+
+            card.appendChild(
+              edit
+            );
+          }
+
+          list.appendChild(
+            card
+          );
         }
-
-        card.appendChild(avatar);
-        card.appendChild(info);
-
-        if (
-          player.player_id ===
-          currentRoomHostId
-        ) {
-
-          const host =
-            document.createElement("div");
-
-          host.className =
-            "host-badge";
-
-          host.textContent =
-            "CREADOR";
-
-          card.appendChild(host);
-        }
-
-        list.appendChild(card);
-      });
+      );
 
       document
-        .getElementById("roomStatus")
+        .getElementById(
+          "roomStatus"
+        )
         .textContent =
           `${players.length} ${
             players.length === 1
@@ -1043,8 +1557,9 @@
 
 
     function subscribeToPlayers() {
-
-      if (playersChannel) {
+      if (
+        playersChannel
+      ) {
         sb.removeChannel(
           playersChannel
         );
@@ -1068,12 +1583,168 @@
               loadPlayers();
             }
           )
-          .subscribe(status => {
-            console.log(
-              "Realtime:",
-              status
+          .subscribe();
+    }
+
+
+    // ---------------------------------------------------
+    // ABANDONAR SALA
+    // ---------------------------------------------------
+
+    async function confirmLeaveRoom() {
+      const confirmed =
+        window.confirm(
+          "¿Abandonar la sala?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      await leaveRoom();
+    }
+
+
+    async function leaveRoom() {
+      try {
+        const {
+          data: players,
+          error:
+            playersError
+        } = await sb
+          .from("players")
+          .select(
+            "player_id, created_at"
+          )
+          .eq(
+            "room_id",
+            currentRoomId
+          )
+          .order(
+            "created_at",
+            {
+              ascending: true
+            }
+          );
+
+        if (
+          playersError
+        ) {
+          throw playersError;
+        }
+
+        const remainingPlayers =
+          players.filter(
+            player =>
+              player.player_id !==
+              localPlayerId
+          );
+
+        const wasHost =
+          currentRoomHostId ===
+          localPlayerId;
+
+        const {
+          error:
+            deletePlayerError
+        } = await sb
+          .from("players")
+          .delete()
+          .eq(
+            "room_id",
+            currentRoomId
+          )
+          .eq(
+            "player_id",
+            localPlayerId
+          );
+
+        if (
+          deletePlayerError
+        ) {
+          throw deletePlayerError;
+        }
+
+        if (
+          remainingPlayers.length ===
+          0
+        ) {
+          const {
+            error:
+              deleteRoomError
+          } = await sb
+            .from("rooms")
+            .delete()
+            .eq(
+              "id",
+              currentRoomId
             );
-          });
+
+          if (
+            deleteRoomError
+          ) {
+            throw deleteRoomError;
+          }
+
+        } else if (
+          wasHost
+        ) {
+          const newHost =
+            remainingPlayers[0];
+
+          const {
+            error:
+              updateRoomError
+          } = await sb
+            .from("rooms")
+            .update({
+              host_id:
+                newHost.player_id
+            })
+            .eq(
+              "id",
+              currentRoomId
+            );
+
+          if (
+            updateRoomError
+          ) {
+            throw updateRoomError;
+          }
+        }
+
+        if (
+          playersChannel
+        ) {
+          sb.removeChannel(
+            playersChannel
+          );
+
+          playersChannel =
+            null;
+        }
+
+        currentRoomId =
+          null;
+
+        currentRoomCode =
+          null;
+
+        currentRoomHostId =
+          null;
+
+        editingProfile =
+          false;
+
+        goHome();
+
+      } catch (error) {
+        console.error(error);
+
+        alert(
+          "No se ha podido abandonar la sala."
+        );
+      }
     }
 
   </script>
