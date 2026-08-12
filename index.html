@@ -321,8 +321,14 @@
       overflow-wrap: anywhere;
     }
 
-    .host-badge {
+    .player-meta {
       margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .host-badge {
       color: #555555;
       font-size: 10px;
       font-weight: 700;
@@ -330,9 +336,9 @@
     }
 
     .edit-hint {
-      margin-left: auto;
-      color: #555555;
-      font-size: 18px;
+      color: #888888;
+      font-size: 22px;
+      line-height: 1;
     }
 
     .small-note {
@@ -342,47 +348,15 @@
       line-height: 1.5;
       text-align: center;
     }
-
-    .profile-preview {
-      margin-bottom: 24px;
-      text-align: center;
-    }
-
-    .profile-preview-avatar {
-      font-size: 58px;
-      margin-bottom: 10px;
-    }
-
-    .profile-preview-name {
-      font-size: 24px;
-      font-weight: 900;
-    }
-
-    .profile-preview-motto {
-      margin-top: 5px;
-      color: #777777;
-      font-size: 13px;
-    }
-
-    .divider {
-      width: 100%;
-      height: 1px;
-      margin: 16px 0 20px;
-      background: #222222;
-    }
   </style>
 </head>
 
 <body>
 
-  <!-- INICIO -->
-
   <main id="home" class="screen active center">
-
     <div class="logo">DILEMA</div>
 
     <div class="actions">
-
       <button class="btn btn-primary" onclick="startCreateFlow()">
         CREAR PARTIDA
       </button>
@@ -390,20 +364,15 @@
       <button class="btn btn-secondary" onclick="openJoinScreen()">
         UNIRME A UNA PARTIDA
       </button>
-
     </div>
 
     <div class="version">
-      V0.0.3
+      V0.0.3A
     </div>
-
   </main>
 
 
-  <!-- INTRODUCIR CÓDIGO -->
-
   <section id="join" class="screen center">
-
     <button class="back" onclick="goHome()">←</button>
 
     <div class="title">
@@ -433,14 +402,10 @@
     >
       CONTINUAR
     </button>
-
   </section>
 
 
-  <!-- PERFIL DE PARTIDA -->
-
   <section id="profile" class="screen">
-
     <button class="back" onclick="backFromProfile()">←</button>
 
     <div class="title" id="profileTitle">
@@ -497,14 +462,10 @@
     >
       ABANDONAR SALA
     </button>
-
   </section>
 
 
-  <!-- SALA -->
-
   <section id="room" class="screen center">
-
     <div class="room-code-label">
       CÓDIGO DE PARTIDA
     </div>
@@ -524,19 +485,14 @@
     <div id="playersList" class="players-list"></div>
 
     <div class="small-note">
-      Toca tu perfil para editarlo.
+      Toca tu ficha para editar perfil o abandonar la sala.
       <br>
       Abre DILEMA en otro móvil y entra con este código.
     </div>
-
   </section>
 
 
   <script>
-    // ---------------------------------------------------
-    // SUPABASE
-    // ---------------------------------------------------
-
     const SUPABASE_URL =
       "https://cioydzndfvskzubyjcgs.supabase.co";
 
@@ -549,10 +505,6 @@
         SUPABASE_KEY
       );
 
-
-    // ---------------------------------------------------
-    // AVATARES
-    // ---------------------------------------------------
 
     const avatarCategories = {
       "CARAS": [
@@ -587,10 +539,6 @@
     };
 
 
-    // ---------------------------------------------------
-    // ESTADO LOCAL
-    // ---------------------------------------------------
-
     let flowMode = null;
     let editingProfile = false;
 
@@ -606,10 +554,6 @@
     const localPlayerId =
       getOrCreateLocalPlayerId();
 
-
-    // ---------------------------------------------------
-    // UTILIDADES
-    // ---------------------------------------------------
 
     function getOrCreateLocalPlayerId() {
       let id =
@@ -692,10 +636,6 @@
       }
     }
 
-
-    // ---------------------------------------------------
-    // AVATARES UI
-    // ---------------------------------------------------
 
     function renderAvatarTabs() {
       const tabs =
@@ -781,10 +721,6 @@
     }
 
 
-    // ---------------------------------------------------
-    // CREAR PARTIDA
-    // ---------------------------------------------------
-
     function startCreateFlow() {
       flowMode = "create";
       editingProfile = false;
@@ -794,10 +730,6 @@
       showScreen("profile");
     }
 
-
-    // ---------------------------------------------------
-    // UNIRSE
-    // ---------------------------------------------------
 
     function openJoinScreen() {
       flowMode = "join";
@@ -903,10 +835,6 @@
       showScreen("profile");
     }
 
-
-    // ---------------------------------------------------
-    // PERFIL
-    // ---------------------------------------------------
 
     function resetProfile() {
       selectedAvatar = "";
@@ -1146,10 +1074,6 @@
       showScreen("room");
     }
 
-
-    // ---------------------------------------------------
-    // SALA
-    // ---------------------------------------------------
 
     function randomRoomCode() {
       const chars =
@@ -1499,6 +1423,14 @@
             info
           );
 
+          const meta =
+            document.createElement(
+              "div"
+            );
+
+          meta.className =
+            "player-meta";
+
           if (
             player.player_id ===
             currentRoomHostId
@@ -1514,10 +1446,12 @@
             host.textContent =
               "CREADOR";
 
-            card.appendChild(
+            meta.appendChild(
               host
             );
-          } else if (
+          }
+
+          if (
             player.player_id ===
             localPlayerId
           ) {
@@ -1532,10 +1466,14 @@
             edit.textContent =
               "⋯";
 
-            card.appendChild(
+            meta.appendChild(
               edit
             );
           }
+
+          card.appendChild(
+            meta
+          );
 
           list.appendChild(
             card
@@ -1586,10 +1524,6 @@
           .subscribe();
     }
 
-
-    // ---------------------------------------------------
-    // ABANDONAR SALA
-    // ---------------------------------------------------
 
     async function confirmLeaveRoom() {
       const confirmed =
