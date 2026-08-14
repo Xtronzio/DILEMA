@@ -551,7 +551,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.5C</div>
+    <div class="version">V0.0.5D</div>
   </main>
 
 
@@ -2162,6 +2162,18 @@ async function refreshLobby() {
           ? "block"
           : "none";
 
+    if (
+      lobbyTimer
+    ) {
+
+      clearInterval(
+        lobbyTimer
+      );
+
+      lobbyTimer =
+        null;
+    }
+
     subscribeToRounds();
 
     startGameRefresh();
@@ -3137,6 +3149,44 @@ async function refreshGame() {
 
   try {
 
+    const liveRoom =
+      await getRoom();
+
+
+    if (
+      !liveRoom
+    ) {
+
+      cleanupRoom();
+
+      goHome();
+
+      return;
+    }
+
+
+    currentRoomCode =
+      liveRoom.code;
+
+    currentRoomHostId =
+      liveRoom.host_id;
+
+    currentExpectedPlayers =
+      liveRoom.expected_players;
+
+    currentRoomStatus =
+      liveRoom.status;
+
+
+    if (
+      liveRoom.status !==
+      "playing"
+    ) {
+
+      return;
+    }
+
+
     const round =
       await loadCurrentRound();
 
@@ -3625,27 +3675,6 @@ async function resetGame() {
 
     const {
       error:
-        deletePlayersError
-    } = await sb
-      .from(
-        "players"
-      )
-      .delete()
-      .eq(
-        "room_id",
-        roomIdToReset
-      );
-
-
-    if (
-      deletePlayersError
-    ) {
-      throw deletePlayersError;
-    }
-
-
-    const {
-      error:
         deleteRoomError
     } = await sb
       .from(
@@ -3662,6 +3691,31 @@ async function resetGame() {
       deleteRoomError
     ) {
       throw deleteRoomError;
+    }
+
+
+    const {
+      error:
+        deletePlayersError
+    } = await sb
+      .from(
+        "players"
+      )
+      .delete()
+      .eq(
+        "room_id",
+        roomIdToReset
+      );
+
+
+    if (
+      deletePlayersError
+    ) {
+
+      console.error(
+        "PLAYER CLEANUP AFTER RESET:",
+        deletePlayersError
+      );
     }
 
 
@@ -3817,7 +3871,16 @@ function subscribeRealtime() {
           filter:
             `room_id=eq.${currentRoomId}`
         },
-        refreshLobby
+        () => {
+
+          if (
+            currentRoomStatus !==
+            "playing"
+          ) {
+
+            refreshLobby();
+          }
+        }
       )
       .subscribe();
 
@@ -3839,7 +3902,23 @@ function subscribeRealtime() {
           filter:
             `id=eq.${currentRoomId}`
         },
-        refreshLobby
+        payload => {
+
+          if (
+            payload &&
+            payload.eventType ===
+              "DELETE"
+          ) {
+
+            cleanupRoom();
+
+            goHome();
+
+            return;
+          }
+
+          refreshLobby();
+        }
       )
       .subscribe();
 
