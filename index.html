@@ -551,7 +551,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.5D</div>
+    <div class="version">V0.0.5E</div>
   </main>
 
 
@@ -3694,10 +3694,23 @@ async function resetGame() {
     }
 
 
-    const {
-      error:
-        deletePlayersError
-    } = await sb
+    /*
+      El anfitrión NO espera a ninguna otra operación.
+      En cuanto la sala se ha borrado correctamente,
+      vuelve localmente a HOME de forma inmediata.
+    */
+    cleanupRoom();
+
+    showScreen(
+      "home"
+    );
+
+
+    /*
+      Limpieza secundaria.
+      Ya no bloquea la navegación del anfitrión.
+    */
+    sb
       .from(
         "players"
       )
@@ -3705,23 +3718,24 @@ async function resetGame() {
       .eq(
         "room_id",
         roomIdToReset
+      )
+      .then(
+        ({
+          error:
+            deletePlayersError
+        }) => {
+
+          if (
+            deletePlayersError
+          ) {
+
+            console.error(
+              "PLAYER CLEANUP AFTER RESET:",
+              deletePlayersError
+            );
+          }
+        }
       );
-
-
-    if (
-      deletePlayersError
-    ) {
-
-      console.error(
-        "PLAYER CLEANUP AFTER RESET:",
-        deletePlayersError
-      );
-    }
-
-
-    cleanupRoom();
-
-    goHome();
 
 
   } catch (
