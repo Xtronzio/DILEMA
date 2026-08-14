@@ -551,7 +551,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.5B</div>
+    <div class="version">V0.0.5C</div>
   </main>
 
 
@@ -1059,6 +1059,25 @@ function showScreen(
   id
 ) {
 
+  const target =
+    document.getElementById(
+      id
+    );
+
+  if (
+    !target
+  ) {
+    return;
+  }
+
+  if (
+    target.classList.contains(
+      "active"
+    )
+  ) {
+    return;
+  }
+
   document
     .querySelectorAll(
       ".screen"
@@ -1070,11 +1089,9 @@ function showScreen(
         )
     );
 
-  document
-    .getElementById(id)
-    .classList.add(
-      "active"
-    );
+  target.classList.add(
+    "active"
+  );
 
 }
 
