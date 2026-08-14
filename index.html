@@ -481,6 +481,12 @@
       line-height: 1.4;
     }
 
+    .vote-option.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px #ffffff inset;
+      background: #1d1d1d;
+    }
+
     .vote-option:disabled {
       opacity: 0.35;
       cursor: default;
@@ -551,7 +557,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.5E</div>
+    <div class="version">V0.0.6</div>
   </main>
 
 
@@ -954,13 +960,14 @@ let roundsChannel = null;
 
 let lobbyTimer = null;
 let gameTimer = null;
+let revealTimer = null;
 let refreshing = false;
 let refreshingGame = false;
 
 let currentRoundId = null;
 let currentRoundStatus = null;
 let currentDilemma = null;
-let localVoteSubmitted = false;
+let localVoteChoice = null;
 
 const localPlayerId =
   getOrCreateLocalPlayerId();
@@ -2957,8 +2964,8 @@ async function startGame() {
   currentDilemma =
     dilemma;
 
-  localVoteSubmitted =
-    false;
+  localVoteChoice =
+    null;
 
 
   const {
@@ -3134,6 +3141,63 @@ async function getVoteCount() {
 }
 
 
+async function loadOwnVote() {
+
+  if (
+    !currentRoundId ||
+    !currentUserId
+  ) {
+    localVoteChoice =
+      null;
+
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "votes"
+    )
+    .select(
+      "choice"
+    )
+    .eq(
+      "round_id",
+      currentRoundId
+    )
+    .eq(
+      "user_id",
+      currentUserId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "OWN VOTE LOAD ERROR:",
+      error
+    );
+
+    return localVoteChoice;
+  }
+
+
+  localVoteChoice =
+    data
+      ? data.choice
+      : null;
+
+
+  return localVoteChoice;
+}
+
+
 async function refreshGame() {
 
   if (
@@ -3238,6 +3302,15 @@ async function refreshGame() {
     }
 
 
+    if (
+      round.status ===
+      "voting"
+    ) {
+
+      await loadOwnVote();
+    }
+
+
     const voteCount =
       await getVoteCount();
 
@@ -3252,17 +3325,95 @@ async function refreshGame() {
       );
 
 
-      if (
-        currentRoomHostId ===
-          localPlayerId &&
-        voteCount &&
-        Number(
-          voteCount.total_votes
-        ) >=
+      scheduleRevealIfReady(
+        voteCount
+      );
+
+    } else if (
+      round.status ===
+      "reveal"
+    ) {
+
+      renderResult(
+        voteCount
+      );
+    }
+
+
+  } finally {
+
+    refreshingGame =
+      false;
+  }
+}
+
+
+function scheduleRevealIfReady(
+  voteCount
+) {
+
+  const ready =
+    currentRoomHostId ===
+      localPlayerId &&
+    voteCount &&
+    Number(
+      voteCount.total_votes
+    ) >=
+      Number(
+        currentExpectedPlayers
+      );
+
+
+  if (
+    !ready
+  ) {
+
+    if (
+      revealTimer
+    ) {
+
+      clearTimeout(
+        revealTimer
+      );
+
+      revealTimer =
+        null;
+    }
+
+    return;
+  }
+
+
+  if (
+    revealTimer
+  ) {
+    return;
+  }
+
+
+  revealTimer =
+    setTimeout(
+      async () => {
+
+        revealTimer =
+          null;
+
+        const latest =
+          await getVoteCount();
+
+
+        if (
+          !latest ||
           Number(
-            currentExpectedPlayers
-          )
-      ) {
+            latest.total_votes
+          ) <
+            Number(
+              currentExpectedPlayers
+            )
+        ) {
+          return;
+        }
+
 
         const {
           error:
@@ -3294,24 +3445,10 @@ async function refreshGame() {
             revealError
           );
         }
-      }
 
-    } else if (
-      round.status ===
-      "reveal"
-    ) {
-
-      renderResult(
-        voteCount
-      );
-    }
-
-
-  } finally {
-
-    refreshingGame =
-      false;
-  }
+      },
+      3000
+    );
 }
 
 
@@ -3364,29 +3501,56 @@ function renderVoting(
       `${total} / ${currentExpectedPlayers}`;
 
 
+  const buttonA =
+    document.getElementById(
+      "voteAButton"
+    );
+
+  const buttonB =
+    document.getElementById(
+      "voteBButton"
+    );
+
+
+  buttonA.disabled =
+    false;
+
+  buttonB.disabled =
+    false;
+
+
+  buttonA.classList.toggle(
+    "selected",
+    localVoteChoice ===
+      "A"
+  );
+
+  buttonB.classList.toggle(
+    "selected",
+    localVoteChoice ===
+      "B"
+  );
+
+
+  const allVoted =
+    total >=
+    Number(
+      currentExpectedPlayers
+    );
+
+
   document
     .getElementById(
       "voteStatus"
     )
     .textContent =
-      localVoteSubmitted
-        ? "VOTO REGISTRADO · ESPERANDO AL RESTO..."
+      localVoteChoice
+        ? (
+            allVoted
+              ? `HAS VOTADO ${localVoteChoice} · TODOS HAN VOTADO · CERRANDO...`
+              : `HAS VOTADO ${localVoteChoice} · TOCA DE NUEVO PARA DESVOTAR`
+          )
         : "VOTA EN SECRETO";
-
-
-  document
-    .getElementById(
-      "voteAButton"
-    )
-    .disabled =
-      localVoteSubmitted;
-
-  document
-    .getElementById(
-      "voteBButton"
-    )
-    .disabled =
-      localVoteSubmitted;
 
 
   showScreen(
@@ -3451,7 +3615,6 @@ async function castVote(
 ) {
 
   if (
-    localVoteSubmitted ||
     !currentRoundId ||
     currentRoundStatus !==
       "voting"
@@ -3468,19 +3631,112 @@ async function castVote(
       "";
 
 
-  document
-    .getElementById(
-      "voteAButton"
-    )
-    .disabled =
-      true;
+  const previousChoice =
+    localVoteChoice;
 
-  document
-    .getElementById(
-      "voteBButton"
-    )
-    .disabled =
-      true;
+
+  if (
+    previousChoice ===
+    choice
+  ) {
+
+    const {
+      error
+    } = await sb
+      .from(
+        "votes"
+      )
+      .delete()
+      .eq(
+        "round_id",
+        currentRoundId
+      )
+      .eq(
+        "user_id",
+        currentUserId
+      );
+
+
+    if (
+      error
+    ) {
+
+      console.error(
+        "VOTE DELETE ERROR:",
+        error
+      );
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido retirar el voto.";
+
+      return;
+    }
+
+
+    localVoteChoice =
+      null;
+
+    await refreshGame();
+
+    return;
+  }
+
+
+  if (
+    previousChoice
+  ) {
+
+    const {
+      error
+    } = await sb
+      .from(
+        "votes"
+      )
+      .update({
+        choice:
+          choice
+      })
+      .eq(
+        "round_id",
+        currentRoundId
+      )
+      .eq(
+        "user_id",
+        currentUserId
+      );
+
+
+    if (
+      error
+    ) {
+
+      console.error(
+        "VOTE UPDATE ERROR:",
+        error
+      );
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido cambiar el voto.";
+
+      return;
+    }
+
+
+    localVoteChoice =
+      choice;
+
+    await refreshGame();
+
+    return;
+  }
 
 
   const {
@@ -3515,56 +3771,22 @@ async function castVote(
       error
     );
 
-
-    if (
-      error.code ===
-      "23505"
-    ) {
-
-      localVoteSubmitted =
-        true;
-
-      document
-        .getElementById(
-          "voteStatus"
-        )
-        .textContent =
-          "VOTO YA REGISTRADO · ESPERANDO AL RESTO...";
-
-    } else {
-
-      document
-        .getElementById(
-          "gameError"
-        )
-        .textContent =
-          "No se ha podido registrar el voto.";
-
-      document
-        .getElementById(
-          "voteAButton"
-        )
-        .disabled =
-          false;
-
-      document
-        .getElementById(
-          "voteBButton"
-        )
-        .disabled =
-          false;
-    }
+    document
+      .getElementById(
+        "gameError"
+      )
+      .textContent =
+        "No se ha podido registrar el voto.";
 
     return;
   }
 
 
-  localVoteSubmitted =
-    true;
+  localVoteChoice =
+    choice;
 
   await refreshGame();
 }
-
 
 function subscribeToRounds() {
 
@@ -4182,10 +4404,17 @@ function cleanupRoom() {
     gameTimer
   );
 
+  clearTimeout(
+    revealTimer
+  );
+
   lobbyTimer =
     null;
 
   gameTimer =
+    null;
+
+  revealTimer =
     null;
 
   currentRoundId =
@@ -4197,8 +4426,8 @@ function cleanupRoom() {
   currentDilemma =
     null;
 
-  localVoteSubmitted =
-    false;
+  localVoteChoice =
+    null;
 
   currentRoomId =
     null;
