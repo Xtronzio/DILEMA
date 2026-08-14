@@ -551,7 +551,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.5A</div>
+    <div class="version">V0.0.5B</div>
   </main>
 
 
@@ -2145,10 +2145,6 @@ async function refreshLobby() {
           ? "block"
           : "none";
 
-    showScreen(
-      "started"
-    );
-
     subscribeToRounds();
 
     startGameRefresh();
@@ -3508,10 +3504,7 @@ function subscribeToRounds() {
   if (
     roundsChannel
   ) {
-
-    sb.removeChannel(
-      roundsChannel
-    );
+    return;
   }
 
 
