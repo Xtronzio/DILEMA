@@ -454,7 +454,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.4</div>
+    <div class="version">V0.0.4A</div>
   </main>
 
 
@@ -591,6 +591,12 @@
         <div id="expectedLobby" class="counter-number">0</div>
         <button onclick="changeLobbyExpected(1)">+</button>
       </div>
+
+      <br>
+
+      <button class="btn btn-danger" onclick="confirmResetGame()">
+        REINICIAR PARTIDA
+      </button>
     </div>
 
     <div class="players-title">
@@ -621,6 +627,17 @@
     </div>
 
     <div id="startedCode" class="start-code"></div>
+
+    <br><br>
+
+    <button
+      id="resetStartedBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
   </section>
 
 
@@ -1310,6 +1327,9 @@ function saveAndUseProfile() {
     profiles
   );
 
+  selectedSavedProfileId =
+    profile.id;
+
 
   continueWithProfile(
     profile
@@ -1824,6 +1844,15 @@ async function refreshLobby() {
       )
       .textContent =
         room.code;
+
+    document
+      .getElementById(
+        "resetStartedBtn"
+      )
+      .style.display =
+        room.host_id === localPlayerId
+          ? "block"
+          : "none";
 
     showScreen(
       "started"
@@ -2427,6 +2456,43 @@ async function updateLobbyProfile(
     );
 
 
+  if (
+    selectedSavedProfileId
+  ) {
+
+    const profiles =
+      getProfiles();
+
+    const index =
+      profiles.findIndex(
+        profile =>
+          profile.id ===
+          selectedSavedProfileId
+      );
+
+    if (
+      index >= 0
+    ) {
+
+      profiles[index] = {
+        ...profiles[index],
+        name:
+          name,
+        motto:
+          motto,
+        avatar:
+          avatar
+      };
+
+      saveProfiles(
+        profiles
+      );
+
+    }
+
+  }
+
+
   editingLobbyProfile =
     false;
 
@@ -2522,6 +2588,113 @@ async function startGame() {
       "id",
       currentRoomId
     );
+
+}
+
+
+async function confirmResetGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      "¿Cerrar esta sala para TODOS y empezar de cero?\n\nLos perfiles guardados NO se borrarán."
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  await resetGame();
+
+}
+
+
+async function resetGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const roomIdToReset =
+      currentRoomId;
+
+
+    const {
+      error:
+        deletePlayersError
+    } = await sb
+      .from(
+        "players"
+      )
+      .delete()
+      .eq(
+        "room_id",
+        roomIdToReset
+      );
+
+
+    if (
+      deletePlayersError
+    ) {
+      throw deletePlayersError;
+    }
+
+
+    const {
+      error:
+        deleteRoomError
+    } = await sb
+      .from(
+        "rooms"
+      )
+      .delete()
+      .eq(
+        "id",
+        roomIdToReset
+      );
+
+
+    if (
+      deleteRoomError
+    ) {
+      throw deleteRoomError;
+    }
+
+
+    cleanupRoom();
+
+    goHome();
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "No se ha podido reiniciar la partida."
+    );
+
+  }
 
 }
 
@@ -2878,9 +3051,19 @@ function cleanupRoom() {
   currentRoomStatus =
     null;
 
+  selectedSavedProfileId =
+    null;
+
   localStorage.removeItem(
     "dilema_room_session"
   );
+
+  /*
+    IMPORTANTE:
+    NO BORRAMOS "dilema_profiles".
+    Los perfiles sobreviven a abandonar,
+    reiniciar y terminar una sala.
+  */
 
 }
 
