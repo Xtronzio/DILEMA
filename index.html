@@ -439,6 +439,102 @@
       font-size: 13px;
       letter-spacing: 3px;
     }
+
+    .game-category {
+      margin-bottom: 14px;
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .game-question {
+      width: 100%;
+      margin-bottom: 26px;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .vote-option {
+      width: 100%;
+      margin-bottom: 14px;
+      padding: 18px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .vote-option strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 20px;
+    }
+
+    .vote-option span {
+      color: #c9c9c9;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .vote-option:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .vote-status {
+      margin-top: 22px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .vote-count-big {
+      margin-top: 14px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .result-box {
+      width: 100%;
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-item {
+      padding: 22px 12px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .result-letter {
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .result-number {
+      margin-top: 8px;
+      font-size: 22px;
+      color: #aaa;
+    }
+
+    .game-error {
+      min-height: 20px;
+      margin-top: 18px;
+      color: #ff6b6b;
+      font-size: 12px;
+      text-align: center;
+    }
   </style>
 </head>
 
@@ -455,7 +551,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.4B</div>
+    <div class="version">V0.0.5A</div>
   </main>
 
 
@@ -629,6 +725,10 @@
 
     <div id="startedCode" class="start-code"></div>
 
+    <div class="vote-status">
+      PREPARANDO DILEMA...
+    </div>
+
     <br><br>
 
     <button
@@ -639,6 +739,83 @@
     >
       REINICIAR PARTIDA
     </button>
+  </section>
+
+
+  <section id="voting" class="screen">
+
+    <div id="gameCategory" class="game-category">
+      DILEMA
+    </div>
+
+    <div id="gameQuestion" class="game-question"></div>
+
+    <button
+      id="voteAButton"
+      class="vote-option"
+      onclick="castVote('A')"
+    >
+      <strong>A</strong>
+      <span id="gameOptionA"></span>
+    </button>
+
+    <button
+      id="voteBButton"
+      class="vote-option"
+      onclick="castVote('B')"
+    >
+      <strong>B</strong>
+      <span id="gameOptionB"></span>
+    </button>
+
+    <div id="voteStatus" class="vote-status">
+      VOTA EN SECRETO
+    </div>
+
+    <div id="voteProgress" class="vote-count-big"></div>
+
+    <div id="gameError" class="game-error"></div>
+
+  </section>
+
+
+  <section id="result" class="screen center">
+
+    <div class="game-category">
+      EL GRUPO HA DECIDIDO
+    </div>
+
+    <div id="resultQuestion" class="game-question"></div>
+
+    <div class="result-box">
+
+      <div class="result-item">
+        <div class="result-letter">A</div>
+        <div id="resultA" class="result-number">0</div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-letter">B</div>
+        <div id="resultB" class="result-number">0</div>
+      </div>
+
+    </div>
+
+    <div class="small-note">
+      NADIE SABE QUIÉN HA VOTADO QUÉ.
+    </div>
+
+    <br><br>
+
+    <button
+      id="resetResultBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
+
   </section>
 
 
@@ -773,9 +950,17 @@ let currentRoomStatus = null;
 
 let playersChannel = null;
 let roomChannel = null;
+let roundsChannel = null;
 
 let lobbyTimer = null;
+let gameTimer = null;
 let refreshing = false;
+let refreshingGame = false;
+
+let currentRoundId = null;
+let currentRoundStatus = null;
+let currentDilemma = null;
+let localVoteSubmitted = false;
 
 const localPlayerId =
   getOrCreateLocalPlayerId();
@@ -1964,11 +2149,16 @@ async function refreshLobby() {
       "started"
     );
 
+    subscribeToRounds();
+
+    startGameRefresh();
+
+    await refreshGame();
+
     refreshing =
       false;
 
     return;
-
   }
 
 
@@ -2632,11 +2822,123 @@ async function startGame() {
     );
 
     return;
-
   }
 
 
-  await sb
+  const {
+    data: dilemma,
+    error: dilemmaError
+  } = await sb
+    .from(
+      "dilemmas"
+    )
+    .select(
+      "id, audience, category, intensity, question, option_a, option_b"
+    )
+    .eq(
+      "audience",
+      "teen"
+    )
+    .eq(
+      "active",
+      true
+    )
+    .order(
+      "id",
+      {
+        ascending:
+          true
+      }
+    )
+    .limit(
+      1
+    )
+    .maybeSingle();
+
+
+  if (
+    dilemmaError ||
+    !dilemma
+  ) {
+
+    console.error(
+      "DILEMMA LOAD ERROR:",
+      dilemmaError
+    );
+
+    alert(
+      "No hay ningún dilema activo disponible."
+    );
+
+    return;
+  }
+
+
+  const {
+    data: round,
+    error: roundError
+  } = await sb
+    .from(
+      "rounds"
+    )
+    .insert({
+
+      room_id:
+        currentRoomId,
+
+      round_number:
+        1,
+
+      dilemma_id:
+        dilemma.id,
+
+      status:
+        "voting",
+
+      started_at:
+        new Date().toISOString()
+
+    })
+    .select(
+      "id, room_id, round_number, dilemma_id, status, started_at"
+    )
+    .single();
+
+
+  if (
+    roundError ||
+    !round
+  ) {
+
+    console.error(
+      "ROUND CREATE ERROR:",
+      roundError
+    );
+
+    alert(
+      "No se ha podido crear la primera ronda."
+    );
+
+    return;
+  }
+
+
+  currentRoundId =
+    round.id;
+
+  currentRoundStatus =
+    round.status;
+
+  currentDilemma =
+    dilemma;
+
+  localVoteSubmitted =
+    false;
+
+
+  const {
+    error: roomError
+  } = await sb
     .from(
       "rooms"
     )
@@ -2651,6 +2953,620 @@ async function startGame() {
       currentRoomId
     );
 
+
+  if (
+    roomError
+  ) {
+
+    console.error(
+      "ROOM START ERROR:",
+      roomError
+    );
+
+    alert(
+      "No se ha podido iniciar la partida."
+    );
+  }
+
+}
+
+
+
+async function loadCurrentRound() {
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rounds"
+    )
+    .select(
+      "id, room_id, round_number, dilemma_id, status, started_at"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .order(
+      "round_number",
+      {
+        ascending:
+          false
+      }
+    )
+    .limit(
+      1
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "ROUND LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  return data;
+}
+
+
+async function loadDilemma(
+  dilemmaId
+) {
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "dilemmas"
+    )
+    .select(
+      "id, audience, category, intensity, question, option_a, option_b"
+    )
+    .eq(
+      "id",
+      dilemmaId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "DILEMMA LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  return data;
+}
+
+
+async function getVoteCount() {
+
+  if (
+    !currentRoundId
+  ) {
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb.rpc(
+    "get_vote_count",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "VOTE COUNT ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data[0] ||
+      {
+        total_votes: 0,
+        votes_a: null,
+        votes_b: null
+      };
+  }
+
+
+  return data;
+}
+
+
+async function refreshGame() {
+
+  if (
+    refreshingGame ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+  refreshingGame =
+    true;
+
+
+  try {
+
+    const round =
+      await loadCurrentRound();
+
+
+    if (
+      !round
+    ) {
+
+      showScreen(
+        "started"
+      );
+
+      return;
+    }
+
+
+    currentRoundId =
+      round.id;
+
+    currentRoundStatus =
+      round.status;
+
+
+    if (
+      !currentDilemma ||
+      currentDilemma.id !==
+      round.dilemma_id
+    ) {
+
+      currentDilemma =
+        await loadDilemma(
+          round.dilemma_id
+        );
+    }
+
+
+    if (
+      !currentDilemma
+    ) {
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido cargar el dilema.";
+
+      return;
+    }
+
+
+    const voteCount =
+      await getVoteCount();
+
+
+    if (
+      round.status ===
+      "voting"
+    ) {
+
+      renderVoting(
+        voteCount
+      );
+
+
+      if (
+        currentRoomHostId ===
+          localPlayerId &&
+        voteCount &&
+        Number(
+          voteCount.total_votes
+        ) >=
+          Number(
+            currentExpectedPlayers
+          )
+      ) {
+
+        const {
+          error:
+            revealError
+        } = await sb
+          .from(
+            "rounds"
+          )
+          .update({
+            status:
+              "reveal"
+          })
+          .eq(
+            "id",
+            currentRoundId
+          )
+          .eq(
+            "status",
+            "voting"
+          );
+
+
+        if (
+          revealError
+        ) {
+
+          console.error(
+            "REVEAL ERROR:",
+            revealError
+          );
+        }
+      }
+
+    } else if (
+      round.status ===
+      "reveal"
+    ) {
+
+      renderResult(
+        voteCount
+      );
+    }
+
+
+  } finally {
+
+    refreshingGame =
+      false;
+  }
+}
+
+
+function renderVoting(
+  voteCount
+) {
+
+  document
+    .getElementById(
+      "gameCategory"
+    )
+    .textContent =
+      `${currentDilemma.category || "DILEMA"} · INTENSIDAD ${currentDilemma.intensity || 1}`;
+
+  document
+    .getElementById(
+      "gameQuestion"
+    )
+    .textContent =
+      currentDilemma.question;
+
+  document
+    .getElementById(
+      "gameOptionA"
+    )
+    .textContent =
+      currentDilemma.option_a;
+
+  document
+    .getElementById(
+      "gameOptionB"
+    )
+    .textContent =
+      currentDilemma.option_b;
+
+
+  const total =
+    voteCount
+      ? Number(
+          voteCount.total_votes
+        )
+      : 0;
+
+
+  document
+    .getElementById(
+      "voteProgress"
+    )
+    .textContent =
+      `${total} / ${currentExpectedPlayers}`;
+
+
+  document
+    .getElementById(
+      "voteStatus"
+    )
+    .textContent =
+      localVoteSubmitted
+        ? "VOTO REGISTRADO · ESPERANDO AL RESTO..."
+        : "VOTA EN SECRETO";
+
+
+  document
+    .getElementById(
+      "voteAButton"
+    )
+    .disabled =
+      localVoteSubmitted;
+
+  document
+    .getElementById(
+      "voteBButton"
+    )
+    .disabled =
+      localVoteSubmitted;
+
+
+  showScreen(
+    "voting"
+  );
+}
+
+
+function renderResult(
+  voteCount
+) {
+
+  document
+    .getElementById(
+      "resultQuestion"
+    )
+    .textContent =
+      currentDilemma.question;
+
+
+  document
+    .getElementById(
+      "resultA"
+    )
+    .textContent =
+      voteCount &&
+      voteCount.votes_a !== null
+        ? voteCount.votes_a
+        : "—";
+
+
+  document
+    .getElementById(
+      "resultB"
+    )
+    .textContent =
+      voteCount &&
+      voteCount.votes_b !== null
+        ? voteCount.votes_b
+        : "—";
+
+
+  document
+    .getElementById(
+      "resetResultBtn"
+    )
+    .style.display =
+      currentRoomHostId ===
+        localPlayerId
+          ? "block"
+          : "none";
+
+
+  showScreen(
+    "result"
+  );
+}
+
+
+async function castVote(
+  choice
+) {
+
+  if (
+    localVoteSubmitted ||
+    !currentRoundId ||
+    currentRoundStatus !==
+      "voting"
+  ) {
+    return;
+  }
+
+
+  document
+    .getElementById(
+      "gameError"
+    )
+    .textContent =
+      "";
+
+
+  document
+    .getElementById(
+      "voteAButton"
+    )
+    .disabled =
+      true;
+
+  document
+    .getElementById(
+      "voteBButton"
+    )
+    .disabled =
+      true;
+
+
+  const {
+    error
+  } = await sb
+    .from(
+      "votes"
+    )
+    .insert({
+
+      round_id:
+        currentRoundId,
+
+      player_id:
+        localPlayerId,
+
+      user_id:
+        currentUserId,
+
+      choice:
+        choice
+
+    });
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "VOTE INSERT ERROR:",
+      error
+    );
+
+
+    if (
+      error.code ===
+      "23505"
+    ) {
+
+      localVoteSubmitted =
+        true;
+
+      document
+        .getElementById(
+          "voteStatus"
+        )
+        .textContent =
+          "VOTO YA REGISTRADO · ESPERANDO AL RESTO...";
+
+    } else {
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido registrar el voto.";
+
+      document
+        .getElementById(
+          "voteAButton"
+        )
+        .disabled =
+          false;
+
+      document
+        .getElementById(
+          "voteBButton"
+        )
+        .disabled =
+          false;
+    }
+
+    return;
+  }
+
+
+  localVoteSubmitted =
+    true;
+
+  await refreshGame();
+}
+
+
+function subscribeToRounds() {
+
+  if (
+    roundsChannel
+  ) {
+
+    sb.removeChannel(
+      roundsChannel
+    );
+  }
+
+
+  roundsChannel =
+    sb
+      .channel(
+        `rounds-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "rounds",
+          filter:
+            `room_id=eq.${currentRoomId}`
+        },
+        () => {
+          refreshGame();
+        }
+      )
+      .subscribe();
+}
+
+
+function startGameRefresh() {
+
+  if (
+    gameTimer
+  ) {
+    return;
+  }
+
+
+  gameTimer =
+    setInterval(
+      () => {
+
+        if (
+          currentRoomId &&
+          currentRoomStatus ===
+            "playing" &&
+          document.visibilityState ===
+            "visible"
+        ) {
+
+          refreshGame();
+        }
+
+      },
+      1000
+    );
 }
 
 
@@ -3134,6 +4050,20 @@ function cleanupChannels() {
 
   }
 
+
+  if (
+    roundsChannel
+  ) {
+
+    sb.removeChannel(
+      roundsChannel
+    );
+
+    roundsChannel =
+      null;
+
+  }
+
 }
 
 
@@ -3145,8 +4075,27 @@ function cleanupRoom() {
     lobbyTimer
   );
 
+  clearInterval(
+    gameTimer
+  );
+
   lobbyTimer =
     null;
+
+  gameTimer =
+    null;
+
+  currentRoundId =
+    null;
+
+  currentRoundStatus =
+    null;
+
+  currentDilemma =
+    null;
+
+  localVoteSubmitted =
+    false;
 
   currentRoomId =
     null;
