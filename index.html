@@ -455,7 +455,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.4A</div>
+    <div class="version">V0.0.4B</div>
   </main>
 
 
@@ -655,6 +655,70 @@ const sb =
     SUPABASE_URL,
     SUPABASE_KEY
   );
+
+
+let currentUserId = null;
+let authReady = false;
+
+
+async function ensureAnonymousAuth() {
+
+  if (
+    authReady &&
+    currentUserId
+  ) {
+    return currentUserId;
+  }
+
+  const {
+    data: userData,
+    error: userError
+  } = await sb.auth.getUser();
+
+  if (
+    !userError &&
+    userData &&
+    userData.user
+  ) {
+
+    currentUserId =
+      userData.user.id;
+
+    authReady =
+      true;
+
+    return currentUserId;
+  }
+
+  const {
+    data,
+    error
+  } = await sb.auth.signInAnonymously();
+
+  if (
+    error ||
+    !data ||
+    !data.user
+  ) {
+
+    console.error(
+      "ANONYMOUS AUTH ERROR:",
+      error
+    );
+
+    throw new Error(
+      "No se pudo iniciar la sesión anónima."
+    );
+  }
+
+  currentUserId =
+    data.user.id;
+
+  authReady =
+    true;
+
+  return currentUserId;
+}
 
 
 const avatarCategories = {
@@ -1617,6 +1681,25 @@ async function createRoom(
   profile
 ) {
 
+  try {
+
+    await ensureAnonymousAuth();
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "No se pudo iniciar la identidad segura del jugador."
+    );
+
+    return;
+  }
+
   const code =
     randomRoomCode();
 
@@ -1691,6 +1774,25 @@ async function joinRoomWithProfile(
   profile
 ) {
 
+  try {
+
+    await ensureAnonymousAuth();
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "No se pudo iniciar la identidad segura del jugador."
+    );
+
+    return;
+  }
+
   const room =
     await getRoom();
 
@@ -1735,6 +1837,9 @@ async function insertPlayer(
 
       player_id:
         localPlayerId,
+
+      user_id:
+        currentUserId,
 
       name:
         profile.name,
@@ -2863,6 +2968,21 @@ function saveRoomSession() {
 
 async function restoreRoomSession() {
 
+  try {
+
+    await ensureAnonymousAuth();
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    return;
+  }
+
   const raw =
     localStorage.getItem(
       "dilema_room_session"
@@ -2903,7 +3023,7 @@ async function restoreRoomSession() {
         "players"
       )
       .select(
-        "player_id"
+        "player_id, user_id"
       )
       .eq(
         "room_id",
@@ -2922,6 +3042,41 @@ async function restoreRoomSession() {
 
       return;
 
+    }
+
+    if (
+      !player.user_id
+    ) {
+
+      const {
+        error:
+          backfillUserError
+      } = await sb
+        .from(
+          "players"
+        )
+        .update({
+          user_id:
+            currentUserId
+        })
+        .eq(
+          "room_id",
+          currentRoomId
+        )
+        .eq(
+          "player_id",
+          localPlayerId
+        );
+
+      if (
+        backfillUserError
+      ) {
+
+        console.error(
+          "PLAYER USER_ID BACKFILL ERROR:",
+          backfillUserError
+        );
+      }
     }
 
 
@@ -3028,6 +3183,30 @@ function cleanupRoom() {
 window.addEventListener(
   "DOMContentLoaded",
   async () => {
+
+    try {
+
+      await ensureAnonymousAuth();
+
+      console.log(
+        "DILEMA AUTH READY:",
+        currentUserId
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+      alert(
+        "No se pudo iniciar DILEMA. Recarga la página."
+      );
+
+      return;
+    }
 
     renderAvatarTabs();
 
