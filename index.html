@@ -282,20 +282,21 @@
     }
 
     .room-count {
-      margin-bottom: 8px;
+      margin-bottom: 24px;
       font-size: 22px;
       font-weight: 900;
     }
 
-    .room-state {
-      margin-bottom: 24px;
-      font-size: 13px;
-      color: #777;
+    .room-count.ok {
+      color: #20d66b;
     }
 
-    .room-state.ready {
-      color: white;
-      font-weight: 800;
+    .room-count.ko {
+      color: #ff4d4d;
+    }
+
+    .room-state {
+      display: none;
     }
 
     .host-controls {
@@ -1913,62 +1914,18 @@ function renderLobby(
       room.code;
 
 
-  document
-    .getElementById(
-      "roomCount"
-    )
-    .textContent =
-      `${players.length} / ${room.expected_players}`;
-
-
-  const state =
+  const roomCount =
     document.getElementById(
-      "roomState"
+      "roomCount"
     );
 
+  roomCount.textContent =
+    `${players.length} / ${room.expected_players}`;
 
-  if (
-    players.length ===
-    room.expected_players
-  ) {
-
-    state.textContent =
-      "SALA CUADRADA ✓";
-
-    state.className =
-      "room-state ready";
-
-  } else if (
-    players.length <
-    room.expected_players
-  ) {
-
-    const missing =
-      room.expected_players -
-      players.length;
-
-    state.textContent =
-      `FALTAN ${missing} ${
-        missing === 1
-          ? "JUGADOR"
-          : "JUGADORES"
-      }`;
-
-    state.className =
-      "room-state";
-
-  } else {
-
-    state.textContent =
-      `SOBRAN ${
-        players.length -
-        room.expected_players
-      }`;
-
-    state.className =
-      "room-state";
-
-  }
+  roomCount.className =
+    players.length === room.expected_players
+      ? "room-count ok"
+      : "room-count ko";
 
 
   const isHost =
