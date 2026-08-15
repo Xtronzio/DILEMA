@@ -541,6 +541,79 @@
       font-size: 12px;
       text-align: center;
     }
+
+    .role-card {
+      width: 100%;
+      padding: 26px 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .role-kicker {
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .role-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .role-vote {
+      color: #aaa;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .role-vote strong {
+      color: #fff;
+      font-size: 24px;
+      margin-left: 6px;
+    }
+
+    .role-instruction {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.45;
+      margin-bottom: 26px;
+    }
+
+    .role-waiting {
+      min-height: 22px;
+      margin-top: 12px;
+      color: #777;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .debate-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .debate-question {
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.45;
+      text-align: left;
+      margin-bottom: 22px;
+    }
   </style>
 </head>
 
@@ -557,7 +630,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.6</div>
+    <div class="version">V0.0.7</div>
   </main>
 
 
@@ -814,7 +887,86 @@
     <br><br>
 
     <button
+      id="assignRolesBtn"
+      class="btn btn-primary"
+      onclick="assignRoles()"
+      style="display:none;"
+    >
+      SORTEAR IMPOSTOR
+    </button>
+
+    <div
+      id="waitingRoleDraw"
+      class="small-note"
+      style="display:none;"
+    >
+      ESPERANDO AL CREADOR...
+    </div>
+
+    <button
       id="resetResultBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
+
+  </section>
+
+
+  <section id="role" class="screen center">
+
+    <div class="role-card">
+
+      <div class="role-kicker">
+        TU PAPEL
+      </div>
+
+      <div id="roleTitle" class="role-title"></div>
+
+      <div class="role-vote">
+        HAS VOTADO
+        <strong id="roleVote">—</strong>
+      </div>
+
+      <div id="roleInstruction" class="role-instruction"></div>
+
+      <button
+        id="roleReadyBtn"
+        class="btn btn-primary"
+        onclick="confirmRoleReady()"
+      >
+        ENTENDIDO
+      </button>
+
+      <div id="roleWaiting" class="role-waiting"></div>
+
+    </div>
+
+  </section>
+
+
+  <section id="debate" class="screen center">
+
+    <div class="game-category">
+      TODOS PREPARADOS
+    </div>
+
+    <div class="debate-title">
+      COMIENZA<br>EL DEBATE
+    </div>
+
+    <div id="debateQuestion" class="debate-question"></div>
+
+    <div class="small-note">
+      DEFIENDE TU POSTURA · ENCUENTRA AL IMPOSTOR
+    </div>
+
+    <br><br>
+
+    <button
+      id="resetDebateBtn"
       class="btn btn-danger"
       onclick="confirmResetGame()"
       style="display:none;"
@@ -968,6 +1120,9 @@ let currentRoundId = null;
 let currentRoundStatus = null;
 let currentDilemma = null;
 let localVoteChoice = null;
+let localRoundRole = null;
+let localRoleReady = false;
+let assigningRoles = false;
 
 const localPlayerId =
   getOrCreateLocalPlayerId();
@@ -3304,7 +3459,11 @@ async function refreshGame() {
 
     if (
       round.status ===
-      "voting"
+        "voting" ||
+      round.status ===
+        "role" ||
+      round.status ===
+        "debate"
     ) {
 
       await loadOwnVote();
@@ -3337,6 +3496,20 @@ async function refreshGame() {
       renderResult(
         voteCount
       );
+
+    } else if (
+      round.status ===
+      "role"
+    ) {
+
+      await renderRole();
+
+    } else if (
+      round.status ===
+      "debate"
+    ) {
+
+      renderDebate();
     }
 
 
@@ -3593,9 +3766,382 @@ function renderResult(
         : "—";
 
 
+  const isHost =
+    currentRoomHostId ===
+      localPlayerId;
+
+
+  document
+    .getElementById(
+      "assignRolesBtn"
+    )
+    .style.display =
+      isHost
+        ? "block"
+        : "none";
+
+
+  document
+    .getElementById(
+      "waitingRoleDraw"
+    )
+    .style.display =
+      isHost
+        ? "none"
+        : "block";
+
+
   document
     .getElementById(
       "resetResultBtn"
+    )
+    .style.display =
+      isHost
+        ? "block"
+        : "none";
+
+
+  showScreen(
+    "result"
+  );
+}
+
+
+async function assignRoles() {
+
+  if (
+    assigningRoles ||
+    currentRoomHostId !==
+      localPlayerId ||
+    !currentRoundId ||
+    currentRoundStatus !==
+      "reveal"
+  ) {
+    return;
+  }
+
+
+  assigningRoles =
+    true;
+
+
+  const button =
+    document.getElementById(
+      "assignRolesBtn"
+    );
+
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "SORTEANDO...";
+
+
+  const {
+    error
+  } = await sb.rpc(
+    "assign_round_roles",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "ASSIGN ROLES ERROR:",
+      error
+    );
+
+    alert(
+      "No se ha podido sortear el impostor."
+    );
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "SORTEAR IMPOSTOR";
+
+    assigningRoles =
+      false;
+
+    return;
+  }
+
+
+  assigningRoles =
+    false;
+
+  await refreshGame();
+}
+
+
+async function loadOwnRoundRole() {
+
+  if (
+    !currentRoundId ||
+    !currentUserId
+  ) {
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "round_players"
+    )
+    .select(
+      "role, ready"
+    )
+    .eq(
+      "round_id",
+      currentRoundId
+    )
+    .eq(
+      "user_id",
+      currentUserId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "OWN ROLE LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  if (
+    !data
+  ) {
+    return null;
+  }
+
+
+  localRoundRole =
+    data.role;
+
+  localRoleReady =
+    Boolean(
+      data.ready
+    );
+
+
+  return data;
+}
+
+
+async function renderRole() {
+
+  const roleData =
+    await loadOwnRoundRole();
+
+
+  if (
+    !roleData
+  ) {
+
+    showScreen(
+      "started"
+    );
+
+    return;
+  }
+
+
+  const isImpostor =
+    roleData.role ===
+      "impostor";
+
+
+  const oppositeVote =
+    localVoteChoice ===
+      "A"
+        ? "B"
+        : "A";
+
+
+  document
+    .getElementById(
+      "roleTitle"
+    )
+    .textContent =
+      isImpostor
+        ? "ERES EL IMPOSTOR"
+        : "NO ERES EL IMPOSTOR";
+
+
+  document
+    .getElementById(
+      "roleVote"
+    )
+    .textContent =
+      localVoteChoice ||
+      "—";
+
+
+  document
+    .getElementById(
+      "roleInstruction"
+    )
+    .textContent =
+      isImpostor
+        ? `Defiende ${oppositeVote} y evita que te descubran.`
+        : `Defiende ${localVoteChoice || "tu voto"} y delata al impostor.`;
+
+
+  const readyButton =
+    document.getElementById(
+      "roleReadyBtn"
+    );
+
+
+  const waiting =
+    document.getElementById(
+      "roleWaiting"
+    );
+
+
+  if (
+    roleData.ready
+  ) {
+
+    readyButton.disabled =
+      true;
+
+    readyButton.textContent =
+      "PREPARADO";
+
+    waiting.textContent =
+      "ESPERANDO AL RESTO...";
+
+  } else {
+
+    readyButton.disabled =
+      false;
+
+    readyButton.textContent =
+      "ENTENDIDO";
+
+    waiting.textContent =
+      "";
+  }
+
+
+  showScreen(
+    "role"
+  );
+}
+
+
+async function confirmRoleReady() {
+
+  if (
+    !currentRoundId ||
+    currentRoundStatus !==
+      "role" ||
+    localRoleReady
+  ) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "roleReadyBtn"
+    );
+
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "GUARDANDO...";
+
+
+  const {
+    error
+  } = await sb.rpc(
+    "confirm_round_role",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "CONFIRM ROLE ERROR:",
+      error
+    );
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "ENTENDIDO";
+
+    alert(
+      "No se ha podido confirmar el rol."
+    );
+
+    return;
+  }
+
+
+  localRoleReady =
+    true;
+
+  button.textContent =
+    "PREPARADO";
+
+
+  document
+    .getElementById(
+      "roleWaiting"
+    )
+    .textContent =
+      "ESPERANDO AL RESTO...";
+
+
+  await refreshGame();
+}
+
+
+function renderDebate() {
+
+  document
+    .getElementById(
+      "debateQuestion"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.question
+        : "DILEMA";
+
+
+  document
+    .getElementById(
+      "resetDebateBtn"
     )
     .style.display =
       currentRoomHostId ===
@@ -3605,7 +4151,7 @@ function renderResult(
 
 
   showScreen(
-    "result"
+    "debate"
   );
 }
 
@@ -4428,6 +4974,15 @@ function cleanupRoom() {
 
   localVoteChoice =
     null;
+
+  localRoundRole =
+    null;
+
+  localRoleReady =
+    false;
+
+  assigningRoles =
+    false;
 
   currentRoomId =
     null;
