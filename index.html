@@ -612,7 +612,74 @@
       font-weight: 800;
       line-height: 1.45;
       text-align: left;
-      margin-bottom: 22px;
+      margin-bottom: 16px;
+    }
+
+    .debate-options {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .debate-option {
+      min-height: 112px;
+      padding: 16px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: left;
+    }
+
+    .debate-option-letter {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .debate-option-text {
+      color: #d0d0d0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .tool-dock {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tool-button {
+      min-height: 64px;
+      padding: 8px 4px;
+      border: 1px solid #2e2e2e;
+      border-radius: 12px;
+      background: #151515;
+      color: #777;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: default;
+    }
+
+    .tool-icon {
+      display: block;
+      margin-bottom: 5px;
+      color: #aaa;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .tool-note {
+      margin-top: 9px;
+      color: #555;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-align: center;
     }
   </style>
 </head>
@@ -630,7 +697,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.7</div>
+    <div class="version">V0.0.8</div>
   </main>
 
 
@@ -959,11 +1026,53 @@
 
     <div id="debateQuestion" class="debate-question"></div>
 
+    <div class="debate-options">
+
+      <div class="debate-option">
+        <div class="debate-option-letter">A</div>
+        <div id="debateOptionA" class="debate-option-text"></div>
+      </div>
+
+      <div class="debate-option">
+        <div class="debate-option-letter">B</div>
+        <div id="debateOptionB" class="debate-option-text"></div>
+      </div>
+
+    </div>
+
     <div class="small-note">
       DEFIENDE TU POSTURA · ENCUENTRA AL IMPOSTOR
     </div>
 
-    <br><br>
+    <div class="tool-dock" aria-label="Herramientas de debate">
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">★</span>
+        COMODÍN
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">◆</span>
+        PÓCIMA
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">●</span>
+        PÍLDORA
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">▰</span>
+        PROCLAMA
+      </button>
+
+    </div>
+
+    <div class="tool-note">
+      HERRAMIENTAS · PRÓXIMAMENTE
+    </div>
+
+    <br>
 
     <button
       id="resetDebateBtn"
@@ -4137,6 +4246,26 @@ function renderDebate() {
       currentDilemma
         ? currentDilemma.question
         : "DILEMA";
+
+
+  document
+    .getElementById(
+      "debateOptionA"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.option_a
+        : "";
+
+
+  document
+    .getElementById(
+      "debateOptionB"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.option_b
+        : "";
 
 
   document
