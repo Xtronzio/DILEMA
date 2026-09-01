@@ -697,7 +697,7 @@
       UNIRME A UNA PARTIDA
     </button>
 
-    <div class="version">V0.0.8</div>
+    <div class="version">V0.0.9</div>
   </main>
 
 
@@ -1053,17 +1053,17 @@
 
       <button class="tool-button" type="button" disabled>
         <span class="tool-icon">◆</span>
-        PÓCIMA
+        PÓCIMA <span id="toolPotionCount">×0</span>
       </button>
 
       <button class="tool-button" type="button" disabled>
         <span class="tool-icon">●</span>
-        PÍLDORA
+        PÍLDORA <span id="toolPillCount">×0</span>
       </button>
 
       <button class="tool-button" type="button" disabled>
         <span class="tool-icon">▰</span>
-        PROCLAMA
+        PROCLAMA <span id="toolProclamationCount">×0</span>
       </button>
 
     </div>
@@ -1232,6 +1232,7 @@ let localVoteChoice = null;
 let localRoundRole = null;
 let localRoleReady = false;
 let assigningRoles = false;
+let localInventory = { potions: 0, pills: 0, proclamations: 0 };
 
 const localPlayerId =
   getOrCreateLocalPlayerId();
@@ -3984,6 +3985,16 @@ async function assignRoles() {
   }
 
 
+  const { error: inventoryError } = await sb.rpc(
+    "assign_round_inventory",
+    { p_round_id: currentRoundId }
+  );
+
+  if (inventoryError) {
+    console.error("ASSIGN INVENTORY ERROR:", inventoryError);
+    alert("El impostor se ha sorteado, pero no se ha podido repartir el inventario.");
+  }
+
   assigningRoles =
     false;
 
@@ -4009,7 +4020,7 @@ async function loadOwnRoundRole() {
       "round_players"
     )
     .select(
-      "role, ready"
+      "role, ready, potions, pills, proclamations"
     )
     .eq(
       "round_id",
@@ -4049,6 +4060,12 @@ async function loadOwnRoundRole() {
     Boolean(
       data.ready
     );
+
+  localInventory = {
+    potions: Number(data.potions || 0),
+    pills: Number(data.pills || 0),
+    proclamations: Number(data.proclamations || 0)
+  };
 
 
   return data;
@@ -4237,6 +4254,10 @@ async function confirmRoleReady() {
 
 
 function renderDebate() {
+
+  document.getElementById("toolPotionCount").textContent = `×${localInventory.potions}`;
+  document.getElementById("toolPillCount").textContent = `×${localInventory.pills}`;
+  document.getElementById("toolProclamationCount").textContent = `×${localInventory.proclamations}`;
 
   document
     .getElementById(
