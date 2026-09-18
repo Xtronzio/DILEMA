@@ -742,6 +742,37 @@
     }
 
   </style>
+
+<style>
+  .audience-choice{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin:10px 0 22px;
+    width:100%;
+  }
+  .audience-choice .choice-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    min-height:50px;
+    padding:10px 6px;
+    border:1px solid #333;
+    border-radius:14px;
+    background:#141414;
+    color:#8f8f8f;
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+    cursor:pointer;
+  }
+  .audience-choice .choice-btn.active{
+    background:#fff;
+    color:#000;
+    border-color:#fff;
+  }
+</style>
+
 </head>
 
 <body>
@@ -960,7 +991,7 @@
     <button class="back" onclick="showScreen('debateChoice')">←</button>
 
     <div class="title">PROPÓNNOS UN DILEMA</div>
-    <div class="subtitle">Elige temática e intensidad.</div>
+    <div class="subtitle">Elige cómo quieres debatir.</div>
 
     <div class="small-label">¿PARA QUIÉN?</div>
     <div class="choice-row audience-choice">
@@ -968,7 +999,7 @@
       <button type="button" class="choice-btn active" data-audience="teen" onclick="selectDebateAudience('teen', this)">ADOLESCENTES</button>
       <button type="button" class="choice-btn" data-audience="adult" onclick="selectDebateAudience('adult', this)">ADULTOS</button>
     </div>
-    <div class="microcopy">La edad limita el contenido. La intensidad decide cuánto aprieta el dilema.</div>
+    
 
     <div class="small-label">TEMÁTICA</div>
     <div id="categoryChoices" class="choice-grid"></div>
