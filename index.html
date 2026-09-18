@@ -804,7 +804,7 @@
 
 
 <style>
-  /* DILEMA V0.1.10 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.11 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -852,7 +852,7 @@
 
 
 <style>
-  /* DILEMA V0.1.10 */
+  /* DILEMA V0.1.11 */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -898,7 +898,7 @@
 
 
 <style>
-  /* DILEMA V0.1.10 — four auxiliary labels, one visual language */
+  /* DILEMA V0.1.11 — four auxiliary labels, one visual language */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -923,12 +923,28 @@
 
 
 <style>
-  /* DILEMA V0.1.10 — waiting text static; only ellipsis changes */
+  /* DILEMA V0.1.11 — waiting text static; only ellipsis changes */
   #waitingStatus {
     animation: none !important;
     transform: none !important;
     opacity: 1 !important;
     color: #8d8d8d !important;
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.11 — foco inicial TEENS */
+  .audience-choice .choice-btn.construction-audience {
+    opacity: .28;
+    cursor: default;
+    min-height: 64px;
+  }
+  .audience-choice .choice-btn.construction-audience .construction-label {
+    margin-top: 5px;
+    font-size: 7px;
+    letter-spacing: 1px;
+    white-space: nowrap;
   }
 </style>
 
@@ -947,7 +963,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA V0.1.10</div>
+    <div class="version">DILEMA V0.1.11</div>
   </main>
 
 
@@ -1154,9 +1170,15 @@
 
     <div class="small-label">¿PARA QUIÉN?</div>
     <div class="choice-row audience-choice">
-      <button type="button" class="choice-btn" data-audience="child" onclick="selectDebateAudience('child', this)">NIÑOS</button>
+      <button type="button" class="choice-btn construction-audience" data-audience="child" disabled>
+        NIÑOS
+        <span class="construction-label">EN CONSTRUCCIÓN</span>
+      </button>
       <button type="button" class="choice-btn active" data-audience="teen" onclick="selectDebateAudience('teen', this)">ADOLESCENTES</button>
-      <button type="button" class="choice-btn" data-audience="adult" onclick="selectDebateAudience('adult', this)">ADULTOS</button>
+      <button type="button" class="choice-btn construction-audience" data-audience="adult" disabled>
+        ADULTOS
+        <span class="construction-label">EN CONSTRUCCIÓN</span>
+      </button>
     </div>
     
 
@@ -3500,10 +3522,9 @@ const debateCategories = [
 ];
 
 const debateIntensities = [
-  { label: "SUAVE", value: 1 },
-  { label: "MEDIO", value: 2 },
-  { label: "INTENSO", value: 3 },
-  { label: "SIN FILTRO", value: 4 }
+  { label: "CHILL", value: 1 },
+  { label: "DRAMA", value: 2 },
+  { label: "HELL", value: 3 }
 ];
 
 function refreshMicrophrases() {
