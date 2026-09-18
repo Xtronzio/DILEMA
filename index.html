@@ -773,6 +773,31 @@
   }
 </style>
 
+
+<style>
+  #waitingPhrase{
+    margin:26px auto 0;
+    max-width:520px;
+    text-align:center;
+    line-height:1.3;
+  }
+  #waitingPhrase .dilema-reminder{
+    display:block;
+    margin-bottom:8px;
+    color:#777;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.16em;
+  }
+  #waitingPhrase .dilema-shared-phrase{
+    display:block;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+</style>
+
 </head>
 
 <body>
@@ -795,7 +820,6 @@
   <section id="createMode" class="screen center">
     <button class="back" onclick="goHome()">←</button>
     <div class="title">¿QUÉ HACEMOS HOY?</div>
-    <div id="createModePhrase" class="subtitle">La privacidad garantiza la sinceridad.</div>
     <button class="btn btn-primary" onclick="chooseRoomMode('debate')">ABRIR DEBATE</button>
     <button class="btn btn-secondary construction-btn" type="button" disabled>
       CREAR PARTIDA
@@ -962,7 +986,10 @@
 
     <div id="waitingHost" class="small-note">
       ESPERANDO AL ANFITRIÓN...
-      <div id="waitingPhrase" class="waiting-phrase">Escuchar no significa estar de acuerdo.</div>
+      <div id="waitingPhrase" class="waiting-phrase">
+        <span class="dilema-reminder">Y RECUERDA,</span>
+        <strong class="dilema-shared-phrase">ESCUCHAR NO SIGNIFICA ESTAR DE ACUERDO.</strong>
+      </div>
     </div>
 
   </section>
@@ -1036,7 +1063,6 @@
   <section id="waitingDilemma" class="screen center">
     <div class="game-category">SALA COMPLETA</div>
     <div class="title">ESPERANDO AL ANFITRIÓN</div>
-    <div id="waitingDilemmaPhrase" class="subtitle">Una buena pregunta puede mover una certeza.</div>
     <div class="small-note">ESTÁ ELIGIENDO QUÉ DEBATIMOS.</div>
   </section>
 
@@ -2733,6 +2759,8 @@ function renderLobby(
 ) {
 
   currentRoomMode = room.mode || "game";
+  currentRoomCode = room.code;
+  refreshMicrophrases();
 
   document.querySelector("#room .room-code-label").textContent =
     currentRoomMode === "debate" ? "CÓDIGO DE DEBATE" : "CÓDIGO DE PARTIDA";
@@ -3346,17 +3374,29 @@ const debateIntensities = [
   { label: "SIN FILTRO", value: 4 }
 ];
 
-function randomPhrase() {
-  return startPhrases[Math.floor(Math.random() * startPhrases.length)];
-}
-
 function refreshMicrophrases() {
-  const a = document.getElementById("createModePhrase");
-  const b = document.getElementById("waitingPhrase");
-  const c = document.getElementById("waitingDilemmaPhrase");
-  if (a) a.textContent = randomPhrase();
-  if (b) b.textContent = randomPhrase();
-  if (c) c.textContent = randomPhrase();
+  const target = document.getElementById("waitingPhrase");
+  if (!target) return;
+
+  const phrases = startPhrases.length
+    ? startPhrases
+    : ["Escuchar no significa estar de acuerdo."];
+
+  const roomKey = String(currentRoomCode || currentRoomId || "DILEMA");
+  let hash = 0;
+
+  for (let i = 0; i < roomKey.length; i++) {
+    hash = ((hash << 5) - hash) + roomKey.charCodeAt(i);
+    hash |= 0;
+  }
+
+  const phrase = phrases[Math.abs(hash) % phrases.length];
+
+  target.innerHTML =
+    '<span class="dilema-reminder">Y RECUERDA,</span>' +
+    '<strong class="dilema-shared-phrase">' +
+    phrase.toUpperCase() +
+    '</strong>';
 }
 
 function openSuggestedDebate() {
