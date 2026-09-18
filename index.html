@@ -942,12 +942,12 @@
     <div class="title">¿QUÉ DEBATIMOS?</div>
     <div class="subtitle">Ponemos algo sobre la mesa.</div>
 
-    <button class="btn btn-primary" onclick="openSuggestedDebate()">
-      PROPÓNME UNO
+    <button class="btn btn-primary" onclick="openCustomDebate()">
+      TENEMOS UN DILEMA
     </button>
 
-    <button class="btn btn-secondary" onclick="openCustomDebate()">
-      TENEMOS UNO
+    <button class="btn btn-secondary" onclick="openSuggestedDebate()">
+      PROPÓNNOS UN DILEMA
     </button>
 
     <button class="btn btn-danger" onclick="confirmResetGame()">
@@ -959,7 +959,7 @@
   <section id="debateSuggested" class="screen">
     <button class="back" onclick="showScreen('debateChoice')">←</button>
 
-    <div class="title">PROPÓNME UNO</div>
+    <div class="title">PROPÓNNOS UN DILEMA</div>
     <div class="subtitle">Elige temática e intensidad.</div>
 
     <div class="small-label">TEMÁTICA</div>
@@ -979,7 +979,7 @@
   <section id="customDebate" class="screen">
     <button class="back" onclick="showScreen('debateChoice')">←</button>
 
-    <div class="title">TENEMOS UNO</div>
+    <div class="title">TENEMOS UN DILEMA</div>
     <div class="subtitle">Es vuestro dilema. DILEMA no lo cambia.</div>
 
     <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA"></textarea>
@@ -3295,7 +3295,7 @@ const startPhrases = [
 
 const debateCategories = [
   "ALEATORIO", "AMIGOS", "FAMILIA", "PAREJA",
-  "DINERO", "ÉTICA", "REDES", "ACTUALIDAD", "CABRÓN"
+  "DINERO", "ÉTICA", "REDES", "ACTUALIDAD"
 ];
 
 const debateIntensities = [
