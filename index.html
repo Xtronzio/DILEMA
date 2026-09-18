@@ -800,56 +800,53 @@
 
   <link rel="icon" type="image/png" href="favicon.png">
 
+
+
+
 <style>
-  /* DILEMA V0.1.6 — unified auxiliary labels */
-  .room-label,
+  /* DILEMA V0.1.7 — exact common typography for the four marked labels */
+  .room-code-label,
   .players-title,
-  #waitingPhrase .dilema-reminder{
-    font-size:13px !important;
-    font-weight:500 !important;
-    letter-spacing:.16em !important;
-    line-height:1.25 !important;
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase;
+    color: #8d8d8d !important;
   }
 
-  #waitingPhrase{
-    margin:28px auto 0 !important;
-    max-width:520px;
-    text-align:center;
+  #waitingPhrase {
+    margin: 30px auto 0 !important;
+    max-width: 520px;
+    text-align: center;
   }
 
-  #waitingPhrase .waiting-status{
-    display:block;
-    margin-bottom:28px;
-    color:#8d8d8d;
-    font-size:13px;
-    font-weight:500;
-    letter-spacing:.16em;
-    line-height:1.25;
-    animation:dilemaWaitingPulse 1.4s ease-in-out infinite;
+  #waitingStatus {
+    display: block;
+    margin-bottom: 28px;
+    animation: waitingPulse 1.35s ease-in-out infinite;
   }
 
-  #waitingPhrase .dilema-reminder{
-    display:block;
-    margin-bottom:10px;
-    color:#8d8d8d !important;
+  #waitingPhrase .dilema-reminder {
+    display: block;
+    margin-bottom: 10px;
   }
 
-  #waitingPhrase .dilema-shared-phrase{
-    display:block;
-    color:#fff;
-    font-size:18px;
-    font-weight:800;
-    letter-spacing:.02em;
-    line-height:1.15;
+  #waitingPhrase .dilema-shared-phrase {
+    display: block;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1.15;
   }
 
-  @keyframes dilemaWaitingPulse{
-    0%,100%{opacity:.32;color:#666}
-    50%{opacity:1;color:#fff}
-  }
-
-  @media (prefers-reduced-motion: reduce){
-    #waitingPhrase .waiting-status{animation:none;opacity:1}
+  @keyframes waitingPulse {
+    0%, 100% { opacity: .35; }
+    50%      { opacity: 1; color: #fff !important; }
   }
 </style>
 
@@ -868,7 +865,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA V0.1.6</div>
+    <div class="version">DILEMA V0.1.7</div>
   </main>
 
 
@@ -1038,7 +1035,6 @@
     </button>
 
     <div id="waitingHost" class="small-note">
-      ESPERANDO AL ANFITRIÓN...
       <div id="waitingPhrase" class="waiting-phrase">
         <span class="waiting-status" id="waitingStatus">ESPERANDO AL ANFITRIÓN</span>
 <span class="dilema-reminder">Y RECUERDA,</span>
@@ -5875,20 +5871,23 @@ window.addEventListener(
 
 
 
+
+
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const waitingStatus = document.getElementById("waitingStatus");
-  if (!waitingStatus) return;
-
+(function () {
   let dots = 0;
-  waitingStatus.textContent = "ESPERANDO AL ANFITRIÓN";
 
-  window.setInterval(() => {
+  function tickWaiting() {
+    const el = document.getElementById("waitingStatus");
+    if (!el) return;
+    el.textContent = "ESPERANDO AL ANFITRIÓN" + ".".repeat(dots);
     dots = (dots + 1) % 4;
-    waitingStatus.textContent =
-      "ESPERANDO AL ANFITRIÓN" + ".".repeat(dots);
-  }, 500);
-});
+  }
+
+  tickWaiting();
+  window.setInterval(tickWaiting, 500);
+})();
 </script>
 
 </body>
