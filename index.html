@@ -689,25 +689,34 @@
   <main id="home" class="screen active center">
     <div class="logo">DILEMA</div>
 
-    <button class="btn btn-primary" onclick="openExpectedPlayers()">
-      CREAR PARTIDA
+    <button class="btn btn-primary" onclick="openCreateMode()">
+      CREAR
     </button>
 
     <button class="btn btn-secondary" onclick="openJoinScreen()">
-      UNIRME A UNA PARTIDA
+      UNIRME
     </button>
 
-    <div class="version">V0.0.9</div>
+    <div class="version">DEBATE V0.1</div>
   </main>
 
 
-  <section id="expected" class="screen center">
+  <section id="createMode" class="screen center">
     <button class="back" onclick="goHome()">←</button>
+    <div class="title">¿QUÉ HACEMOS HOY?</div>
+    <div class="subtitle">Hay más de una forma de entrar en DILEMA.</div>
+    <button class="btn btn-primary" onclick="chooseRoomMode('debate')">ABRIR DEBATE</button>
+    <button class="btn btn-secondary" onclick="chooseRoomMode('game')">CREAR PARTIDA</button>
+  </section>
 
-    <div class="title">¿CUÁNTOS JUGÁIS?</div>
+
+  <section id="expected" class="screen center">
+    <button class="back" onclick="showScreen('createMode')">←</button>
+
+    <div class="title">¿CUÁNTOS SERÉIS?</div>
 
     <div class="subtitle">
-      La sala tendrá que estar cuadrada para poder iniciar.
+      La sala tendrá que estar completa para poder iniciar.
     </div>
 
     <div class="counter">
@@ -747,7 +756,7 @@
     <div class="title">ENTRAR</div>
 
     <div class="subtitle">
-      Introduce el código de la partida.
+      Introduce el código de la sala.
     </div>
 
     <input
@@ -1214,6 +1223,7 @@ let currentRoomCode = null;
 let currentRoomHostId = null;
 let currentExpectedPlayers = null;
 let currentRoomStatus = null;
+let currentRoomMode = "game";
 
 let playersChannel = null;
 let roomChannel = null;
@@ -1376,6 +1386,15 @@ function goHome() {
 
 }
 
+
+function openCreateMode() {
+  showScreen("createMode");
+}
+
+function chooseRoomMode(mode) {
+  currentRoomMode = mode === "debate" ? "debate" : "game";
+  openExpectedPlayers();
+}
 
 function openExpectedPlayers() {
 
@@ -2079,7 +2098,7 @@ async function findRoom() {
         "joinError"
       )
       .textContent =
-        "Esa partida no existe.";
+        "Esa sala no existe.";
 
     return;
 
@@ -2096,7 +2115,7 @@ async function findRoom() {
         "joinError"
       )
       .textContent =
-        "ESTA PARTIDA YA HA COMENZADO.";
+        "ESTA SALA YA HA COMENZADO.";
 
     return;
 
@@ -2114,6 +2133,9 @@ async function findRoom() {
 
   currentExpectedPlayers =
     data.expected_players;
+
+  currentRoomMode =
+    data.mode || "game";
 
   openProfileChoice(
     "join"
@@ -2197,7 +2219,10 @@ async function createRoom(
         localPlayerId,
 
       expected_players:
-        setupExpectedPlayers
+        setupExpectedPlayers,
+
+      mode:
+        currentRoomMode
 
     })
     .select()
@@ -2231,6 +2256,9 @@ async function createRoom(
 
   currentRoomStatus =
     data.status;
+
+  currentRoomMode =
+    data.mode || "game";
 
 
   await insertPlayer(
@@ -2277,7 +2305,7 @@ async function joinRoomWithProfile(
   ) {
 
     alert(
-      "La partida ya ha comenzado."
+      "La sala ya ha comenzado."
     );
 
     return;
@@ -2412,6 +2440,9 @@ async function refreshLobby() {
   currentRoomStatus =
     room.status;
 
+  currentRoomMode =
+    room.mode || "game";
+
 
   if (
     room.status ===
@@ -2497,6 +2528,14 @@ function renderLobby(
   room,
   players
 ) {
+
+  currentRoomMode = room.mode || "game";
+
+  document.querySelector("#room .room-code-label").textContent =
+    currentRoomMode === "debate" ? "CÓDIGO DE DEBATE" : "CÓDIGO DE PARTIDA";
+
+  document.getElementById("startGameBtn").textContent =
+    currentRoomMode === "debate" ? "INICIAR DEBATE" : "INICIAR PARTIDA";
 
   document
     .getElementById(
@@ -3505,6 +3544,9 @@ async function refreshGame() {
 
     currentRoomStatus =
       liveRoom.status;
+
+    currentRoomMode =
+      liveRoom.mode || "game";
 
 
     if (
@@ -4895,7 +4937,10 @@ function saveRoomSession() {
         currentRoomId,
 
       roomCode:
-        currentRoomCode
+        currentRoomCode,
+
+      roomMode:
+        currentRoomMode
 
     })
   );
@@ -5029,6 +5074,9 @@ async function restoreRoomSession() {
     currentRoomStatus =
       room.status;
 
+    currentRoomMode =
+      room.mode || session.roomMode || "game";
+
 
     await enterRoom();
 
@@ -5148,6 +5196,9 @@ function cleanupRoom() {
 
   currentRoomStatus =
     null;
+
+  currentRoomMode =
+    "game";
 
   selectedSavedProfileId =
     null;
