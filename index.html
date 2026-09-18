@@ -801,7 +801,7 @@
   <link rel="icon" type="image/png" href="favicon.png">
 
 <style>
-  /* DILEMA V0.1.5 — unified auxiliary labels */
+  /* DILEMA V0.1.6 — unified auxiliary labels */
   .room-label,
   .players-title,
   #waitingPhrase .dilema-reminder{
@@ -825,7 +825,7 @@
     font-weight:500;
     letter-spacing:.16em;
     line-height:1.25;
-    animation:dilemaWaitingPulse 1.9s ease-in-out infinite;
+    animation:dilemaWaitingPulse 1.4s ease-in-out infinite;
   }
 
   #waitingPhrase .dilema-reminder{
@@ -844,8 +844,8 @@
   }
 
   @keyframes dilemaWaitingPulse{
-    0%,100%{opacity:.38}
-    50%{opacity:1}
+    0%,100%{opacity:.32;color:#666}
+    50%{opacity:1;color:#fff}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -868,7 +868,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA V0.1.5</div>
+    <div class="version">DILEMA V0.1.6</div>
   </main>
 
 
@@ -1040,7 +1040,7 @@
     <div id="waitingHost" class="small-note">
       ESPERANDO AL ANFITRIÓN...
       <div id="waitingPhrase" class="waiting-phrase">
-        <span class="waiting-status" id="waitingStatus">ESPERANDO AL ANFITRIÓN...</span>
+        <span class="waiting-status" id="waitingStatus">ESPERANDO AL ANFITRIÓN</span>
 <span class="dilema-reminder">Y RECUERDA,</span>
         <strong class="dilema-shared-phrase">ESCUCHAR NO SIGNIFICA ESTAR DE ACUERDO.</strong>
       </div>
@@ -5872,17 +5872,23 @@ window.addEventListener(
 </script>
 
 
+
+
+
 <script>
-(function(){
-  let waitingDotStep = 0;
-  function animateWaitingDots(){
-    const el = document.getElementById("waitingStatus");
-    if (!el) return;
-    waitingDotStep = (waitingDotStep + 1) % 4;
-    el.textContent = "ESPERANDO AL ANFITRIÓN" + ".".repeat(waitingDotStep);
-  }
-  setInterval(animateWaitingDots, 520);
-})();
+document.addEventListener("DOMContentLoaded", () => {
+  const waitingStatus = document.getElementById("waitingStatus");
+  if (!waitingStatus) return;
+
+  let dots = 0;
+  waitingStatus.textContent = "ESPERANDO AL ANFITRIÓN";
+
+  window.setInterval(() => {
+    dots = (dots + 1) % 4;
+    waitingStatus.textContent =
+      "ESPERANDO AL ANFITRIÓN" + ".".repeat(dots);
+  }, 500);
+});
 </script>
 
 </body>
