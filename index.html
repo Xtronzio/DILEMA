@@ -804,7 +804,7 @@
 
 
 <style>
-  /* DILEMA V0.1.11 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.12 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -852,7 +852,7 @@
 
 
 <style>
-  /* DILEMA V0.1.11 */
+  /* DILEMA V0.1.12 */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -898,7 +898,7 @@
 
 
 <style>
-  /* DILEMA V0.1.11 — four auxiliary labels, one visual language */
+  /* DILEMA V0.1.12 — four auxiliary labels, one visual language */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -923,7 +923,7 @@
 
 
 <style>
-  /* DILEMA V0.1.11 — waiting text static; only ellipsis changes */
+  /* DILEMA V0.1.12 — waiting text static; only ellipsis changes */
   #waitingStatus {
     animation: none !important;
     transform: none !important;
@@ -934,7 +934,7 @@
 
 
 <style>
-  /* DILEMA V0.1.11 — foco inicial TEENS */
+  /* DILEMA V0.1.12 — foco inicial TEENS */
   .audience-choice .choice-btn.construction-audience {
     opacity: .28;
     cursor: default;
@@ -945,6 +945,19 @@
     font-size: 7px;
     letter-spacing: 1px;
     white-space: nowrap;
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.12 — resultado colectivo y esperas */
+  #debateGroupVote .majority-choice {
+    color: #ff4d5a;
+    font-weight: 900;
+  }
+
+  .host-wait-animated {
+    min-height: 17px;
   }
 </style>
 
@@ -963,7 +976,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA V0.1.11</div>
+    <div class="version">DILEMA V0.1.12</div>
   </main>
 
 
@@ -1375,8 +1388,8 @@
 
   <section id="debate" class="screen center">
 
-    <div class="game-category">
-      TODOS PREPARADOS
+    <div id="debateGroupVote" class="game-category">
+      EL GRUPO HA VOTADO
     </div>
 
     <div class="debate-title">
@@ -4953,12 +4966,41 @@ async function confirmRoleReady() {
 }
 
 
+
+async function renderDebateGroupVote() {
+  const target = document.getElementById("debateGroupVote");
+  if (!target || currentRoomMode !== "debate") return;
+
+  const voteCount = await getVoteCount();
+  if (!voteCount) {
+    target.textContent = "EL GRUPO HA VOTADO";
+    return;
+  }
+
+  const votesA = Number(voteCount.votes_a || 0);
+  const votesB = Number(voteCount.votes_b || 0);
+
+  if (votesA === votesB) {
+    target.textContent = "EL GRUPO ESTÁ DIVIDIDO";
+    return;
+  }
+
+  const majority = votesA > votesB ? "A" : "B";
+  target.innerHTML =
+    'EL GRUPO HA VOTADO <span class="majority-choice">' + majority + '</span>';
+}
+
 function renderDebate() {
 
   const debateMode = currentRoomMode === "debate";
 
-  document.querySelector("#debate .game-category").textContent =
-    debateMode ? "EL GRUPO HA VOTADO" : "TODOS PREPARADOS";
+  const debateGroupVote = document.getElementById("debateGroupVote");
+
+  if (debateMode) {
+    renderDebateGroupVote();
+  } else if (debateGroupVote) {
+    debateGroupVote.textContent = "TODOS PREPARADOS";
+  }
 
   document.querySelector("#debate .debate-title").innerHTML =
     debateMode ? "ABRIMOS<br>EL DEBATE" : "COMIENZA<br>EL DEBATE";
@@ -5978,15 +6020,33 @@ window.addEventListener(
 <script>
 (function () {
   let n = 0;
-  function updateWaiting() {
-    const el = document.getElementById("waitingStatus");
-    if (!el) return;
-    el.textContent = "ESPERANDO AL ANFITRIÓN" + ".".repeat(n);
+
+  function markHostWaitingLabels() {
+    const candidates = document.querySelectorAll(
+      "#waitingStatus, #waitingRoleDraw, .waiting-status, .small-note"
+    );
+
+    candidates.forEach(function (el) {
+      const text = (el.textContent || "").trim();
+      if (/^ESPERANDO AL ANFITRIÓN(?:\.\.\.)?$/.test(text)) {
+        el.classList.add("host-wait-animated");
+      }
+    });
+  }
+
+  function updateHostWaitingLabels() {
+    markHostWaitingLabels();
+
+    document.querySelectorAll(".host-wait-animated").forEach(function (el) {
+      el.textContent = "ESPERANDO AL ANFITRIÓN" + ".".repeat(n);
+    });
+
     n = (n + 1) % 4;
   }
+
   document.addEventListener("DOMContentLoaded", function () {
-    updateWaiting();
-    setInterval(updateWaiting, 500);
+    updateHostWaitingLabels();
+    setInterval(updateHostWaitingLabels, 500);
   });
 })();
 </script>
