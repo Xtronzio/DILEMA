@@ -867,7 +867,7 @@
     </button>
 
     <div id="waitingHost" class="small-note">
-      ESPERANDO AL CREADOR...
+      ESPERANDO AL ANFITRIÓN...
     </div>
 
   </section>
@@ -946,11 +946,13 @@
 
       <div class="result-item">
         <div class="result-letter">A</div>
+        <div id="resultOptionA" class="debate-option-text" style="margin:10px 0 14px;"></div>
         <div id="resultA" class="result-number">0</div>
       </div>
 
       <div class="result-item">
         <div class="result-letter">B</div>
+        <div id="resultOptionB" class="debate-option-text" style="margin:10px 0 14px;"></div>
         <div id="resultB" class="result-number">0</div>
       </div>
 
@@ -976,7 +978,7 @@
       class="small-note"
       style="display:none;"
     >
-      ESPERANDO AL CREADOR...
+      ESPERANDO AL ANFITRIÓN...
     </div>
 
     <button
@@ -1082,6 +1084,31 @@
     </div>
 
     <br>
+
+    <button
+      id="absentBtn"
+      class="btn btn-secondary"
+      onclick="prototypeAbsent()"
+    >
+      AUSENTARME
+    </button>
+
+    <button
+      id="abandonDebateBtn"
+      class="btn btn-danger"
+      onclick="prototypeAbandon()"
+    >
+      ABANDONAR
+    </button>
+
+    <button
+      id="pauseDebateBtn"
+      class="btn btn-secondary"
+      onclick="prototypePause()"
+      style="display:none;"
+    >
+      PAUSAR DEBATE
+    </button>
 
     <button
       id="resetDebateBtn"
@@ -3896,6 +3923,17 @@ function renderResult(
       currentDilemma.question;
 
 
+  document.getElementById("resultOptionA").textContent =
+    currentDilemma.option_a;
+
+  document.getElementById("resultOptionB").textContent =
+    currentDilemma.option_b;
+
+  document.getElementById("assignRolesBtn").textContent =
+    currentRoomMode === "debate"
+      ? "COMENZAR DEBATE"
+      : "SORTEAR IMPOSTOR";
+
   document
     .getElementById(
       "resultA"
@@ -3960,6 +3998,40 @@ function renderResult(
 
 
 async function assignRoles() {
+
+  if (currentRoomMode === "debate") {
+    if (
+      assigningRoles ||
+      currentRoomHostId !== localPlayerId ||
+      !currentRoundId ||
+      currentRoundStatus !== "reveal"
+    ) {
+      return;
+    }
+
+    assigningRoles = true;
+
+    try {
+      const { error } = await sb
+        .from("rounds")
+        .update({ status: "debate" })
+        .eq("id", currentRoundId)
+        .eq("room_id", currentRoomId);
+
+      if (error) {
+        console.error(error);
+        alert("No se ha podido comenzar el debate.");
+        return;
+      }
+
+      currentRoundStatus = "debate";
+      await refreshGame();
+    } finally {
+      assigningRoles = false;
+    }
+
+    return;
+  }
 
   if (
     assigningRoles ||
@@ -4296,6 +4368,33 @@ async function confirmRoleReady() {
 
 
 function renderDebate() {
+
+  const debateMode = currentRoomMode === "debate";
+
+  document.querySelector("#debate .game-category").textContent =
+    debateMode ? "EL GRUPO HA VOTADO" : "TODOS PREPARADOS";
+
+  document.querySelector("#debate .debate-title").innerHTML =
+    debateMode ? "ABRIMOS<br>EL DEBATE" : "COMIENZA<br>EL DEBATE";
+
+  document.querySelector("#debate .small-note").textContent =
+    debateMode
+      ? "DEFIENDE LO QUE PIENSAS · ESCUCHA · CAMBIA DE OPINIÓN SI QUIERES"
+      : "DEFIENDE TU POSTURA · ENCUENTRA AL IMPOSTOR";
+
+  const dock = document.querySelector("#debate .tool-dock");
+  const toolNote = document.querySelector("#debate .tool-note");
+  if (dock) dock.style.display = debateMode ? "none" : "flex";
+  if (toolNote) toolNote.style.display = debateMode ? "none" : "block";
+
+  document.getElementById("pauseDebateBtn").style.display =
+    debateMode && currentRoomHostId === localPlayerId ? "block" : "none";
+
+  document.getElementById("abandonDebateBtn").textContent =
+    debateMode ? "ABANDONAR DEBATE" : "ABANDONAR PARTIDA";
+
+  document.getElementById("absentBtn").textContent =
+    debateMode ? "AUSENTARME DEL DEBATE" : "AUSENTARME DE LA PARTIDA";
 
   document.getElementById("toolPotionCount").textContent = `×${localInventory.potions}`;
   document.getElementById("toolPillCount").textContent = `×${localInventory.pills}`;
@@ -4714,6 +4813,25 @@ async function resetGame() {
 
 }
 
+
+function prototypeAbsent() {
+  alert("AUSENTARSE queda incorporado al flujo. En el siguiente paso conectaremos el estado PRESENTE / AUSENTE a Supabase para que la plaza se conserve y pueda reanudarse.");
+}
+
+function prototypeAbandon() {
+  const farewell = prompt(
+    "¿ASÍ QUE TE VAS?\n\nPuedes desaparecer en silencio o dejar unas últimas palabras.\n\nMensaje de despedida (opcional):",
+    ""
+  );
+
+  if (farewell === null) return;
+
+  alert("ABANDONAR queda definido como irreversible para esta sala. Antes de activarlo de verdad añadiremos el bloqueo persistente en Supabase para impedir que esa identidad vuelva a entrar.");
+}
+
+function prototypePause() {
+  alert("PAUSAR DEBATE queda reservado al anfitrión. La persistencia y reanudación se conectarán a Supabase junto con los estados PRESENTE / AUSENTE / ABANDONÓ.");
+}
 
 async function confirmLeaveRoom() {
 
