@@ -962,6 +962,14 @@
     <div class="title">PROPÓNNOS UN DILEMA</div>
     <div class="subtitle">Elige temática e intensidad.</div>
 
+    <div class="small-label">¿PARA QUIÉN?</div>
+    <div class="choice-row audience-choice">
+      <button type="button" class="choice-btn" data-audience="child" onclick="selectDebateAudience('child', this)">NIÑOS</button>
+      <button type="button" class="choice-btn active" data-audience="teen" onclick="selectDebateAudience('teen', this)">ADOLESCENTES</button>
+      <button type="button" class="choice-btn" data-audience="adult" onclick="selectDebateAudience('adult', this)">ADULTOS</button>
+    </div>
+    <div class="microcopy">La edad limita el contenido. La intensidad decide cuánto aprieta el dilema.</div>
+
     <div class="small-label">TEMÁTICA</div>
     <div id="categoryChoices" class="choice-grid"></div>
 
@@ -1370,6 +1378,7 @@ let setupExpectedPlayers = 4;
 let flowMode = null;
 let editingLobbyProfile = false;
 
+let selectedDebateAudience = "teen";
 let selectedDebateCategory = "ALEATORIO";
 let selectedDebateIntensity = 2;
 
@@ -3295,7 +3304,8 @@ const startPhrases = [
 
 const debateCategories = [
   "ALEATORIO", "AMIGOS", "FAMILIA", "PAREJA",
-  "DINERO", "ÉTICA", "REDES", "ACTUALIDAD"
+  "TRABAJO", "DINERO", "OCIO", "DEPORTE",
+  "REDES", "TECNOLOGÍA", "ÉTICA", "SOCIEDAD", "ACTUALIDAD"
 ];
 
 const debateIntensities = [
@@ -3368,6 +3378,12 @@ function openCustomDebate() {
   showScreen("customDebate");
 }
 
+function selectDebateAudience(audience, button) {
+  selectedDebateAudience = audience;
+  document.querySelectorAll(".audience-choice .choice-btn").forEach(btn => btn.classList.remove("active"));
+  if (button) button.classList.add("active");
+}
+
 async function proposeDilemma() {
   if (currentRoomHostId !== localPlayerId || currentRoomMode !== "debate") return;
 
@@ -3375,6 +3391,7 @@ async function proposeDilemma() {
     .from("dilemmas")
     .select("id, audience, category, intensity, question, option_a, option_b")
     .eq("active", true)
+      .eq("audience", selectedDebateAudience)
     .lte("intensity", selectedDebateIntensity);
 
   if (selectedDebateCategory !== "ALEATORIO") {
