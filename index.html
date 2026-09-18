@@ -681,6 +681,66 @@
       letter-spacing: 1px;
       text-align: center;
     }
+
+    .construction-btn {
+      position: relative;
+      opacity: 0.42 !important;
+    }
+
+    .construction-label {
+      display: block;
+      margin-top: 7px;
+      color: #777;
+      font-size: 9px;
+      letter-spacing: 2px;
+    }
+
+    .waiting-phrase {
+      margin-top: 18px;
+      color: #666;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    textarea {
+      font: inherit;
+    }
+
+    .debate-input {
+      min-height: 94px;
+      resize: vertical;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .choice-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0 26px;
+    }
+
+    .choice-chip {
+      min-height: 54px;
+      padding: 10px 7px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: #888;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .choice-chip.selected {
+      border-color: white;
+      background: white;
+      color: #0b0b0b;
+    }
+
   </style>
 </head>
 
@@ -697,16 +757,19 @@
       UNIRME
     </button>
 
-    <div class="version">DEBATE V0.1</div>
+    <div class="version">DEBATE V0.1 · PISTA</div>
   </main>
 
 
   <section id="createMode" class="screen center">
     <button class="back" onclick="goHome()">←</button>
     <div class="title">¿QUÉ HACEMOS HOY?</div>
-    <div class="subtitle">Hay más de una forma de entrar en DILEMA.</div>
+    <div id="createModePhrase" class="subtitle">La privacidad garantiza la sinceridad.</div>
     <button class="btn btn-primary" onclick="chooseRoomMode('debate')">ABRIR DEBATE</button>
-    <button class="btn btn-secondary" onclick="chooseRoomMode('game')">CREAR PARTIDA</button>
+    <button class="btn btn-secondary construction-btn" type="button" disabled>
+      CREAR PARTIDA
+      <span class="construction-label">EN CONSTRUCCIÓN</span>
+    </button>
   </section>
 
 
@@ -835,7 +898,7 @@
 
     <div id="hostControls" class="host-controls" style="display:none;">
       <div class="small-label">
-        JUGADORES PREVISTOS
+        PARTICIPANTES PREVISTOS
       </div>
 
       <div class="counter">
@@ -852,7 +915,7 @@
     </div>
 
     <div class="players-title">
-      JUGADORES
+      PARTICIPANTES
     </div>
 
     <div id="playersList" class="players-list"></div>
@@ -868,8 +931,74 @@
 
     <div id="waitingHost" class="small-note">
       ESPERANDO AL ANFITRIÓN...
+      <div id="waitingPhrase" class="waiting-phrase">Escuchar no significa estar de acuerdo.</div>
     </div>
 
+  </section>
+
+
+  <section id="debateChoice" class="screen center">
+    <div class="game-category">SALA COMPLETA</div>
+    <div class="title">¿QUÉ DEBATIMOS?</div>
+    <div class="subtitle">Ponemos algo sobre la mesa.</div>
+
+    <button class="btn btn-primary" onclick="openSuggestedDebate()">
+      PROPÓNME UNO
+    </button>
+
+    <button class="btn btn-secondary" onclick="openCustomDebate()">
+      TENEMOS UNO
+    </button>
+
+    <button class="btn btn-danger" onclick="confirmResetGame()">
+      CERRAR SALA
+    </button>
+  </section>
+
+
+  <section id="debateSuggested" class="screen">
+    <button class="back" onclick="showScreen('debateChoice')">←</button>
+
+    <div class="title">PROPÓNME UNO</div>
+    <div class="subtitle">Elige temática e intensidad.</div>
+
+    <div class="small-label">TEMÁTICA</div>
+    <div id="categoryChoices" class="choice-grid"></div>
+
+    <div class="small-label">INTENSIDAD</div>
+    <div id="intensityChoices" class="choice-grid"></div>
+
+    <div id="suggestedError" class="error"></div>
+
+    <button class="btn btn-primary" onclick="proposeDilemma()">
+      PROPONER DILEMA
+    </button>
+  </section>
+
+
+  <section id="customDebate" class="screen">
+    <button class="back" onclick="showScreen('debateChoice')">←</button>
+
+    <div class="title">TENEMOS UNO</div>
+    <div class="subtitle">Es vuestro dilema. DILEMA no lo cambia.</div>
+
+    <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA"></textarea>
+    <textarea id="customA" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN A"></textarea>
+    <textarea id="customB" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN B"></textarea>
+
+    <div id="customError" class="error"></div>
+
+    <button class="btn btn-primary" onclick="startCustomDebate()">
+      LANZAR DILEMA
+    </button>
+  </section>
+
+
+  <section id="waitingDilemma" class="screen center">
+    <div class="game-category">SALA COMPLETA</div>
+    <div class="title">ESPERANDO AL ANFITRIÓN</div>
+    <div id="waitingDilemmaPhrase" class="subtitle">Una buena pregunta puede mover una certeza.</div>
+    <div class="small-note">ESTÁ ELIGIENDO QUÉ DEBATIMOS.</div>
   </section>
 
 
@@ -1241,6 +1370,9 @@ let setupExpectedPlayers = 4;
 let flowMode = null;
 let editingLobbyProfile = false;
 
+let selectedDebateCategory = "ALEATORIO";
+let selectedDebateIntensity = 2;
+
 let selectedAvatar = "";
 let selectedAvatarCategory = "CARAS";
 let selectedSavedProfileId = null;
@@ -1419,7 +1551,11 @@ function openCreateMode() {
 }
 
 function chooseRoomMode(mode) {
-  currentRoomMode = mode === "debate" ? "debate" : "game";
+  if (mode !== "debate") {
+    return;
+  }
+
+  currentRoomMode = "debate";
   openExpectedPlayers();
 }
 
@@ -2562,7 +2698,7 @@ function renderLobby(
     currentRoomMode === "debate" ? "CÓDIGO DE DEBATE" : "CÓDIGO DE PARTIDA";
 
   document.getElementById("startGameBtn").textContent =
-    currentRoomMode === "debate" ? "INICIAR DEBATE" : "INICIAR PARTIDA";
+    currentRoomMode === "debate" ? "ELEGIR DILEMA" : "INICIAR PARTIDA";
 
   document
     .getElementById(
@@ -2778,7 +2914,7 @@ function renderPlayers(
           "host-badge";
 
         badge.textContent =
-          "CREADOR";
+          "ANFITRIÓN";
 
         meta.appendChild(
           badge
@@ -3144,12 +3280,226 @@ function backFromProfile() {
 }
 
 
+
+const startPhrases = [
+  "La privacidad garantiza la sinceridad.",
+  "Separa a la persona del argumento.",
+  "Cambiar de opinión también es pensar.",
+  "No todas las certezas sobreviven a una buena pregunta.",
+  "Escuchar no significa estar de acuerdo.",
+  "Una contradicción también dice algo.",
+  "La primera respuesta no siempre es la definitiva.",
+  "Convencer no es tener razón.",
+  "A veces importa más el porqué que el qué."
+];
+
+const debateCategories = [
+  "ALEATORIO", "AMIGOS", "FAMILIA", "PAREJA",
+  "DINERO", "ÉTICA", "REDES", "ACTUALIDAD", "CABRÓN"
+];
+
+const debateIntensities = [
+  { label: "SUAVE", value: 1 },
+  { label: "MEDIO", value: 2 },
+  { label: "INTENSO", value: 3 },
+  { label: "SIN FILTRO", value: 4 }
+];
+
+function randomPhrase() {
+  return startPhrases[Math.floor(Math.random() * startPhrases.length)];
+}
+
+function refreshMicrophrases() {
+  const a = document.getElementById("createModePhrase");
+  const b = document.getElementById("waitingPhrase");
+  const c = document.getElementById("waitingDilemmaPhrase");
+  if (a) a.textContent = randomPhrase();
+  if (b) b.textContent = randomPhrase();
+  if (c) c.textContent = randomPhrase();
+}
+
+function openSuggestedDebate() {
+  selectedDebateCategory = "ALEATORIO";
+  selectedDebateIntensity = 2;
+  renderDebateFilters();
+  document.getElementById("suggestedError").textContent = "";
+  showScreen("debateSuggested");
+}
+
+function renderDebateFilters() {
+  const categories = document.getElementById("categoryChoices");
+  const intensities = document.getElementById("intensityChoices");
+
+  categories.innerHTML = "";
+  intensities.innerHTML = "";
+
+  debateCategories.forEach(category => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-chip" +
+      (selectedDebateCategory === category ? " selected" : "");
+    button.textContent = category;
+    button.onclick = () => {
+      selectedDebateCategory = category;
+      renderDebateFilters();
+    };
+    categories.appendChild(button);
+  });
+
+  debateIntensities.forEach(item => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-chip" +
+      (selectedDebateIntensity === item.value ? " selected" : "");
+    button.textContent = item.label;
+    button.onclick = () => {
+      selectedDebateIntensity = item.value;
+      renderDebateFilters();
+    };
+    intensities.appendChild(button);
+  });
+}
+
+function openCustomDebate() {
+  document.getElementById("customQuestion").value = "";
+  document.getElementById("customA").value = "";
+  document.getElementById("customB").value = "";
+  document.getElementById("customError").textContent = "";
+  showScreen("customDebate");
+}
+
+async function proposeDilemma() {
+  if (currentRoomHostId !== localPlayerId || currentRoomMode !== "debate") return;
+
+  let query = sb
+    .from("dilemmas")
+    .select("id, audience, category, intensity, question, option_a, option_b")
+    .eq("active", true)
+    .lte("intensity", selectedDebateIntensity);
+
+  if (selectedDebateCategory !== "ALEATORIO") {
+    query = query.eq("category", selectedDebateCategory);
+  }
+
+  const { data, error } = await query.limit(100);
+
+  if (error) {
+    console.error("DILEMMA LOAD ERROR:", error);
+    document.getElementById("suggestedError").textContent =
+      "No se ha podido consultar el catálogo.";
+    return;
+  }
+
+  if (!data || !data.length) {
+    document.getElementById("suggestedError").textContent =
+      "Todavía no hay dilemas para esa combinación.";
+    return;
+  }
+
+  const dilemma = data[Math.floor(Math.random() * data.length)];
+  await launchDebateDilemma(dilemma);
+}
+
+async function startCustomDebate() {
+  if (currentRoomHostId !== localPlayerId || currentRoomMode !== "debate") return;
+
+  const question = document.getElementById("customQuestion").value.trim();
+  const optionA = document.getElementById("customA").value.trim();
+  const optionB = document.getElementById("customB").value.trim();
+
+  if (!question || !optionA || !optionB) {
+    document.getElementById("customError").textContent =
+      "Escribe la pregunta y las dos opciones.";
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("dilemmas")
+    .insert({
+      audience: "custom",
+      category: "PERSONALIZADO",
+      intensity: 1,
+      question: question,
+      option_a: optionA,
+      option_b: optionB,
+      active: true
+    })
+    .select("id, audience, category, intensity, question, option_a, option_b")
+    .single();
+
+  if (error || !data) {
+    console.error("CUSTOM DILEMMA ERROR:", error);
+    document.getElementById("customError").textContent =
+      "Falta habilitar en Supabase el guardado de dilemas personalizados.";
+    return;
+  }
+
+  await launchDebateDilemma(data);
+}
+
+async function launchDebateDilemma(dilemma) {
+  const { data: round, error: roundError } = await sb
+    .from("rounds")
+    .insert({
+      room_id: currentRoomId,
+      round_number: 1,
+      dilemma_id: dilemma.id,
+      status: "voting",
+      started_at: new Date().toISOString()
+    })
+    .select("id, room_id, round_number, dilemma_id, status, started_at")
+    .single();
+
+  if (roundError || !round) {
+    console.error("ROUND CREATE ERROR:", roundError);
+    alert("No se ha podido preparar la votación.");
+    return;
+  }
+
+  const { error: roomError } = await sb
+    .from("rooms")
+    .update({ status: "playing" })
+    .eq("id", currentRoomId);
+
+  if (roomError) {
+    console.error("ROOM START ERROR:", roomError);
+    alert("No se ha podido abrir el debate.");
+    return;
+  }
+
+  currentRoundId = round.id;
+  currentRoundStatus = round.status;
+  currentDilemma = dilemma;
+  localVoteChoice = null;
+  currentRoomStatus = "playing";
+
+  subscribeToRounds();
+  startGameRefresh();
+  await refreshGame();
+}
+
+
 async function startGame() {
 
   if (
     currentRoomHostId !==
     localPlayerId
   ) {
+    return;
+  }
+
+  if (currentRoomMode === "debate") {
+    const { count } = await sb
+      .from("players")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", currentRoomId);
+
+    if (count !== currentExpectedPlayers) {
+      alert("La sala no está completa.");
+      return;
+    }
+
+    showScreen("debateChoice");
     return;
   }
 
@@ -3327,7 +3677,7 @@ async function startGame() {
     );
 
     alert(
-      "No se ha podido iniciar la partida."
+      "No se ha podido iniciar la sala."
     );
   }
 
@@ -4390,6 +4740,9 @@ function renderDebate() {
   document.getElementById("pauseDebateBtn").style.display =
     debateMode && currentRoomHostId === localPlayerId ? "block" : "none";
 
+  document.getElementById("resetDebateBtn").textContent =
+    debateMode ? "REINICIAR DEBATE" : "REINICIAR PARTIDA";
+
   document.getElementById("abandonDebateBtn").textContent =
     debateMode ? "ABANDONAR DEBATE" : "ABANDONAR PARTIDA";
 
@@ -4806,7 +5159,7 @@ async function resetGame() {
     );
 
     alert(
-      "No se ha podido reiniciar la partida."
+      "No se ha podido cerrar la sala."
     );
 
   }
@@ -5366,6 +5719,8 @@ window.addEventListener(
     renderAvatarTabs();
 
     renderAvatars();
+
+    refreshMicrophrases();
 
     await restoreRoomSession();
 
