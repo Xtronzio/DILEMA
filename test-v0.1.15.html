@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015Y — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015Z — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1027,6 +1027,16 @@
 #pilotGiroBtn:disabled{opacity:1!important}
 #pilotGiroBtn.pilot-selected:disabled{background:#fff!important;color:#000!important;border-color:#fff!important}
 #pilotPauseBtn.pilot-selected{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+</style><style>
+/* 015Z: definitive lower layout + stable proclamation */
+#pilotPresence{display:block!important;width:100%!important;margin-top:12px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{display:block!important;width:100%!important;min-width:0!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:14px 0 0!important;padding:0!important}
+#pilotHostGroup #pilotHostBadge{position:static!important;display:block!important;width:100%!important;height:auto!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;line-height:14px!important}
+#pilotHostGroup #pilotPauseBtn{position:static!important;display:block!important;width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{animation:none!important;transition:none!important}
+#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
 </style></head>
 
 <body>
@@ -6137,7 +6147,8 @@ window.addEventListener(
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
     if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
     if(va&&vb){
-      const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",s.cycle).eq("user_id",currentUserId).maybeSingle();
+      const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
+      const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
       va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
       const complete=(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
@@ -6307,7 +6318,7 @@ window.addEventListener(
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
-     ["pilotGiroBtn","pilotProclamaBtn"].forEach(id=>{const q=E(id);if(q&&paused)q.disabled=true});
+     {const q=E("pilotGiroBtn");if(q&&paused)q.disabled=true;}
    }catch(e){}
  };
  const originalRender=window.renderDebate;
