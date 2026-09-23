@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 003 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 004 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1352,8 +1352,12 @@
     <div class="title">PROPÓNNOS UN DILEMA</div>
     <div class="subtitle">Elige cómo quieres debatir.</div>
 
-    <div class="small-label">PARA</div>
-    <div class="audience-fixed">TEENS</div>
+    <div class="small-label">¿PARA QUIÉN?</div>
+    <div class="choice-row audience-choice">
+      <button type="button" class="choice-btn construction-audience" disabled>KIDS<span class="construction-label">EN CONSTRUCCIÓN</span></button>
+      <button type="button" class="choice-btn" data-audience="teen" onclick="selectDebateAudience('teen', this)">TEENS</button>
+      <button type="button" class="choice-btn construction-audience" disabled>ADULTOS<span class="construction-label">EN CONSTRUCCIÓN</span></button>
+    </div>
     
 
     <div class="small-label">TEMÁTICA</div>
@@ -4279,7 +4283,15 @@ async function refreshGame() {
       liveRoom.status !==
       "playing"
     ) {
-
+      if(currentRoomMode==="debate"){
+        currentRoundId=null;
+        currentRoundStatus=null;
+        currentDilemma=null;
+        localVoteChoice=null;
+        if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
+        showScreen("room");
+        setTimeout(()=>refreshLobby(),0);
+      }
       return;
     }
 
