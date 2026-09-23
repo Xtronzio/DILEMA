@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 007 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 008 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1132,6 +1132,12 @@
 #proposeDilemmaBtn.ready{
  background:#0b0b0b!important;color:#fff!important;border:1px solid #fff!important
 }
+</style><style>
+/* V0.1.16-008: collective GIRO proposal */
+#pilotGiroVoteBox{display:none;margin-top:14px;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+#pilotGiroVoteBox p{font-weight:900;margin-bottom:12px;line-height:1.35}
+#pilotGiroVoteBox [data-giro-vote]{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+#pilotGiroVoteBox [data-giro-vote].pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
 </style></head>
 
 <body>
@@ -6236,6 +6242,8 @@ window.addEventListener(
     '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
     '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama">📣</button></div>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button></div>'+
+    '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
+      '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
@@ -6280,7 +6288,7 @@ window.addEventListener(
     const state=el("pilotState");
     if(state){
       const parts=[
-        ["GIRO",s.requests,s.players],
+        
         ["PROCLAMA",s.proclamations_used,s.proclamations_assigned],
         ["AUSENTE",s.absent,s.total_active],["PAUSA",s.paused?1:0,1],["ABANDONO",s.abandoned,(s.total_active||0)+(s.abandoned||0)]
       ];
@@ -6305,19 +6313,19 @@ window.addEventListener(
       va.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_a)<Number(s.votes_b));
       vb.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_b)<Number(s.votes_a));
     }
-    const gb=el("pilotGiroBtn");
+    const gb=el("pilotGiroBtn"), gvb=el("pilotGiroVoteBox");
+    let giroProposal=null;
+    try{giroProposal=await rpc("get_debate_twist_proposal",{p_round_id:currentRoundId});}catch(e){}
+    const giroOpen=!!giroProposal&&giroProposal.status==="open"&&s.phase==="debate";
+    if(gvb){
+      gvb.style.display=giroOpen?"block":"none";
+      const gy=gvb.querySelector('[data-giro-vote="YES"]'),gn=gvb.querySelector('[data-giro-vote="NO"]');
+      if(gy)gy.classList.toggle("pilot-selected",giroOpen&&giroProposal.mine==="YES");
+      if(gn)gn.classList.toggle("pilot-selected",giroOpen&&giroProposal.mine==="NO");
+    }
     if(gb){
-      /* During a GIRO/revote, PEDIR GIRO belongs to the previous cycle:
-         it must be neutral and unavailable on every device until revote completes. */
-      if(s.phase==="twist"){
-        gb.classList.remove("pilot-selected");
-        gb.disabled=true;
-      }else{
-        const ownReq=await sb.from("debate_twist_requests").select("id").eq("round_id",currentRoundId).eq("vote_cycle",s.cycle).eq("user_id",currentUserId).maybeSingle();
-        const mine=!!ownReq.data;
-        gb.classList.toggle("pilot-selected",mine);
-        gb.disabled=!s.request_open||mine;
-      }
+      gb.classList.remove("pilot-selected");
+      gb.disabled=s.phase!=="debate"||!s.request_open||giroOpen;
     }
     const cb=el("pilotCloseBox");
     if(cb){
@@ -6348,11 +6356,18 @@ window.addEventListener(
  };
  window.pilotRequestTwist=async function(){
    try{
-    await init(); const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
-    await rpc("request_debate_twist",{p_round_id:currentRoundId});
-    const localGiro=el("pilotGiroBtn"); if(localGiro){localGiro.classList.add("pilot-selected");localGiro.disabled=true;}
+    await init();
+    await rpc("propose_debate_twist_vote",{p_round_id:currentRoundId});
     await pilotRefresh();
-   }catch(e){alert("No se ha podido pedir el GIRO.");}
+   }catch(e){alert("No se ha podido proponer el GIRO.");}
+ };
+ window.pilotGiroVote=async function(choice){
+   try{
+    const box=el("pilotGiroVoteBox");
+    if(box)box.querySelectorAll("[data-giro-vote]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.giroVote===choice));
+    await rpc("cast_debate_twist_vote",{p_round_id:currentRoundId,p_choice:choice});
+    await pilotRefresh();
+   }catch(e){alert("No se ha podido registrar el voto del GIRO.");}
  };
  window.pilotTopVote=async function(choice){
    try{
