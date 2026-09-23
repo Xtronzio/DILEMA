@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015R — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015S — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -985,6 +985,9 @@
 #debatePilotPanel #pilotPresence>button{display:block;width:100%!important;min-height:54px!important;margin:0!important}
 #debatePilotPanel #pilotHostBadge{grid-column:1/-1;text-align:center;font-size:11px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
 #pauseDebateBtn,#resetGameBtn,#debate #hostDebateControls{display:none!important}
+</style><style>
+#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}
+#pilotHostBadge{grid-column:1/-1!important;margin:6px 0 -2px!important}
 </style></head>
 
 <body>
@@ -6189,7 +6192,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div id="pilotHostBadge" style="display:none">ERES ANFITRIÓN</div><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button><button id="pilotHostReset" class="btn btn-danger" onclick="pilotRestartDebate()">REINICIAR</button>';
+   x.innerHTML='<button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button><div id="pilotHostBadge" style="display:none">ERES ANFITRIÓN</div><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button><button id="pilotHostReset" class="btn btn-danger" onclick="pilotRestartDebate()">REINICIAR</button>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
@@ -6235,6 +6238,8 @@ window.addEventListener(
        const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
        if(hr.data){currentRoomHostId=hr.data.host_id;isHost=currentRoomHostId===localPlayerId;}
      }catch(e){}
+     const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
+     const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const badge=E("pilotHostBadge");if(badge)badge.style.display=isHost?"block":"none";
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
      const rb=E("pilotHostReset");if(rb)rb.style.display=isHost?"block":"none";
