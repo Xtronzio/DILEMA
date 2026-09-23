@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015Q — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015R — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6009,6 +6009,21 @@ window.addEventListener(
 #pilotCloseBox p{font-weight:900;margin-bottom:12px}
 #pilotRevote{display:none;margin-top:14px}
 #pilotRevote .vote-option{margin-bottom:9px}
+</style>
+<style>
+/* V0.1.15 interaction rule: no actionable choice is preselected.
+   White is reserved for a choice made by this user. */
+#debateChoice .btn-primary,
+#debateChoice .btn-secondary {
+  background:#0b0b0b !important;
+  color:#fff !important;
+  border:1px solid #3a3a3a !important;
+}
+#debateChoice .btn-primary:active,
+#debateChoice .btn-secondary:active {
+  background:#fff !important;
+  color:#000 !important;
+}
 </style>
 <script>
 (function(){
