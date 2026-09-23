@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 002 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 003 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1116,6 +1116,22 @@
 </style><style>
 /* V0.1.16-002: a launched GIRO clears visual request state until revote completes */
 #debatePilotPanel #pilotGiroBtn:disabled{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+</style><style>
+/* V0.1.16-003: simplified TEENS filters and explicit CTA state */
+#debateSuggested .audience-fixed{
+ margin:8px 0 24px;padding:14px 16px;border:1px solid #343434;border-radius:14px;
+ color:#fff;background:#0b0b0b;text-align:center;font-size:12px;font-weight:900;letter-spacing:2px
+}
+#debateSuggested #categoryChoices{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#debateSuggested #intensityChoices{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#debateSuggested .choice-chip{background:#0b0b0b!important;color:#8e96a3!important;border:1px solid #343434!important}
+#debateSuggested .choice-chip.selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+#proposeDilemmaBtn:disabled{
+ background:#0b0b0b!important;color:#555!important;border:1px solid #292929!important;opacity:1!important
+}
+#proposeDilemmaBtn.ready{
+ background:#0b0b0b!important;color:#fff!important;border:1px solid #fff!important
+}
 </style></head>
 
 <body>
@@ -1336,18 +1352,8 @@
     <div class="title">PROPÓNNOS UN DILEMA</div>
     <div class="subtitle">Elige cómo quieres debatir.</div>
 
-    <div class="small-label">¿PARA QUIÉN?</div>
-    <div class="choice-row audience-choice">
-      <button type="button" class="choice-btn construction-audience" data-audience="child" disabled>
-        NIÑOS
-        <span class="construction-label">EN CONSTRUCCIÓN</span>
-      </button>
-      <button type="button" class="choice-btn" data-audience="teen" onclick="selectDebateAudience('teen', this)">TEENS</button>
-      <button type="button" class="choice-btn construction-audience" data-audience="adult" disabled>
-        ADULTOS
-        <span class="construction-label">EN CONSTRUCCIÓN</span>
-      </button>
-    </div>
+    <div class="small-label">PARA</div>
+    <div class="audience-fixed">TEENS</div>
     
 
     <div class="small-label">TEMÁTICA</div>
@@ -1358,7 +1364,7 @@
 
     <div id="suggestedError" class="error"></div>
 
-    <button class="btn btn-primary" onclick="proposeDilemma()">
+    <button id="proposeDilemmaBtn" class="btn btn-primary" onclick="proposeDilemma()" disabled>
       PROPONER DILEMA
     </button>
   </section>
@@ -3643,6 +3649,7 @@ function refreshMicrophrases() {
 }
 
 function openSuggestedDebate() {
+  selectedDebateAudience = "teen";
   selectedDebateCategory = null;
   selectedDebateIntensity = null;
   renderDebateFilters();
@@ -3653,6 +3660,7 @@ function openSuggestedDebate() {
 function renderDebateFilters() {
   const categories = document.getElementById("categoryChoices");
   const intensities = document.getElementById("intensityChoices");
+  const proposeBtn = document.getElementById("proposeDilemmaBtn");
 
   categories.innerHTML = "";
   intensities.innerHTML = "";
@@ -3682,6 +3690,11 @@ function renderDebateFilters() {
     };
     intensities.appendChild(button);
   });
+  if(proposeBtn){
+    const ready=!!selectedDebateCategory && !!selectedDebateIntensity;
+    proposeBtn.disabled=!ready;
+    proposeBtn.classList.toggle("ready",ready);
+  }
 }
 
 function openCustomDebate() {
