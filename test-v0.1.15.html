@@ -976,6 +976,10 @@
 #pilotPresence>button{width:100%!important;margin:0!important;min-height:54px!important}
 #pilotCloseBox .pilot-actions{grid-template-columns:1fr 1fr}
 </style>
+<style>
+#pauseDebateBtn{display:none!important}
+#debatePilotPanel #pilotHostReset{width:100%!important;min-height:54px!important;margin:0!important}
+</style>
 </head>
 
 <body>
@@ -6234,10 +6238,10 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button><button class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button>';
+   x.innerHTML='<button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button><button class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button><button id="pilotHostReset" class="btn btn-danger" onclick="confirmResetGame()">REINICIAR</button>';
    p.appendChild(x);
-   const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn");
-   if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none";
+   const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn");
+   if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none";
  }
  async function R(n,a){const r=await sb.rpc(n,a);if(r.error)throw r.error;return r.data}
  let absent=false,paused=false;
@@ -6265,7 +6269,9 @@ window.addEventListener(
      if(!currentRoundId)return;
      const s=await R("get_debate_state",{p_round_id:currentRoundId});paused=!!s.paused;
      const banner=E("pilotPauseBanner"); if(banner)banner.style.display=paused?"block":"none";
-     const pb=E("pilotPauseBtn");if(pb){pb.style.display=currentRoomHostId===localPlayerId?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
+     const isHost=currentRoomHostId===localPlayerId;
+     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
+     const rb=E("pilotHostReset");if(rb)rb.style.display=isHost?"block":"none";
      ["pilotGiroBtn","pilotProclamaBtn"].forEach(id=>{const q=E(id);if(q&&paused)q.disabled=true});
    }catch(e){}
  };
