@@ -969,6 +969,13 @@
 #debatePilotPanel .pilot-hot{color:#fff;font-weight:900}
 #debatePilotPanel .pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
 </style>
+<style>
+#debatePilotPanel .pilot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
+#debatePilotPanel .pilot-actions>button{width:100%!important;min-width:0!important;min-height:54px!important;margin:0!important}
+#pilotPresence{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#pilotPresence>button{width:100%!important;margin:0!important;min-height:54px!important}
+#pilotCloseBox .pilot-actions{grid-template-columns:1fr 1fr}
+</style>
 </head>
 
 <body>
@@ -6150,8 +6157,27 @@ window.addEventListener(
       el("pilotRevoteA").textContent=currentDilemma?currentDilemma.option_a:"";
       el("pilotRevoteB").textContent=currentDilemma?currentDilemma.option_b:"";
     }else{tbox.style.display="none";rev.style.display="none"}
-    const gb=el("pilotGiroBtn"); if(gb){gb.disabled=!s.request_open;gb.classList.toggle("pilot-selected",Number(s.requests)>0);}
-    const cb=el("pilotCloseBox"); if(cb) cb.style.display=s.phase==="closing"?"block":"none";
+    const gb=el("pilotGiroBtn");
+    if(gb){
+      const ownReq=await sb.from("debate_twist_requests").select("id").eq("round_id",currentRoundId).eq("vote_cycle",s.cycle).eq("user_id",currentUserId).maybeSingle();
+      const mine=!!ownReq.data;
+      gb.classList.toggle("pilot-selected",mine);
+      gb.disabled=!s.request_open||mine;
+    }
+    const cb=el("pilotCloseBox");
+    if(cb){
+      cb.style.display=s.phase==="closing"?"block":"none";
+      const yes=cb.querySelector('[data-close="YES"]'), no=cb.querySelector('[data-close="NO"]');
+      if(s.phase==="closing"){
+        const ownClose=await sb.from("debate_close_votes").select("choice").eq("round_id",currentRoundId).eq("proposal_number",s.close_proposal).eq("user_id",currentUserId).maybeSingle();
+        const mine=ownClose.data?ownClose.data.choice:null;
+        if(yes) yes.classList.toggle("pilot-selected",mine==="YES");
+        if(no) no.classList.toggle("pilot-selected",mine==="NO");
+      }else{
+        if(yes) yes.classList.remove("pilot-selected");
+        if(no) no.classList.remove("pilot-selected");
+      }
+    }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
     if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=!pr?"SIN PROCLAMA":pr.used_at?"PROCLAMA USADA":"PROCLAMA";pb.classList.toggle("pilot-selected",!!pr&&!pr.used_at)}
     await latestEvent();
@@ -6170,6 +6196,7 @@ window.addEventListener(
    try{
     await init(); const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
     await sb.from("debate_twist_requests").upsert({round_id:currentRoundId,vote_cycle:s.cycle,player_id:localPlayerId,user_id:currentUserId},{onConflict:"round_id,vote_cycle,player_id"});
+    const localGiro=el("pilotGiroBtn"); if(localGiro){localGiro.classList.add("pilot-selected");localGiro.disabled=true;}
     const n=await rpc("get_debate_state",{p_round_id:currentRoundId});
     if(currentRoomHostId===localPlayerId && n.requests>n.players/2) await rpc("launch_debate_twist",{p_round_id:currentRoundId,p_trigger:"requested"});
     await pilotRefresh();
@@ -6186,7 +6213,10 @@ window.addEventListener(
    try{await rpc("use_debate_proclamation",{p_round_id:currentRoundId});await pilotRefresh()}catch(e){alert("No tienes una PROCLAMA disponible.");}
  };
  window.pilotProposeClose=async function(){try{await rpc("propose_debate_close",{p_round_id:currentRoundId});await pilotRefresh()}catch(e){alert("No se ha podido proponer el cierre.");}};
- window.pilotCloseVote=async function(choice){try{const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done) alert("DEBATE FINALIZADO");}catch(e){alert("No se ha podido votar el cierre.");}};
+ window.pilotCloseVote=async function(choice){try{
+   const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.close===choice));}
+   const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done) alert("DEBATE FINALIZADO");
+ }catch(e){alert("No se ha podido votar el cierre.");}};
  document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(()=>{if(currentRoomMode==="debate"&&currentRoundId&&document.visibilityState==="visible")pilotRefresh()},1200)});
 })();
 </script>
