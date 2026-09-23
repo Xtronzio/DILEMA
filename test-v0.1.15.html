@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 016B — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 016C — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1037,6 +1037,15 @@
 #pilotHostGroup #pilotPauseBtn{position:static!important;display:block!important;width:100%!important;height:54px!important;margin:0!important}
 #pilotProclamaBtn{animation:none!important;transition:none!important}
 #pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+</style><style>
+/* 016C: same visual voting language on collective result */
+#result .result-item{background:#0b0b0b!important;border:1px solid #3a3a3a!important;transition:none!important;animation:none!important}
+#result .result-item.result-my-vote{border:2px solid #fff!important;box-shadow:none!important}
+#result .result-item .result-number{color:#fff!important}
+#result .result-item.result-win .result-number{color:#39d353!important}
+#result .result-item.result-lose .result-number{color:#ff4d5a!important}
+#result #assignRolesBtn{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
+#result #resetResultBtn{display:none!important}
 </style></head>
 
 <body>
@@ -4586,15 +4595,21 @@ function renderResult(
         : "block";
 
 
-  document
-    .getElementById(
-      "resetResultBtn"
-    )
-    .style.display =
-      isHost
-        ? "block"
-        : "none";
+  document.getElementById("resetResultBtn").style.display =
+    (currentRoomMode==="debate") ? "none" : (isHost ? "block" : "none");
 
+  const items=document.querySelectorAll("#result .result-item");
+  if(items.length>=2){
+    items[0].classList.remove("result-my-vote","result-win","result-lose");
+    items[1].classList.remove("result-my-vote","result-win","result-lose");
+    if(localVoteChoice==="A")items[0].classList.add("result-my-vote");
+    if(localVoteChoice==="B")items[1].classList.add("result-my-vote");
+    const a=Number(voteCount?.votes_a||0),b=Number(voteCount?.votes_b||0);
+    if(a!==b){
+      (a>b?items[0]:items[1]).classList.add("result-win");
+      (a>b?items[1]:items[0]).classList.add("result-lose");
+    }
+  }
 
   showScreen(
     "result"
