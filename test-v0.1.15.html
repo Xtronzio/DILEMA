@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 016E — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 016F — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1082,6 +1082,17 @@
  width:100%!important;height:54px!important;margin:0!important;padding:0 12px!important;
  font-size:12px!important;line-height:1!important;text-align:center!important
 }
+</style><style>
+#debatePilotPanel .pilot-main-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#debatePilotPanel .pilot-giro-cell{display:grid!important;grid-template-columns:minmax(0,1fr) 46px!important;gap:7px!important}
+#pilotGiroBtn,#pilotEndBtn{width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{width:46px!important;height:54px!important;margin:0!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin:9px 0 0!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{width:100%!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:20px 0 0!important;padding:16px 0 0!important;border-top:1px solid #292929!important}
+#pilotHostBadge{width:100%!important;text-align:center!important;margin:0 0 10px!important}
+#pilotHostGroup #pilotPauseBtn{width:100%!important;height:54px!important;margin:0!important}
 </style></head>
 
 <body>
@@ -6150,9 +6161,9 @@ window.addEventListener(
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
     '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
-    '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
+    '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
     '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama">📣</button></div>'+
-    '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button>'+
+    '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
