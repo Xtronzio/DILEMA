@@ -1,0 +1,6452 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b0b">
+
+  <title>DILEMA</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      background: #0b0b0b;
+    }
+
+    body {
+      min-height: 100vh;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 40px 24px 30px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .center {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo {
+      margin-bottom: 70px;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 4px;
+    }
+
+    .title {
+      margin-bottom: 8px;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 18px;
+      margin-bottom: 14px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #0b0b0b;
+      border: 1px solid white;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 1px solid #444;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #4a2222;
+    }
+
+    .btn:disabled {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    .back {
+      position: absolute;
+      top: 28px;
+      border: 0;
+      background: transparent;
+      color: #777;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .version {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #555;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    .text-input {
+      width: 100%;
+      margin-bottom: 18px;
+      padding: 17px;
+      background: transparent;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 14px;
+      outline: none;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .text-input:focus {
+      border-color: white;
+    }
+
+    #playerName {
+      text-transform: uppercase;
+    }
+
+    .room-code-input {
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .avatar-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .avatar-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .avatar-tab {
+      flex: 0 0 auto;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #151515;
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .avatar-tab.active {
+      background: white;
+      color: black;
+    }
+
+    .avatars {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .avatar {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid #333;
+      background: #151515;
+      font-size: 28px;
+    }
+
+    .avatar.selected {
+      background: white;
+    }
+
+    .profiles-list {
+      width: 100%;
+      margin-bottom: 22px;
+    }
+
+    .saved-profile {
+      width: 100%;
+      padding: 14px 4px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #151515;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      flex: 0 0 48px;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .profile-motto {
+      color: #777;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .profile-delete {
+      background: transparent;
+      border: 0;
+      color: #555;
+      font-size: 20px;
+      padding: 10px;
+    }
+
+    .room-code-label,
+    .players-title,
+    .small-label {
+      color: #777;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .room-code {
+      margin: 8px 0 26px;
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 10px;
+    }
+
+    .room-count {
+      margin-bottom: 24px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .room-count.ok {
+      color: #20d66b;
+    }
+
+    .room-count.ko {
+      color: #ff4d4d;
+    }
+
+    .room-state {
+      display: none;
+    }
+
+    .host-controls {
+      width: 100%;
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid #222;
+      border-radius: 14px;
+    }
+
+    .counter {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .counter button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #444;
+      background: transparent;
+      color: white;
+      font-size: 22px;
+    }
+
+    .counter-number {
+      min-width: 40px;
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .players-title {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 10px;
+    }
+
+    .players-list {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .player-card {
+      width: 100%;
+      padding: 14px 4px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+    }
+
+    .own-card {
+      cursor: pointer;
+    }
+
+    .player-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      flex: 0 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #151515;
+      font-size: 27px;
+    }
+
+    .player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .player-name {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .player-motto {
+      margin-top: 4px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .player-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .host-badge {
+      color: #555;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .edit-hint {
+      color: #888;
+      font-size: 22px;
+    }
+
+    .kick {
+      border: 0;
+      background: transparent;
+      color: #666;
+      font-size: 18px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      text-align: center;
+      color: #555;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .error {
+      min-height: 22px;
+      margin-bottom: 12px;
+      color: #999;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .start-message {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 20px;
+    }
+
+    .start-code {
+      color: #777;
+      font-size: 13px;
+      letter-spacing: 3px;
+    }
+
+    .game-category {
+      margin-bottom: 14px;
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .game-question {
+      width: 100%;
+      margin-bottom: 26px;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .vote-option {
+      width: 100%;
+      margin-bottom: 14px;
+      padding: 18px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .vote-option strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 20px;
+    }
+
+    .vote-option span {
+      color: #c9c9c9;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .vote-option.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px #ffffff inset;
+      background: #1d1d1d;
+    }
+
+    .vote-option:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .vote-status {
+      margin-top: 22px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .vote-count-big {
+      margin-top: 14px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .result-box {
+      width: 100%;
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-item {
+      padding: 22px 12px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .result-letter {
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .result-number {
+      margin-top: 8px;
+      font-size: 22px;
+      color: #aaa;
+    }
+
+    .game-error {
+      min-height: 20px;
+      margin-top: 18px;
+      color: #ff6b6b;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .role-card {
+      width: 100%;
+      padding: 26px 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .role-kicker {
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .role-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .role-vote {
+      color: #aaa;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .role-vote strong {
+      color: #fff;
+      font-size: 24px;
+      margin-left: 6px;
+    }
+
+    .role-instruction {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.45;
+      margin-bottom: 26px;
+    }
+
+    .role-waiting {
+      min-height: 22px;
+      margin-top: 12px;
+      color: #777;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .debate-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .debate-question {
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.45;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .debate-options {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .debate-option {
+      min-height: 112px;
+      padding: 16px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: left;
+    }
+
+    .debate-option-letter {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .debate-option-text {
+      color: #d0d0d0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .tool-dock {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tool-button {
+      min-height: 64px;
+      padding: 8px 4px;
+      border: 1px solid #2e2e2e;
+      border-radius: 12px;
+      background: #151515;
+      color: #777;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: default;
+    }
+
+    .tool-icon {
+      display: block;
+      margin-bottom: 5px;
+      color: #aaa;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .tool-note {
+      margin-top: 9px;
+      color: #555;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .construction-btn {
+      position: relative;
+      opacity: 0.42 !important;
+    }
+
+    .construction-label {
+      display: block;
+      margin-top: 7px;
+      color: #777;
+      font-size: 9px;
+      letter-spacing: 2px;
+    }
+
+    .waiting-phrase {
+      margin-top: 18px;
+      color: #666;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    textarea {
+      font: inherit;
+    }
+
+    .debate-input {
+      min-height: 94px;
+      resize: vertical;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .choice-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0 26px;
+    }
+
+    .choice-chip {
+      min-height: 54px;
+      padding: 10px 7px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: #888;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .choice-chip.selected {
+      border-color: white;
+      background: white;
+      color: #0b0b0b;
+    }
+
+  </style>
+
+<style>
+  .audience-choice{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin:10px 0 22px;
+    width:100%;
+  }
+  .audience-choice .choice-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    min-height:50px;
+    padding:10px 6px;
+    border:1px solid #333;
+    border-radius:14px;
+    background:#141414;
+    color:#8f8f8f;
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+    cursor:pointer;
+  }
+  .audience-choice .choice-btn.active{
+    background:#fff;
+    color:#000;
+    border-color:#fff;
+  }
+</style>
+
+
+<style>
+  #waitingPhrase{
+    margin:26px auto 0;
+    max-width:520px;
+    text-align:center;
+    line-height:1.3;
+  }
+  #waitingPhrase .dilema-reminder{
+    display:block;
+    margin-bottom:8px;
+    color:#777;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.16em;
+  }
+  #waitingPhrase .dilema-shared-phrase{
+    display:block;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+</style>
+
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="DILEMA">
+  <meta name="application-name" content="DILEMA">
+
+
+
+
+<style>
+  /* DILEMA V0.1.16 · 001 — exact common typography for the four marked labels */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase;
+    color: #8d8d8d !important;
+  }
+
+  #waitingPhrase {
+    margin: 30px auto 0 !important;
+    max-width: 520px;
+    text-align: center;
+  }
+
+  #waitingStatus {
+    display: block;
+    margin-bottom: 28px;
+    animation: waitingPulse 1.35s ease-in-out infinite;
+  }
+
+  #waitingPhrase .dilema-reminder {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  #waitingPhrase .dilema-shared-phrase {
+    display: block;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1.15;
+  }
+
+  @keyframes waitingPulse {
+    0%, 100% { opacity: .35; }
+    50%      { opacity: 1; color: #fff !important; }
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.15 TEST */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase;
+    color: #8d8d8d !important;
+  }
+
+  #waitingPhrase {
+    display:block !important;
+    margin:30px auto 0 !important;
+    max-width:520px;
+    text-align:center;
+  }
+
+  #waitingStatus {
+    display:block !important;
+    min-height:17px;
+    margin-bottom:28px;
+    }
+
+  
+
+  #waitingPhrase .dilema-reminder {
+    display:block;
+    margin-bottom:10px;
+  }
+
+  #waitingPhrase .dilema-shared-phrase {
+    display:block;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.02em;
+    line-height:1.15;
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.15 TEST — four auxiliary labels, one visual language */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
+    color: #8d8d8d !important;
+  }
+
+  #waitingStatus {
+    display:block !important;
+    min-height:17px;
+    margin-bottom:28px;
+    }
+
+  
+</style>
+
+
+<style>
+  /* DILEMA V0.1.15 TEST — waiting text static; only ellipsis changes */
+  #waitingStatus {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    color: #8d8d8d !important;
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.15 TEST — foco inicial TEENS */
+  .audience-choice .choice-btn.construction-audience {
+    opacity: .28;
+    cursor: default;
+    min-height: 64px;
+  }
+  .audience-choice .choice-btn.construction-audience .construction-label {
+    margin-top: 5px;
+    font-size: 7px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+</style>
+
+
+<style>
+  /* DILEMA V0.1.15 TEST — resultado colectivo y esperas */
+  #debateGroupVote .majority-choice {
+    color: #ff4d5a;
+    font-weight: 900;
+  }
+
+  .host-wait-animated {
+    min-height: 17px;
+  }
+</style>
+
+<style>
+#debatePilotPanel .pilot-state{line-height:2}
+#debatePilotPanel .pilot-hot{color:#fff;font-weight:900}
+#debatePilotPanel .pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+</style>
+<style>
+#debatePilotPanel .pilot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
+#debatePilotPanel .pilot-actions>button{width:100%!important;min-width:0!important;min-height:54px!important;margin:0!important}
+#pilotPresence{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#pilotPresence>button{width:100%!important;margin:0!important;min-height:54px!important}
+#pilotCloseBox .pilot-actions{grid-template-columns:1fr 1fr}
+</style>
+<style>
+#pauseDebateBtn{display:none!important}
+#debatePilotPanel #pilotHostReset{width:100%!important;min-height:54px!important;margin:0!important}
+</style>
+<style>
+#debatePilotPanel #pilotPresence{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#debatePilotPanel #pilotPresence>button{display:block;width:100%!important;min-height:54px!important;margin:0!important}
+#debatePilotPanel #pilotHostBadge{grid-column:1/-1;text-align:center;font-size:11px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
+#pauseDebateBtn,#resetGameBtn,#debate #hostDebateControls{display:none!important}
+</style><style>
+#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}
+#pilotHostBadge{grid-column:1/-1!important;margin:6px 0 -2px!important}
+</style><style>#pilotHostReset,#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}</style><style>
+/* 015V visual contract: black neutral, white = my selection, green/red = validated result */
+#debatePilotPanel .pilot-main-actions{display:grid;grid-template-columns:1fr 54px;gap:9px;align-items:stretch}
+#debatePilotPanel .pilot-main-actions .btn,#pilotEndBtn{margin:0!important;min-height:54px!important}
+#pilotEndBtn{width:100%!important;margin-top:9px!important}
+.pilot-proclama-icon{border:1px solid #3a3a3a;border-radius:14px;background:#0b0b0b;color:#fff;font-size:23px;min-height:54px}
+.pilot-proclama-icon:disabled,.pilot-proclama-off{opacity:.32}
+#pilotPresence{display:block!important}
+#pilotPresence .pilot-presence-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#pilotPresence .pilot-presence-row>button{width:100%!important;margin:0!important;min-height:54px!important}
+#pilotHostGroup{margin-top:12px}
+#pilotHostBadge{text-align:center;font-size:10px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
+#pilotHostGroup>button{width:100%!important;margin:0!important;min-height:54px!important}
+#debate .debate-option{cursor:pointer}
+#debate .debate-option.pilot-my-vote{border-color:#fff!important;box-shadow:0 0 0 2px #fff inset!important}
+#debate .pilot-vote-count{margin-top:12px;font-size:24px;font-weight:900;color:#fff}
+#debate .debate-option.pilot-win .pilot-vote-count{color:#39d353!important}
+#debate .debate-option.pilot-lose .pilot-vote-count{color:#ff4d5a!important}
+#pilotState .pilot-hot{font-weight:900;color:#fff}
+#pilotCloseBox [data-close]{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+#pilotCloseBox [data-close].pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+#resetDebateBtn{display:none!important}
+</style><style>
+/* 015W: stable selection + balanced lower controls */
+#debate .debate-option.pilot-my-vote{animation:none!important;transition:none!important;opacity:1!important;border:2px solid #fff!important;box-shadow:none!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;margin-top:14px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{min-height:54px!important}
+#pilotHostGroup{display:none;margin:0!important;padding-top:2px!important;width:100%!important}
+#pilotHostGroup #pilotHostBadge{display:block!important;width:100%!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;font-size:10px!important;line-height:1.3!important;letter-spacing:2px!important}
+#pilotHostGroup #pilotPauseBtn{display:block!important;width:100%!important;min-height:54px!important;margin:0!important}
+</style><style>
+/* 015X: no flashing in live debate state */
+#debatePilotPanel *,#debate .debate-option,#debate .pilot-vote-count{animation:none!important;transition:none!important}
+#debate .pilot-vote-count{opacity:1!important}
+#pilotGiroBtn:disabled,#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+#pilotGiroBtn:disabled{opacity:1!important}
+#pilotGiroBtn.pilot-selected:disabled{background:#fff!important;color:#000!important;border-color:#fff!important}
+#pilotPauseBtn.pilot-selected{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+</style><style>
+/* 015Z: definitive lower layout + stable proclamation */
+#pilotPresence{display:block!important;width:100%!important;margin-top:12px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{display:block!important;width:100%!important;min-width:0!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:14px 0 0!important;padding:0!important}
+#pilotHostGroup #pilotHostBadge{position:static!important;display:block!important;width:100%!important;height:auto!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;line-height:14px!important}
+#pilotHostGroup #pilotPauseBtn{position:static!important;display:block!important;width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{animation:none!important;transition:none!important}
+#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+</style><style>
+/* 016C: same visual voting language on collective result */
+#result .result-item{background:#0b0b0b!important;border:1px solid #3a3a3a!important;transition:none!important;animation:none!important}
+#result .result-item.result-my-vote{border:2px solid #fff!important;box-shadow:none!important}
+#result .result-item .result-number{color:#fff!important}
+#result .result-item.result-win .result-number{color:#39d353!important}
+#result .result-item.result-lose .result-number{color:#ff4d5a!important}
+#result #assignRolesBtn{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
+#result #resetResultBtn{display:none!important}
+</style><style>
+/* 016D: result ownership + clear host waiting */
+#result .result-item.result-my-vote{border:2px solid #fff!important;outline:0!important}
+#waitingRoleDraw.host-wait-animated,#waitingRoleDraw{
+  color:#fff!important;font-size:13px!important;font-weight:900!important;
+  letter-spacing:2px!important;opacity:1!important;margin:22px 0 8px!important;
+  min-height:auto!important
+}
+.host-wait-animated{animation:none!important;transition:none!important}
+</style><style>
+/* 016E: player controls and host controls are separate, ordered blocks */
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin-top:14px!important;gap:0!important}
+#pilotPresence .pilot-presence-row{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important;width:100%!important;margin:0!important
+}
+#pilotPresence .pilot-presence-row>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;height:54px!important;margin:0!important;padding:0 10px!important;
+ font-size:11px!important;line-height:1!important;text-align:center!important
+}
+#pilotHostGroup{
+ position:static!important;width:100%!important;margin:20px 0 0!important;padding:18px 0 0!important;
+ border-top:1px solid #292929!important
+}
+#pilotHostBadge{
+ position:static!important;display:block!important;width:100%!important;margin:0 0 12px!important;padding:0!important;
+ text-align:center!important;color:#fff!important;font-size:11px!important;font-weight:900!important;
+ line-height:16px!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important;gap:9px!important}
+#pilotHostGroup .pilot-host-actions>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;height:54px!important;margin:0!important;padding:0 12px!important;
+ font-size:12px!important;line-height:1!important;text-align:center!important
+}
+</style><style>
+#debatePilotPanel .pilot-main-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#debatePilotPanel .pilot-giro-cell{display:grid!important;grid-template-columns:minmax(0,1fr) 46px!important;gap:7px!important}
+#pilotGiroBtn,#pilotEndBtn{width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{width:46px!important;height:54px!important;margin:0!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin:9px 0 0!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{width:100%!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:20px 0 0!important;padding:16px 0 0!important;border-top:1px solid #292929!important}
+#pilotHostBadge{width:100%!important;text-align:center!important;margin:0 0 10px!important}
+#pilotHostGroup #pilotPauseBtn{width:100%!important;height:54px!important;margin:0!important}
+</style><style>
+/* 016G: host controls are a separate full-width block */
+#pilotPresence{display:block!important;width:100%!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotHostGroup{
+ display:none;position:static!important;float:none!important;clear:both!important;
+ width:100%!important;max-width:none!important;grid-column:1 / -1!important;
+ margin:24px 0 0!important;padding:20px 0 0!important;
+ border-top:1px solid #3a3a3a!important
+}
+#pilotHostBadge{
+ position:static!important;float:none!important;width:100%!important;
+ margin:0 0 12px!important;padding:0!important;text-align:center!important;
+ color:#fff!important;font-size:11px!important;font-weight:900!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:block!important;width:100%!important;margin:0!important}
+#pilotHostGroup #pilotPauseBtn{
+ position:static!important;float:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;max-width:none!important;height:54px!important;margin:0!important
+}
+</style></head>
+
+<body>
+
+  <main id="home" class="screen active center">
+    <div class="logo">DILEMA</div>
+
+    <button class="btn btn-primary" onclick="openCreateMode()">
+      CREAR
+    </button>
+
+    <button class="btn btn-secondary" onclick="openJoinScreen()">
+      UNIRME
+    </button>
+
+    <div class="version">DILEMA V0.1.15 TEST</div>
+  </main>
+
+
+  <section id="createMode" class="screen center">
+    <button class="back" onclick="goHome()">←</button>
+    <div class="title">¿QUÉ HACEMOS HOY?</div>
+    <button class="btn btn-primary" onclick="chooseRoomMode('debate')">ABRIR DEBATE</button>
+    <button class="btn btn-secondary construction-btn" type="button" disabled>
+      CREAR PARTIDA
+      <span class="construction-label">EN CONSTRUCCIÓN</span>
+    </button>
+  </section>
+
+
+  <section id="expected" class="screen center">
+    <button class="back" onclick="showScreen('createMode')">←</button>
+
+    <div class="title">¿CUÁNTOS SERÉIS?</div>
+
+    <div class="subtitle">
+      La sala tendrá que estar completa para poder iniciar.
+    </div>
+
+    <div class="counter">
+      <button onclick="changeExpected(-1)">−</button>
+      <div id="expectedSetup" class="counter-number">4</div>
+      <button onclick="changeExpected(1)">+</button>
+    </div>
+
+    <br><br>
+
+    <button class="btn btn-primary" onclick="openProfileChoice('create')">
+      CONTINUAR
+    </button>
+  </section>
+
+
+  <section id="profileChoice" class="screen">
+    <button class="back" onclick="backFromProfileChoice()">←</button>
+
+    <div class="title">¿QUIÉN ERES HOY?</div>
+
+    <div class="subtitle">
+      Elige un perfil guardado o crea uno nuevo.
+    </div>
+
+    <div id="savedProfiles" class="profiles-list"></div>
+
+    <button class="btn btn-secondary" onclick="newProfile()">
+      + NUEVO PERFIL
+    </button>
+  </section>
+
+
+  <section id="join" class="screen center">
+    <button class="back" onclick="goHome()">←</button>
+
+    <div class="title">ENTRAR</div>
+
+    <div class="subtitle">
+      Introduce el código de la sala.
+    </div>
+
+    <input
+      id="joinCode"
+      class="text-input room-code-input"
+      maxlength="4"
+      placeholder="----"
+      oninput="normalizeJoinCode()"
+    >
+
+    <div id="joinError" class="error"></div>
+
+    <button class="btn btn-primary" onclick="findRoom()">
+      CONTINUAR
+    </button>
+  </section>
+
+
+  <section id="profile" class="screen">
+    <button class="back" onclick="backFromProfile()">←</button>
+
+    <div id="profileTitle" class="title">NUEVO PERFIL</div>
+
+    <div class="subtitle">
+      Nombre, avatar y lema.
+    </div>
+
+    <input
+      id="playerName"
+      class="text-input"
+      maxlength="16"
+      placeholder="TU NOMBRE"
+      oninput="normalizePlayerName()"
+    >
+
+    <input
+      id="playerMotto"
+      class="text-input"
+      maxlength="50"
+      placeholder="TU LEMA (OPCIONAL)"
+    >
+
+    <div class="small-label">ELIGE AVATAR</div>
+    <br>
+
+    <div id="avatarTabs" class="avatar-tabs"></div>
+    <div id="avatars" class="avatars"></div>
+
+    <div id="profileError" class="error"></div>
+
+    <button id="saveProfileBtn" class="btn btn-primary" onclick="saveAndUseProfile()">
+      GUARDAR Y CONTINUAR
+    </button>
+
+    <button
+      id="leaveRoomBtn"
+      class="btn btn-danger"
+      style="display:none;"
+      onclick="confirmLeaveRoom()"
+    >
+      ABANDONAR SALA
+    </button>
+  </section>
+
+
+  <section id="room" class="screen center">
+
+    <div class="room-code-label">
+      CÓDIGO DE PARTIDA
+    </div>
+
+    <div id="roomCodeDisplay" class="room-code">----</div>
+
+    <div id="roomCount" class="room-count">0 / 0</div>
+    <div id="roomState" class="room-state">ESPERANDO...</div>
+
+    <div id="hostControls" class="host-controls" style="display:none;">
+      <div class="small-label">
+        PARTICIPANTES PREVISTOS
+      </div>
+
+      <div class="counter">
+        <button onclick="changeLobbyExpected(-1)">−</button>
+        <div id="expectedLobby" class="counter-number">0</div>
+        <button onclick="changeLobbyExpected(1)">+</button>
+      </div>
+
+      <br>
+
+      <button class="btn btn-danger" onclick="confirmResetGame()">
+        REINICIAR PARTIDA
+      </button>
+    </div>
+
+    <div class="players-title players-title">PARTICIPANTES</div>
+
+    <div id="playersList" class="players-list"></div>
+
+    <button
+      id="startGameBtn"
+      class="btn btn-primary"
+      onclick="startGame()"
+      style="display:none;"
+    >
+      INICIAR PARTIDA
+    </button>
+
+    <div id="waitingHost" class="small-note">
+      <div id="waitingPhrase" class="waiting-phrase">
+        <span id="waitingStatus" class="waiting-status">ESPERANDO AL ANFITRIÓN</span>
+        <span class="dilema-reminder">Y RECUERDA,</span>
+        <strong class="dilema-shared-phrase">ESCUCHAR NO SIGNIFICA ESTAR DE ACUERDO.</strong>
+      </div>
+    </div>
+
+  </section>
+
+
+  <section id="debateChoice" class="screen center">
+    <div class="game-category">SALA COMPLETA</div>
+    <div class="title">¿QUÉ DEBATIMOS?</div>
+    <div class="subtitle">Ponemos algo sobre la mesa.</div>
+
+    <button class="btn btn-primary" onclick="openCustomDebate()">
+      TENEMOS UN DILEMA
+    </button>
+
+    <button class="btn btn-secondary" onclick="openSuggestedDebate()">
+      PROPÓNNOS UN DILEMA
+    </button>
+
+    <button class="btn btn-danger" onclick="confirmResetGame()">
+      CERRAR SALA
+    </button>
+  </section>
+
+
+  <section id="debateSuggested" class="screen">
+    <button class="back" onclick="showScreen('debateChoice')">←</button>
+
+    <div class="title">PROPÓNNOS UN DILEMA</div>
+    <div class="subtitle">Elige cómo quieres debatir.</div>
+
+    <div class="small-label">¿PARA QUIÉN?</div>
+    <div class="choice-row audience-choice">
+      <button type="button" class="choice-btn construction-audience" data-audience="child" disabled>
+        NIÑOS
+        <span class="construction-label">EN CONSTRUCCIÓN</span>
+      </button>
+      <button type="button" class="choice-btn" data-audience="teen" onclick="selectDebateAudience('teen', this)">TEENS</button>
+      <button type="button" class="choice-btn construction-audience" data-audience="adult" disabled>
+        ADULTOS
+        <span class="construction-label">EN CONSTRUCCIÓN</span>
+      </button>
+    </div>
+    
+
+    <div class="small-label">TEMÁTICA</div>
+    <div id="categoryChoices" class="choice-grid"></div>
+
+    <div class="small-label">INTENSIDAD</div>
+    <div id="intensityChoices" class="choice-grid"></div>
+
+    <div id="suggestedError" class="error"></div>
+
+    <button class="btn btn-primary" onclick="proposeDilemma()">
+      PROPONER DILEMA
+    </button>
+  </section>
+
+
+  <section id="customDebate" class="screen">
+    <button class="back" onclick="showScreen('debateChoice')">←</button>
+
+    <div class="title">TENEMOS UN DILEMA</div>
+    <div class="subtitle">Es vuestro dilema. DILEMA no lo cambia.</div>
+
+    <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA"></textarea>
+    <textarea id="customA" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN A"></textarea>
+    <textarea id="customB" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN B"></textarea>
+
+    <div id="customError" class="error"></div>
+
+    <button class="btn btn-primary" onclick="startCustomDebate()">
+      LANZAR DILEMA
+    </button>
+  </section>
+
+
+  <section id="waitingDilemma" class="screen center">
+    <div class="game-category">SALA COMPLETA</div>
+    <div class="title">ESPERANDO AL ANFITRIÓN</div>
+    <div class="small-note">ESTÁ ELIGIENDO QUÉ DEBATIMOS.</div>
+  </section>
+
+
+  <section id="started" class="screen center">
+    <div class="start-message">
+      PARTIDA<br>INICIADA
+    </div>
+
+    <div id="startedCode" class="start-code"></div>
+
+    <div class="vote-status">
+      PREPARANDO DILEMA...
+    </div>
+
+    <br><br>
+
+    <button
+      id="resetStartedBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
+  </section>
+
+
+  <section id="voting" class="screen">
+
+    <div id="gameCategory" class="game-category">
+      DILEMA
+    </div>
+
+    <div id="gameQuestion" class="game-question"></div>
+
+    <button
+      id="voteAButton"
+      class="vote-option"
+      onclick="castVote('A')"
+    >
+      <strong>A</strong>
+      <span id="gameOptionA"></span>
+    </button>
+
+    <button
+      id="voteBButton"
+      class="vote-option"
+      onclick="castVote('B')"
+    >
+      <strong>B</strong>
+      <span id="gameOptionB"></span>
+    </button>
+
+    <div id="voteStatus" class="vote-status">
+      VOTA EN SECRETO
+    </div>
+
+    <div id="voteProgress" class="vote-count-big"></div>
+
+    <div id="gameError" class="game-error"></div>
+
+  </section>
+
+
+  <section id="result" class="screen center">
+
+    <div class="game-category">
+      EL GRUPO HA DECIDIDO
+    </div>
+
+    <div id="resultQuestion" class="game-question"></div>
+
+    <div class="result-box">
+
+      <div class="result-item">
+        <div class="result-letter">A</div>
+        <div id="resultOptionA" class="debate-option-text" style="margin:10px 0 14px;"></div>
+        <div id="resultA" class="result-number">0</div>
+      </div>
+
+      <div class="result-item">
+        <div class="result-letter">B</div>
+        <div id="resultOptionB" class="debate-option-text" style="margin:10px 0 14px;"></div>
+        <div id="resultB" class="result-number">0</div>
+      </div>
+
+    </div>
+
+    <div class="small-note">
+      NADIE SABE QUIÉN HA VOTADO QUÉ.
+    </div>
+
+    <br><br>
+
+    <button
+      id="assignRolesBtn"
+      class="btn btn-primary"
+      onclick="assignRoles()"
+      style="display:none;"
+    >
+      SORTEAR IMPOSTOR
+    </button>
+
+    <div
+      id="waitingRoleDraw"
+      class="small-note"
+      style="display:none;"
+    >
+      ESPERANDO AL ANFITRIÓN...
+    </div>
+
+    <button
+      id="resetResultBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
+
+  </section>
+
+
+  <section id="role" class="screen center">
+
+    <div class="role-card">
+
+      <div class="role-kicker">
+        TU PAPEL
+      </div>
+
+      <div id="roleTitle" class="role-title"></div>
+
+      <div class="role-vote">
+        HAS VOTADO
+        <strong id="roleVote">—</strong>
+      </div>
+
+      <div id="roleInstruction" class="role-instruction"></div>
+
+      <button
+        id="roleReadyBtn"
+        class="btn btn-primary"
+        onclick="confirmRoleReady()"
+      >
+        ENTENDIDO
+      </button>
+
+      <div id="roleWaiting" class="role-waiting"></div>
+
+    </div>
+
+  </section>
+
+
+  <section id="debate" class="screen center">
+
+    <div id="debateGroupVote" class="game-category">
+      EL GRUPO HA VOTADO
+    </div>
+
+    <div class="debate-title">
+      COMIENZA<br>EL DEBATE
+    </div>
+
+    <div id="debateQuestion" class="debate-question"></div>
+
+    <div class="debate-options">
+
+      <div class="debate-option">
+        <div class="debate-option-letter">A</div>
+        <div id="debateOptionA" class="debate-option-text"></div>
+      </div>
+
+      <div class="debate-option">
+        <div class="debate-option-letter">B</div>
+        <div id="debateOptionB" class="debate-option-text"></div>
+      </div>
+
+    </div>
+
+    <div class="small-note">
+      DEFIENDE TU POSTURA · ENCUENTRA AL IMPOSTOR
+    </div>
+
+    <div class="tool-dock" aria-label="Herramientas de debate">
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">★</span>
+        COMODÍN
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">◆</span>
+        PÓCIMA <span id="toolPotionCount">×0</span>
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">●</span>
+        PÍLDORA <span id="toolPillCount">×0</span>
+      </button>
+
+      <button class="tool-button" type="button" disabled>
+        <span class="tool-icon">▰</span>
+        PROCLAMA <span id="toolProclamationCount">×0</span>
+      </button>
+
+    </div>
+
+    <div class="tool-note">
+      HERRAMIENTAS · PRÓXIMAMENTE
+    </div>
+
+    <br>
+
+    <button
+      id="absentBtn"
+      class="btn btn-secondary"
+      onclick="prototypeAbsent()"
+    >
+      AUSENTARME
+    </button>
+
+    <button
+      id="abandonDebateBtn"
+      class="btn btn-danger"
+      onclick="prototypeAbandon()"
+    >
+      ABANDONAR
+    </button>
+
+    <button
+      id="pauseDebateBtn"
+      class="btn btn-secondary"
+      onclick="prototypePause()"
+      style="display:none;"
+    >
+      PAUSAR DEBATE
+    </button>
+
+    <button
+      id="resetDebateBtn"
+      class="btn btn-danger"
+      onclick="confirmResetGame()"
+      style="display:none;"
+    >
+      REINICIAR PARTIDA
+    </button>
+
+  </section>
+
+
+<script>
+
+const SUPABASE_URL =
+  "https://cioydzndfvskzubyjcgs.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_XrqG0cXWS2vlJIa3jw70Ng_33Gftqes";
+
+const sb =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+let currentUserId = null;
+let authReady = false;
+
+
+async function ensureAnonymousAuth() {
+
+  if (
+    authReady &&
+    currentUserId
+  ) {
+    return currentUserId;
+  }
+
+  const {
+    data: userData,
+    error: userError
+  } = await sb.auth.getUser();
+
+  if (
+    !userError &&
+    userData &&
+    userData.user
+  ) {
+
+    currentUserId =
+      userData.user.id;
+
+    authReady =
+      true;
+
+    return currentUserId;
+  }
+
+  const {
+    data,
+    error
+  } = await sb.auth.signInAnonymously();
+
+  if (
+    error ||
+    !data ||
+    !data.user
+  ) {
+
+    console.error(
+      "ANONYMOUS AUTH ERROR:",
+      error
+    );
+
+    throw new Error(
+      "No se pudo iniciar la sesión anónima."
+    );
+  }
+
+  currentUserId =
+    data.user.id;
+
+  authReady =
+    true;
+
+  return currentUserId;
+}
+
+
+const avatarCategories = {
+
+  "CARAS": [
+    "😈","🤡","🤬","🥴","🤪",
+    "😎","🤯","🥸","🤠","👹"
+  ],
+
+  "ANIMALES": [
+    "🦍","🐸","🦆","🐒","🦄",
+    "🦖","🦈","🐙","🦝","🦥"
+  ],
+
+  "BICHOS": [
+    "👽","🤖","👾","💀","👻",
+    "🧟","🧛","🧌","🦹","🥷"
+  ],
+
+  "COMIDA": [
+    "🍆","🍑","🌭","🍕","🍔",
+    "🍌","🥒","🌶️","🍩","🧀"
+  ],
+
+  "DEPORTE": [
+    "⚽","🏀","🏈","🎾","🥊",
+    "🏆","🏎️","🚴","🏄","🏋️"
+  ],
+
+  "CAOS": [
+    "💩","💣","🧨","🖕","🧠",
+    "🦠","🪦","🚽","🩲","🔥"
+  ]
+
+};
+
+
+let setupExpectedPlayers = 4;
+
+let flowMode = null;
+let editingLobbyProfile = false;
+
+let selectedDebateAudience = "teen";
+let selectedDebateCategory = null;
+let selectedDebateIntensity = null;
+
+let selectedAvatar = "";
+let selectedAvatarCategory = "CARAS";
+let selectedSavedProfileId = null;
+
+let currentRoomId = null;
+let currentRoomCode = null;
+let currentRoomHostId = null;
+let currentExpectedPlayers = null;
+let currentRoomStatus = null;
+let currentRoomMode = "game";
+
+let playersChannel = null;
+let roomChannel = null;
+let roundsChannel = null;
+
+let lobbyTimer = null;
+let gameTimer = null;
+let revealTimer = null;
+let refreshing = false;
+let refreshingGame = false;
+
+let currentRoundId = null;
+let currentRoundStatus = null;
+let currentDilemma = null;
+let localVoteChoice = null;
+let localRoundRole = null;
+let localRoleReady = false;
+let assigningRoles = false;
+let localInventory = { potions: 0, pills: 0, proclamations: 0 };
+
+const localPlayerId =
+  getOrCreateLocalPlayerId();
+
+
+function getOrCreateLocalPlayerId() {
+
+  let id =
+    localStorage.getItem(
+      "dilema_local_player_id"
+    );
+
+  if (!id) {
+
+    id =
+      crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now().toString(36) +
+          Math.random().toString(36).slice(2);
+
+    localStorage.setItem(
+      "dilema_local_player_id",
+      id
+    );
+
+  }
+
+  return id;
+
+}
+
+
+function getProfiles() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(
+        "dilema_profiles"
+      ) || "[]"
+    );
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
+
+function saveProfiles(
+  profiles
+) {
+
+  localStorage.setItem(
+    "dilema_profiles",
+    JSON.stringify(profiles)
+  );
+
+}
+
+
+function normalizePlayerName() {
+
+  const input =
+    document.getElementById(
+      "playerName"
+    );
+
+  input.value =
+    input.value.toLocaleUpperCase(
+      "es-ES"
+    );
+
+}
+
+
+function normalizeJoinCode() {
+
+  const input =
+    document.getElementById(
+      "joinCode"
+    );
+
+  input.value =
+    input.value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0,4);
+
+}
+
+
+function showScreen(
+  id
+) {
+
+  const target =
+    document.getElementById(
+      id
+    );
+
+  if (
+    !target
+  ) {
+    return;
+  }
+
+  if (
+    target.classList.contains(
+      "active"
+    )
+  ) {
+    return;
+  }
+
+  document
+    .querySelectorAll(
+      ".screen"
+    )
+    .forEach(
+      screen =>
+        screen.classList.remove(
+          "active"
+        )
+    );
+
+  target.classList.add(
+    "active"
+  );
+
+}
+
+
+function goHome() {
+
+  showScreen(
+    "home"
+  );
+
+}
+
+
+function openCreateMode() {
+  showScreen("createMode");
+}
+
+function chooseRoomMode(mode) {
+  if (mode !== "debate") {
+    return;
+  }
+
+  currentRoomMode = "debate";
+  openExpectedPlayers();
+}
+
+function openExpectedPlayers() {
+
+  setupExpectedPlayers =
+    4;
+
+  document
+    .getElementById(
+      "expectedSetup"
+    )
+    .textContent =
+      setupExpectedPlayers;
+
+  showScreen(
+    "expected"
+  );
+
+}
+
+
+function changeExpected(
+  change
+) {
+
+  setupExpectedPlayers =
+    Math.max(
+      2,
+      Math.min(
+        20,
+        setupExpectedPlayers +
+        change
+      )
+    );
+
+  document
+    .getElementById(
+      "expectedSetup"
+    )
+    .textContent =
+      setupExpectedPlayers;
+
+}
+
+
+function openJoinScreen() {
+
+  flowMode =
+    "join";
+
+  document
+    .getElementById(
+      "joinCode"
+    )
+    .value =
+      "";
+
+  document
+    .getElementById(
+      "joinError"
+    )
+    .textContent =
+      "";
+
+  showScreen(
+    "join"
+  );
+
+}
+
+
+function openProfileChoice(
+  mode
+) {
+
+  flowMode =
+    mode;
+
+  renderSavedProfiles();
+
+  showScreen(
+    "profileChoice"
+  );
+
+}
+
+
+function backFromProfileChoice() {
+
+  if (
+    flowMode ===
+    "create"
+  ) {
+
+    showScreen(
+      "expected"
+    );
+
+  } else {
+
+    showScreen(
+      "join"
+    );
+
+  }
+
+}
+
+
+function renderSavedProfiles() {
+
+  const container =
+    document.getElementById(
+      "savedProfiles"
+    );
+
+  const profiles =
+    getProfiles();
+
+  container.innerHTML =
+    "";
+
+  if (
+    profiles.length ===
+    0
+  ) {
+
+    container.innerHTML =
+      '<div class="small-note">NO HAY PERFILES GUARDADOS</div>';
+
+    return;
+
+  }
+
+
+  profiles.forEach(
+    profile => {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "saved-profile";
+
+
+      row.onclick =
+        () => useSavedProfile(
+          profile.id
+        );
+
+
+      const avatar =
+        document.createElement(
+          "div"
+        );
+
+      avatar.className =
+        "profile-avatar";
+
+      avatar.textContent =
+        profile.avatar;
+
+
+      const info =
+        document.createElement(
+          "div"
+        );
+
+      info.className =
+        "profile-info";
+
+
+      const name =
+        document.createElement(
+          "div"
+        );
+
+      name.className =
+        "profile-name";
+
+      name.textContent =
+        profile.name;
+
+
+      info.appendChild(
+        name
+      );
+
+
+      if (
+        profile.motto
+      ) {
+
+        const motto =
+          document.createElement(
+            "div"
+          );
+
+        motto.className =
+          "profile-motto";
+
+        motto.textContent =
+          `“${profile.motto}”`;
+
+        info.appendChild(
+          motto
+        );
+
+      }
+
+
+      const remove =
+        document.createElement(
+          "button"
+        );
+
+      remove.className =
+        "profile-delete";
+
+      remove.textContent =
+        "×";
+
+      remove.onclick =
+        event => {
+
+          event.stopPropagation();
+
+          deleteSavedProfile(
+            profile.id
+          );
+
+        };
+
+
+      row.appendChild(
+        avatar
+      );
+
+      row.appendChild(
+        info
+      );
+
+      row.appendChild(
+        remove
+      );
+
+      container.appendChild(
+        row
+      );
+
+    }
+  );
+
+}
+
+
+function deleteSavedProfile(
+  id
+) {
+
+  const profiles =
+    getProfiles()
+      .filter(
+        profile =>
+          profile.id !==
+          id
+      );
+
+  saveProfiles(
+    profiles
+  );
+
+  renderSavedProfiles();
+
+}
+
+
+function newProfile() {
+
+  editingLobbyProfile =
+    false;
+
+  selectedSavedProfileId =
+    null;
+
+  selectedAvatar =
+    "";
+
+  selectedAvatarCategory =
+    "CARAS";
+
+  document
+    .getElementById(
+      "playerName"
+    )
+    .value =
+      "";
+
+  document
+    .getElementById(
+      "playerMotto"
+    )
+    .value =
+      "";
+
+  document
+    .getElementById(
+      "profileTitle"
+    )
+    .textContent =
+      "NUEVO PERFIL";
+
+  document
+    .getElementById(
+      "saveProfileBtn"
+    )
+    .textContent =
+      "GUARDAR Y CONTINUAR";
+
+  document
+    .getElementById(
+      "leaveRoomBtn"
+    )
+    .style.display =
+      "none";
+
+  renderAvatarTabs();
+  renderAvatars();
+
+  showScreen(
+    "profile"
+  );
+
+}
+
+
+async function useSavedProfile(id) {
+  const profile = getProfiles().find(p => p.id === id);
+  if (!profile) return;
+
+  selectedSavedProfileId = id;
+  selectedAvatar = profile.avatar;
+  selectedAvatarCategory = findAvatarCategory(profile.avatar);
+  document.getElementById("playerName").value = profile.name;
+  document.getElementById("playerMotto").value = profile.motto || "";
+
+  try {
+    await continueWithProfile(profile);
+  } catch (error) {
+    console.error("PROFILE CONTINUE ERROR:", error);
+    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
+    showScreen("join");
+  }
+}
+
+
+function saveAndUseProfile() {
+
+  const name =
+    document
+      .getElementById(
+        "playerName"
+      )
+      .value
+      .trim()
+      .toUpperCase();
+
+  const motto =
+    document
+      .getElementById(
+        "playerMotto"
+      )
+      .value
+      .trim();
+
+
+  if (
+    !name ||
+    !selectedAvatar
+  ) {
+
+    document
+      .getElementById(
+        "profileError"
+      )
+      .textContent =
+        "Nombre y avatar son obligatorios.";
+
+    return;
+
+  }
+
+
+  if (
+    editingLobbyProfile
+  ) {
+
+    updateLobbyProfile(
+      name,
+      motto,
+      selectedAvatar
+    );
+
+    return;
+
+  }
+
+
+  let profiles =
+    getProfiles();
+
+
+  const profile = {
+
+    id:
+      selectedSavedProfileId ||
+      crypto.randomUUID(),
+
+    name:
+      name,
+
+    avatar:
+      selectedAvatar,
+
+    motto:
+      motto
+
+  };
+
+
+  const existingIndex =
+    profiles.findIndex(
+      p =>
+        p.id ===
+        profile.id
+    );
+
+
+  if (
+    existingIndex >=
+    0
+  ) {
+
+    profiles[
+      existingIndex
+    ] =
+      profile;
+
+  } else {
+
+    profiles.push(
+      profile
+    );
+
+  }
+
+
+  saveProfiles(
+    profiles
+  );
+
+  selectedSavedProfileId =
+    profile.id;
+
+
+  continueWithProfile(
+    profile
+  );
+
+}
+
+
+async function continueWithProfile(
+  profile
+) {
+
+  if (
+    flowMode ===
+    "create"
+  ) {
+
+    await createRoom(
+      profile
+    );
+
+  } else {
+
+    await joinRoomWithProfile(
+      profile
+    );
+
+  }
+
+}
+
+
+function renderAvatarTabs() {
+
+  const tabs =
+    document.getElementById(
+      "avatarTabs"
+    );
+
+  tabs.innerHTML =
+    "";
+
+
+  Object.keys(
+    avatarCategories
+  ).forEach(
+    category => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "avatar-tab" +
+        (
+          category ===
+          selectedAvatarCategory
+            ? " active"
+            : ""
+        );
+
+      button.textContent =
+        category;
+
+      button.onclick =
+        () => {
+
+          selectedAvatarCategory =
+            category;
+
+          renderAvatarTabs();
+
+          renderAvatars();
+
+        };
+
+      tabs.appendChild(
+        button
+      );
+
+    }
+  );
+
+}
+
+
+function renderAvatars() {
+
+  const container =
+    document.getElementById(
+      "avatars"
+    );
+
+  container.innerHTML =
+    "";
+
+
+  avatarCategories[
+    selectedAvatarCategory
+  ].forEach(
+    emoji => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "avatar" +
+        (
+          emoji ===
+          selectedAvatar
+            ? " selected"
+            : ""
+        );
+
+      button.textContent =
+        emoji;
+
+      button.onclick =
+        () => {
+
+          selectedAvatar =
+            emoji;
+
+          renderAvatars();
+
+        };
+
+      container.appendChild(
+        button
+      );
+
+    }
+  );
+
+}
+
+
+function findAvatarCategory(
+  avatar
+) {
+
+  for (
+    const [
+      category,
+      values
+    ]
+    of Object.entries(
+      avatarCategories
+    )
+  ) {
+
+    if (
+      values.includes(
+        avatar
+      )
+    ) {
+
+      return category;
+
+    }
+
+  }
+
+  return "CARAS";
+
+}
+
+
+async function findRoom() {
+
+  const code =
+    document
+      .getElementById(
+        "joinCode"
+      )
+      .value
+      .trim()
+      .toUpperCase();
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "code",
+      code
+    )
+    .maybeSingle();
+
+
+  if (
+    error ||
+    !data
+  ) {
+
+    document
+      .getElementById(
+        "joinError"
+      )
+      .textContent =
+        "Esa sala no existe.";
+
+    return;
+
+  }
+
+
+  if (
+    data.status !==
+    "waiting"
+  ) {
+
+    document
+      .getElementById(
+        "joinError"
+      )
+      .textContent =
+        "ESTA SALA YA HA COMENZADO.";
+
+    return;
+
+  }
+
+
+  currentRoomId =
+    data.id;
+
+  currentRoomCode =
+    data.code;
+
+  currentRoomHostId =
+    data.host_id;
+
+  currentExpectedPlayers =
+    data.expected_players;
+
+  currentRoomMode =
+    data.mode || "game";
+
+  openProfileChoice(
+    "join"
+  );
+
+}
+
+
+function randomRoomCode() {
+
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  let code =
+    "";
+
+  for (
+    let i = 0;
+    i < 4;
+    i++
+  ) {
+
+    code +=
+      chars[
+        Math.floor(
+          Math.random() *
+          chars.length
+        )
+      ];
+
+  }
+
+  return code;
+
+}
+
+
+async function createRoom(
+  profile
+) {
+
+  try {
+
+    await ensureAnonymousAuth();
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "No se pudo iniciar la identidad segura del jugador."
+    );
+
+    return;
+  }
+
+  const code =
+    randomRoomCode();
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .insert({
+
+      code:
+        code,
+
+      status:
+        "waiting",
+
+      host_id:
+        localPlayerId,
+
+      expected_players:
+        setupExpectedPlayers,
+
+      mode:
+        currentRoomMode
+
+    })
+    .select()
+    .single();
+
+
+  if (
+    error
+  ) {
+
+    alert(
+      "No se pudo crear la sala."
+    );
+
+    return;
+
+  }
+
+
+  currentRoomId =
+    data.id;
+
+  currentRoomCode =
+    data.code;
+
+  currentRoomHostId =
+    data.host_id;
+
+  currentExpectedPlayers =
+    data.expected_players;
+
+  currentRoomStatus =
+    data.status;
+
+  currentRoomMode =
+    data.mode || "game";
+
+
+  await insertPlayer(
+    profile
+  );
+
+  saveRoomSession();
+
+  await enterRoom();
+
+}
+
+
+async function joinRoomWithProfile(profile) {
+  try {
+    await ensureAnonymousAuth();
+    const room = await getRoom();
+    if (!room || room.status !== "waiting") {
+      alert("La sala ya ha comenzado.");
+      return;
+    }
+    await insertPlayer(profile);
+    saveRoomSession();
+    await enterRoom();
+  } catch (error) {
+    console.error("JOIN ROOM ERROR:", error);
+    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
+    showScreen("join");
+  }
+}
+
+async function insertPlayer(profile) {
+  const { data: existing, error: findError } = await sb
+    .from("players")
+    .select("id,player_id,abandoned_at")
+    .eq("room_id",currentRoomId)
+    .eq("player_id",localPlayerId)
+    .maybeSingle();
+  if(findError) throw findError;
+  if(existing){
+    const {error}=await sb.from("players").update({
+      user_id:currentUserId,name:profile.name,avatar:profile.avatar,motto:profile.motto||null,
+      presence:"present",abandoned_at:null,farewell:null
+    }).eq("id",existing.id);
+    if(error) throw error;
+    return;
+  }
+  const { error } = await sb.from("players").insert({
+    room_id:currentRoomId,player_id:localPlayerId,user_id:currentUserId,
+    name:profile.name,avatar:profile.avatar,motto:profile.motto||null,presence:"present"
+  });
+  if (error) throw error;
+}
+
+
+async function enterRoom() {
+
+  showScreen(
+    "room"
+  );
+
+  await refreshLobby();
+
+  subscribeRealtime();
+
+  startSafetyRefresh();
+
+}
+
+
+async function getRoom() {
+
+  const {
+    data
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "id",
+      currentRoomId
+    )
+    .maybeSingle();
+
+  return data;
+
+}
+
+
+async function refreshLobby() {
+
+  if (
+    refreshing ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+  refreshing =
+    true;
+
+
+  const room =
+    await getRoom();
+
+
+  if (
+    !room
+  ) {
+
+    cleanupRoom();
+
+    goHome();
+
+    refreshing =
+      false;
+
+    return;
+
+  }
+
+
+  currentRoomCode =
+    room.code;
+
+  currentRoomHostId =
+    room.host_id;
+
+  currentExpectedPlayers =
+    room.expected_players;
+
+  currentRoomStatus =
+    room.status;
+
+  currentRoomMode =
+    room.mode || "game";
+
+
+  if (
+    room.status ===
+    "playing"
+  ) {
+
+    document
+      .getElementById(
+        "startedCode"
+      )
+      .textContent =
+        room.code;
+
+    document
+      .getElementById(
+        "resetStartedBtn"
+      )
+      .style.display =
+        room.host_id === localPlayerId
+          ? "block"
+          : "none";
+
+    if (
+      lobbyTimer
+    ) {
+
+      clearInterval(
+        lobbyTimer
+      );
+
+      lobbyTimer =
+        null;
+    }
+
+    subscribeToRounds();
+
+    startGameRefresh();
+
+    await refreshGame();
+
+    refreshing =
+      false;
+
+    return;
+  }
+
+
+  const {
+    data: players
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .is("abandoned_at",null)
+    .order(
+      "created_at",
+      {
+        ascending:
+          true
+      }
+    );
+
+
+  renderLobby(
+    room,
+    players || []
+  );
+
+
+  refreshing =
+    false;
+
+}
+
+
+function renderLobby(
+  room,
+  players
+) {
+
+  currentRoomMode = room.mode || "game";
+  currentRoomCode = room.code;
+  refreshMicrophrases();
+
+  document.querySelector("#room .room-code-label").textContent =
+    currentRoomMode === "debate" ? "CÓDIGO DE DEBATE" : "CÓDIGO DE PARTIDA";
+
+  document.getElementById("startGameBtn").textContent =
+    currentRoomMode === "debate" ? "ELEGIR DILEMA" : "INICIAR PARTIDA";
+
+  document
+    .getElementById(
+      "roomCodeDisplay"
+    )
+    .textContent =
+      room.code;
+
+
+  const roomCount =
+    document.getElementById(
+      "roomCount"
+    );
+
+  roomCount.textContent =
+    `${players.length} / ${room.expected_players}`;
+
+  roomCount.className =
+    players.length === room.expected_players
+      ? "room-count ok"
+      : "room-count ko";
+
+
+  const isHost =
+    room.host_id ===
+    localPlayerId;
+
+
+  document
+    .getElementById(
+      "hostControls"
+    )
+    .style.display =
+      isHost
+        ? "block"
+        : "none";
+
+
+  document
+    .getElementById(
+      "expectedLobby"
+    )
+    .textContent =
+      room.expected_players;
+
+
+  const start =
+    document.getElementById(
+      "startGameBtn"
+    );
+
+
+  const waiting =
+    document.getElementById(
+      "waitingHost"
+    );
+
+
+  if (
+    isHost
+  ) {
+
+    start.style.display =
+      "block";
+
+    waiting.style.display =
+      "none";
+
+    start.disabled =
+      players.length !==
+      room.expected_players;
+
+  } else {
+
+    start.style.display =
+      "none";
+
+    waiting.style.display =
+      "block";
+
+  }
+
+
+  renderPlayers(
+    players,
+    isHost
+  );
+
+}
+
+
+function renderPlayers(
+  players,
+  isHost
+) {
+
+  const list =
+    document.getElementById(
+      "playersList"
+    );
+
+  list.innerHTML =
+    "";
+
+
+  players.forEach(
+    player => {
+
+      const row =
+        document.createElement(
+          "div"
+        );
+
+      row.className =
+        "player-card";
+
+
+      if (
+        player.player_id ===
+        localPlayerId
+      ) {
+
+        row.classList.add(
+          "own-card"
+        );
+
+        row.onclick =
+          openLobbyProfile;
+
+      }
+
+
+      const avatar =
+        document.createElement(
+          "div"
+        );
+
+      avatar.className =
+        "player-avatar";
+
+      avatar.textContent =
+        player.avatar;
+
+
+      const info =
+        document.createElement(
+          "div"
+        );
+
+      info.className =
+        "player-info";
+
+
+      const name =
+        document.createElement(
+          "div"
+        );
+
+      name.className =
+        "player-name";
+
+      name.textContent =
+        player.name;
+
+
+      info.appendChild(
+        name
+      );
+
+
+      if (
+        player.motto
+      ) {
+
+        const motto =
+          document.createElement(
+            "div"
+          );
+
+        motto.className =
+          "player-motto";
+
+        motto.textContent =
+          `“${player.motto}”`;
+
+        info.appendChild(
+          motto
+        );
+
+      }
+
+
+      const meta =
+        document.createElement(
+          "div"
+        );
+
+      meta.className =
+        "player-meta";
+
+
+      if (
+        player.player_id ===
+        currentRoomHostId
+      ) {
+
+        const badge =
+          document.createElement(
+            "div"
+          );
+
+        badge.className =
+          "host-badge";
+
+        badge.textContent =
+          "ANFITRIÓN";
+
+        meta.appendChild(
+          badge
+        );
+
+      }
+
+
+      if (
+        player.player_id ===
+        localPlayerId
+      ) {
+
+        const edit =
+          document.createElement(
+            "div"
+          );
+
+        edit.className =
+          "edit-hint";
+
+        edit.textContent =
+          "⋯";
+
+        meta.appendChild(
+          edit
+        );
+
+      }
+
+
+      if (
+        isHost &&
+        player.player_id !==
+        localPlayerId
+      ) {
+
+        const kick =
+          document.createElement(
+            "button"
+          );
+
+        kick.className =
+          "kick";
+
+        kick.textContent =
+          "×";
+
+        kick.onclick =
+          event => {
+
+            event.stopPropagation();
+
+            kickPlayer(
+              player.player_id
+            );
+
+          };
+
+        meta.appendChild(
+          kick
+        );
+
+      }
+
+
+      row.appendChild(
+        avatar
+      );
+
+      row.appendChild(
+        info
+      );
+
+      row.appendChild(
+        meta
+      );
+
+      list.appendChild(
+        row
+      );
+
+    }
+  );
+
+}
+
+
+async function changeLobbyExpected(
+  change
+) {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const next =
+    Math.max(
+      2,
+      Math.min(
+        20,
+        currentExpectedPlayers +
+        change
+      )
+    );
+
+
+  await sb
+    .from(
+      "rooms"
+    )
+    .update({
+
+      expected_players:
+        next
+
+    })
+    .eq(
+      "id",
+      currentRoomId
+    );
+
+}
+
+
+async function kickPlayer(
+  playerId
+) {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      "¿Expulsar a este jugador de la sala?"
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  await sb
+    .from(
+      "players"
+    )
+    .delete()
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      playerId
+    );
+
+}
+
+
+async function openLobbyProfile() {
+
+  const {
+    data
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    )
+    .maybeSingle();
+
+
+  if (!data) {
+    return;
+  }
+
+
+  editingLobbyProfile =
+    true;
+
+  selectedAvatar =
+    data.avatar;
+
+  selectedAvatarCategory =
+    findAvatarCategory(
+      data.avatar
+    );
+
+
+  document
+    .getElementById(
+      "playerName"
+    )
+    .value =
+      data.name;
+
+
+  document
+    .getElementById(
+      "playerMotto"
+    )
+    .value =
+      data.motto ||
+      "";
+
+
+  document
+    .getElementById(
+      "profileTitle"
+    )
+    .textContent =
+      "EDITAR PERFIL";
+
+
+  document
+    .getElementById(
+      "saveProfileBtn"
+    )
+    .textContent =
+      "GUARDAR CAMBIOS";
+
+
+  document
+    .getElementById(
+      "leaveRoomBtn"
+    )
+    .style.display =
+      "block";
+
+
+  renderAvatarTabs();
+  renderAvatars();
+
+  showScreen(
+    "profile"
+  );
+
+}
+
+
+async function updateLobbyProfile(
+  name,
+  motto,
+  avatar
+) {
+
+  await sb
+    .from(
+      "players"
+    )
+    .update({
+
+      name:
+        name,
+
+      motto:
+        motto ||
+        null,
+
+      avatar:
+        avatar
+
+    })
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    );
+
+
+  if (
+    selectedSavedProfileId
+  ) {
+
+    const profiles =
+      getProfiles();
+
+    const index =
+      profiles.findIndex(
+        profile =>
+          profile.id ===
+          selectedSavedProfileId
+      );
+
+    if (
+      index >= 0
+    ) {
+
+      profiles[index] = {
+        ...profiles[index],
+        name:
+          name,
+        motto:
+          motto,
+        avatar:
+          avatar
+      };
+
+      saveProfiles(
+        profiles
+      );
+
+    }
+
+  }
+
+
+  editingLobbyProfile =
+    false;
+
+  showScreen(
+    "room"
+  );
+
+  refreshLobby();
+
+}
+
+
+function backFromProfile() {
+
+  if (
+    editingLobbyProfile
+  ) {
+
+    editingLobbyProfile =
+      false;
+
+    showScreen(
+      "room"
+    );
+
+  } else {
+
+    showScreen(
+      "profileChoice"
+    );
+
+  }
+
+}
+
+
+
+const startPhrases = [
+  "La privacidad garantiza la sinceridad.",
+  "Separa a la persona del argumento.",
+  "Cambiar de opinión también es pensar.",
+  "No todas las certezas sobreviven a una buena pregunta.",
+  "Escuchar no significa estar de acuerdo.",
+  "Una contradicción también dice algo.",
+  "La primera respuesta no siempre es la definitiva.",
+  "Convencer no es tener razón.",
+  "A veces importa más el porqué que el qué."
+];
+
+const debateCategories = [
+  "ALEATORIO","AMISTAD","AMOR","FAMILIA","INSTI","REDES","DINERO","FUTURO","MORAL","WTF"
+];
+
+const debateIntensities = [
+  { label: "CHILL", value: 1 },
+  { label: "CRINGE", value: 2 },
+  { label: "WTF", value: 3 }
+];
+
+function refreshMicrophrases() {
+  const phraseTarget = document.querySelector("#waitingPhrase .dilema-shared-phrase");
+  if (!phraseTarget) return;
+
+  const phrases = startPhrases.length
+    ? startPhrases
+    : ["Escuchar no significa estar de acuerdo."];
+
+  const roomKey = String(currentRoomCode || currentRoomId || "DILEMA");
+  let hash = 0;
+
+  for (let i = 0; i < roomKey.length; i++) {
+    hash = ((hash << 5) - hash) + roomKey.charCodeAt(i);
+    hash |= 0;
+  }
+
+  const phrase = phrases[Math.abs(hash) % phrases.length];
+  phraseTarget.textContent = phrase.toUpperCase();
+}
+
+function openSuggestedDebate() {
+  selectedDebateCategory = null;
+  selectedDebateIntensity = null;
+  renderDebateFilters();
+  document.getElementById("suggestedError").textContent = "";
+  showScreen("debateSuggested");
+}
+
+function renderDebateFilters() {
+  const categories = document.getElementById("categoryChoices");
+  const intensities = document.getElementById("intensityChoices");
+
+  categories.innerHTML = "";
+  intensities.innerHTML = "";
+
+  debateCategories.forEach(category => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-chip" +
+      (selectedDebateCategory === category ? " selected" : "");
+    button.textContent = category;
+    button.onclick = () => {
+      selectedDebateCategory = category;
+      renderDebateFilters();
+    };
+    categories.appendChild(button);
+  });
+
+  debateIntensities.forEach(item => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "choice-chip" +
+      (selectedDebateIntensity === item.value ? " selected" : "");
+    button.textContent = item.label;
+    button.onclick = () => {
+      selectedDebateIntensity = item.value;
+      renderDebateFilters();
+    };
+    intensities.appendChild(button);
+  });
+}
+
+function openCustomDebate() {
+  document.getElementById("customQuestion").value = "";
+  document.getElementById("customA").value = "";
+  document.getElementById("customB").value = "";
+  document.getElementById("customError").textContent = "";
+  showScreen("customDebate");
+}
+
+function selectDebateAudience(audience, button) {
+  selectedDebateAudience = audience;
+  document.querySelectorAll(".audience-choice .choice-btn").forEach(btn => btn.classList.remove("active"));
+  if (button) button.classList.add("active");
+}
+
+async function proposeDilemma() {
+  if (currentRoomHostId !== localPlayerId || currentRoomMode !== "debate") return;
+  if(!selectedDebateCategory || !selectedDebateIntensity){
+    document.getElementById("suggestedError").textContent="ELIGE TEMÁTICA E INTENSIDAD.";
+    return;
+  }
+
+  let query = sb
+    .from("dilemmas")
+    .select("id, audience, category, intensity, question, option_a, option_b")
+    .eq("active", true)
+      .eq("audience", selectedDebateAudience)
+    .lte("intensity", selectedDebateIntensity);
+
+  if (selectedDebateCategory !== "ALEATORIO") {
+    query = query.eq("category", selectedDebateCategory);
+  }
+
+  const { data, error } = await query.limit(100);
+
+  if (error) {
+    console.error("DILEMMA LOAD ERROR:", error);
+    document.getElementById("suggestedError").textContent =
+      "No se ha podido consultar el catálogo.";
+    return;
+  }
+
+  if (!data || !data.length) {
+    document.getElementById("suggestedError").textContent =
+      "Todavía no hay dilemas para esa combinación.";
+    return;
+  }
+
+  const dilemma = data[Math.floor(Math.random() * data.length)];
+  await launchDebateDilemma(dilemma);
+}
+
+async function startCustomDebate() {
+  if (currentRoomHostId !== localPlayerId || currentRoomMode !== "debate") return;
+
+  const question = document.getElementById("customQuestion").value.trim();
+  const optionA = document.getElementById("customA").value.trim();
+  const optionB = document.getElementById("customB").value.trim();
+
+  if (!question || !optionA || !optionB) {
+    document.getElementById("customError").textContent =
+      "Escribe la pregunta y las dos opciones.";
+    return;
+  }
+
+  const { data, error } = await sb
+    .from("dilemmas")
+    .insert({
+      audience: "custom",
+      category: "PERSONALIZADO",
+      intensity: 1,
+      question: question,
+      option_a: optionA,
+      option_b: optionB,
+      active: true
+    })
+    .select("id, audience, category, intensity, question, option_a, option_b")
+    .single();
+
+  if (error || !data) {
+    console.error("CUSTOM DILEMMA ERROR:", error);
+    document.getElementById("customError").textContent =
+      "Falta habilitar en Supabase el guardado de dilemas personalizados.";
+    return;
+  }
+
+  await launchDebateDilemma(data);
+}
+
+async function launchDebateDilemma(dilemma) {
+  const { data: round, error: roundError } = await sb
+    .from("rounds")
+    .insert({
+      room_id: currentRoomId,
+      round_number: 1,
+      dilemma_id: dilemma.id,
+      status: "voting",
+      started_at: new Date().toISOString()
+    })
+    .select("id, room_id, round_number, dilemma_id, status, started_at")
+    .single();
+
+  if (roundError || !round) {
+    console.error("ROUND CREATE ERROR:", roundError);
+    alert("No se ha podido preparar la votación.");
+    return;
+  }
+
+  const { error: roomError } = await sb
+    .from("rooms")
+    .update({ status: "playing" })
+    .eq("id", currentRoomId);
+
+  if (roomError) {
+    console.error("ROOM START ERROR:", roomError);
+    alert("No se ha podido abrir el debate.");
+    return;
+  }
+
+  currentRoundId = round.id;
+  currentRoundStatus = round.status;
+  currentDilemma = dilemma;
+  localVoteChoice = null;
+  currentRoomStatus = "playing";
+
+  subscribeToRounds();
+  startGameRefresh();
+  await refreshGame();
+}
+
+
+async function startGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+  if (currentRoomMode === "debate") {
+    const { count } = await sb
+      .from("players")
+      .select("*", { count: "exact", head: true })
+      .eq("room_id", currentRoomId)
+      .is("abandoned_at",null);
+
+    if (count !== currentExpectedPlayers) {
+      alert("La sala no está completa.");
+      return;
+    }
+
+    showScreen("debateChoice");
+    return;
+  }
+
+
+  const {
+    count
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "*",
+      {
+        count:
+          "exact",
+        head:
+          true
+      }
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    );
+
+
+  if (
+    count !==
+    currentExpectedPlayers
+  ) {
+
+    alert(
+      "La sala no está cuadrada."
+    );
+
+    return;
+  }
+
+
+  const {
+    data: dilemma,
+    error: dilemmaError
+  } = await sb
+    .from(
+      "dilemmas"
+    )
+    .select(
+      "id, audience, category, intensity, question, option_a, option_b"
+    )
+    .eq(
+      "audience",
+      "teen"
+    )
+    .eq(
+      "active",
+      true
+    )
+    .order(
+      "id",
+      {
+        ascending:
+          true
+      }
+    )
+    .limit(
+      1
+    )
+    .maybeSingle();
+
+
+  if (
+    dilemmaError ||
+    !dilemma
+  ) {
+
+    console.error(
+      "DILEMMA LOAD ERROR:",
+      dilemmaError
+    );
+
+    alert(
+      "No hay ningún dilema activo disponible."
+    );
+
+    return;
+  }
+
+
+  const {
+    data: round,
+    error: roundError
+  } = await sb
+    .from(
+      "rounds"
+    )
+    .insert({
+
+      room_id:
+        currentRoomId,
+
+      round_number:
+        1,
+
+      dilemma_id:
+        dilemma.id,
+
+      status:
+        "voting",
+
+      started_at:
+        new Date().toISOString()
+
+    })
+    .select(
+      "id, room_id, round_number, dilemma_id, status, started_at"
+    )
+    .single();
+
+
+  if (
+    roundError ||
+    !round
+  ) {
+
+    console.error(
+      "ROUND CREATE ERROR:",
+      roundError
+    );
+
+    alert(
+      "No se ha podido crear la primera ronda."
+    );
+
+    return;
+  }
+
+
+  currentRoundId =
+    round.id;
+
+  currentRoundStatus =
+    round.status;
+
+  currentDilemma =
+    dilemma;
+
+  localVoteChoice =
+    null;
+
+
+  const {
+    error: roomError
+  } = await sb
+    .from(
+      "rooms"
+    )
+    .update({
+
+      status:
+        "playing"
+
+    })
+    .eq(
+      "id",
+      currentRoomId
+    );
+
+
+  if (
+    roomError
+  ) {
+
+    console.error(
+      "ROOM START ERROR:",
+      roomError
+    );
+
+    alert(
+      "No se ha podido iniciar la sala."
+    );
+  }
+
+}
+
+
+
+async function loadCurrentRound() {
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "rounds"
+    )
+    .select(
+      "id, room_id, round_number, dilemma_id, status, started_at"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .order(
+      "round_number",
+      {
+        ascending:
+          false
+      }
+    )
+    .limit(
+      1
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "ROUND LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  return data;
+}
+
+
+async function loadDilemma(
+  dilemmaId
+) {
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "dilemmas"
+    )
+    .select(
+      "id, audience, category, intensity, question, option_a, option_b"
+    )
+    .eq(
+      "id",
+      dilemmaId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "DILEMMA LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  return data;
+}
+
+
+async function getVoteCount() {
+
+  if (
+    !currentRoundId
+  ) {
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb.rpc(
+    "get_vote_count",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "VOTE COUNT ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  if (
+    Array.isArray(
+      data
+    )
+  ) {
+
+    return data[0] ||
+      {
+        total_votes: 0,
+        votes_a: null,
+        votes_b: null
+      };
+  }
+
+
+  return data;
+}
+
+
+async function loadOwnVote() {
+
+  if (
+    !currentRoundId ||
+    !currentUserId
+  ) {
+    localVoteChoice =
+      null;
+
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "votes"
+    )
+    .select(
+      "choice"
+    )
+    .eq(
+      "round_id",
+      currentRoundId
+    )
+    .eq(
+      "user_id",
+      currentUserId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "OWN VOTE LOAD ERROR:",
+      error
+    );
+
+    return localVoteChoice;
+  }
+
+
+  localVoteChoice =
+    data
+      ? data.choice
+      : null;
+
+
+  return localVoteChoice;
+}
+
+
+async function refreshGame() {
+
+  if (
+    refreshingGame ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+  refreshingGame =
+    true;
+
+
+  try {
+
+    const liveRoom =
+      await getRoom();
+
+
+    if (
+      !liveRoom
+    ) {
+
+      cleanupRoom();
+
+      goHome();
+
+      return;
+    }
+
+
+    currentRoomCode =
+      liveRoom.code;
+
+    currentRoomHostId =
+      liveRoom.host_id;
+
+    currentExpectedPlayers =
+      liveRoom.expected_players;
+
+    currentRoomStatus =
+      liveRoom.status;
+
+    currentRoomMode =
+      liveRoom.mode || "game";
+
+
+    if (
+      liveRoom.status !==
+      "playing"
+    ) {
+
+      return;
+    }
+
+
+    const round =
+      await loadCurrentRound();
+
+
+    if (
+      !round
+    ) {
+
+      showScreen(
+        "started"
+      );
+
+      return;
+    }
+
+
+    currentRoundId =
+      round.id;
+
+    currentRoundStatus =
+      round.status;
+
+
+    if (
+      !currentDilemma ||
+      currentDilemma.id !==
+      round.dilemma_id
+    ) {
+
+      currentDilemma =
+        await loadDilemma(
+          round.dilemma_id
+        );
+    }
+
+
+    if (
+      !currentDilemma
+    ) {
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido cargar el dilema.";
+
+      return;
+    }
+
+
+    if (
+      round.status ===
+        "voting" ||
+      round.status ===
+        "role" ||
+      round.status ===
+        "debate" ||
+      round.status ===
+        "reveal"
+    ) {
+
+      await loadOwnVote();
+    }
+
+
+    const voteCount =
+      await getVoteCount();
+
+
+    if (
+      round.status ===
+      "voting"
+    ) {
+
+      renderVoting(
+        voteCount
+      );
+
+
+      scheduleRevealIfReady(
+        voteCount
+      );
+
+    } else if (
+      round.status ===
+      "reveal"
+    ) {
+
+      renderResult(
+        voteCount
+      );
+
+    } else if (
+      round.status ===
+      "role"
+    ) {
+
+      await renderRole();
+
+    } else if (
+      round.status ===
+      "debate"
+    ) {
+
+      renderDebate();
+    }
+
+
+  } finally {
+
+    refreshingGame =
+      false;
+  }
+}
+
+
+function scheduleRevealIfReady(
+  voteCount
+) {
+
+  const ready =
+    currentRoomHostId ===
+      localPlayerId &&
+    voteCount &&
+    Number(
+      voteCount.total_votes
+    ) >=
+      Number(
+        currentExpectedPlayers
+      );
+
+
+  if (
+    !ready
+  ) {
+
+    if (
+      revealTimer
+    ) {
+
+      clearTimeout(
+        revealTimer
+      );
+
+      revealTimer =
+        null;
+    }
+
+    return;
+  }
+
+
+  if (
+    revealTimer
+  ) {
+    return;
+  }
+
+
+  revealTimer =
+    setTimeout(
+      async () => {
+
+        revealTimer =
+          null;
+
+        const latest =
+          await getVoteCount();
+
+
+        if (
+          !latest ||
+          Number(
+            latest.total_votes
+          ) <
+            Number(
+              currentExpectedPlayers
+            )
+        ) {
+          return;
+        }
+
+
+        const {
+          error:
+            revealError
+        } = await sb
+          .from(
+            "rounds"
+          )
+          .update({
+            status:
+              "reveal"
+          })
+          .eq(
+            "id",
+            currentRoundId
+          )
+          .eq(
+            "status",
+            "voting"
+          );
+
+
+        if (
+          revealError
+        ) {
+
+          console.error(
+            "REVEAL ERROR:",
+            revealError
+          );
+        }
+
+      },
+      3000
+    );
+}
+
+
+function renderVoting(
+  voteCount
+) {
+
+  document
+    .getElementById(
+      "gameCategory"
+    )
+    .textContent =
+      `${currentDilemma.category || "DILEMA"} · INTENSIDAD ${currentDilemma.intensity || 1}`;
+
+  document
+    .getElementById(
+      "gameQuestion"
+    )
+    .textContent =
+      currentDilemma.question;
+
+  document
+    .getElementById(
+      "gameOptionA"
+    )
+    .textContent =
+      currentDilemma.option_a;
+
+  document
+    .getElementById(
+      "gameOptionB"
+    )
+    .textContent =
+      currentDilemma.option_b;
+
+
+  const total =
+    voteCount
+      ? Number(
+          voteCount.total_votes
+        )
+      : 0;
+
+
+  document
+    .getElementById(
+      "voteProgress"
+    )
+    .textContent =
+      `${total} / ${currentExpectedPlayers}`;
+
+
+  const buttonA =
+    document.getElementById(
+      "voteAButton"
+    );
+
+  const buttonB =
+    document.getElementById(
+      "voteBButton"
+    );
+
+
+  buttonA.disabled =
+    false;
+
+  buttonB.disabled =
+    false;
+
+
+  buttonA.classList.toggle(
+    "selected",
+    localVoteChoice ===
+      "A"
+  );
+
+  buttonB.classList.toggle(
+    "selected",
+    localVoteChoice ===
+      "B"
+  );
+
+
+  const allVoted =
+    total >=
+    Number(
+      currentExpectedPlayers
+    );
+
+
+  document
+    .getElementById(
+      "voteStatus"
+    )
+    .textContent =
+      localVoteChoice
+        ? (
+            allVoted
+              ? `HAS VOTADO ${localVoteChoice} · TODOS HAN VOTADO · CERRANDO...`
+              : `HAS VOTADO ${localVoteChoice} · TOCA DE NUEVO PARA DESVOTAR`
+          )
+        : "VOTA EN SECRETO";
+
+
+  showScreen(
+    "voting"
+  );
+}
+
+
+function renderResult(
+  voteCount
+) {
+
+  document
+    .getElementById(
+      "resultQuestion"
+    )
+    .textContent =
+      currentDilemma.question;
+
+
+  document.getElementById("resultOptionA").textContent =
+    currentDilemma.option_a;
+
+  document.getElementById("resultOptionB").textContent =
+    currentDilemma.option_b;
+
+  document.getElementById("assignRolesBtn").textContent =
+    currentRoomMode === "debate"
+      ? "COMENZAR DEBATE"
+      : "SORTEAR IMPOSTOR";
+
+  document
+    .getElementById(
+      "resultA"
+    )
+    .textContent =
+      voteCount &&
+      voteCount.votes_a !== null
+        ? voteCount.votes_a
+        : "—";
+
+
+  document
+    .getElementById(
+      "resultB"
+    )
+    .textContent =
+      voteCount &&
+      voteCount.votes_b !== null
+        ? voteCount.votes_b
+        : "—";
+
+
+  const isHost =
+    currentRoomHostId ===
+      localPlayerId;
+
+
+  document
+    .getElementById(
+      "assignRolesBtn"
+    )
+    .style.display =
+      isHost
+        ? "block"
+        : "none";
+
+
+  document
+    .getElementById(
+      "waitingRoleDraw"
+    )
+    .style.display =
+      isHost
+        ? "none"
+        : "block";
+
+
+  document.getElementById("resetResultBtn").style.display =
+    (currentRoomMode==="debate") ? "none" : (isHost ? "block" : "none");
+
+  const items=document.querySelectorAll("#result .result-item");
+  if(items.length>=2){
+    items[0].classList.remove("result-my-vote","result-win","result-lose");
+    items[1].classList.remove("result-my-vote","result-win","result-lose");
+    if(localVoteChoice==="A")items[0].classList.add("result-my-vote");
+    if(localVoteChoice==="B")items[1].classList.add("result-my-vote");
+    const a=Number(voteCount?.votes_a||0),b=Number(voteCount?.votes_b||0);
+    if(a!==b){
+      (a>b?items[0]:items[1]).classList.add("result-win");
+      (a>b?items[1]:items[0]).classList.add("result-lose");
+    }
+  }
+
+  showScreen(
+    "result"
+  );
+}
+
+
+async function assignRoles() {
+
+  if (currentRoomMode === "debate") {
+    if (
+      assigningRoles ||
+      currentRoomHostId !== localPlayerId ||
+      !currentRoundId ||
+      currentRoundStatus !== "reveal"
+    ) {
+      return;
+    }
+
+    assigningRoles = true;
+
+    try {
+      const { data, error } = await sb.rpc("start_debate_engine", {
+        p_round_id: currentRoundId
+      });
+
+      if (error) {
+        console.error(error);
+        alert("No se ha podido comenzar el debate.");
+        return;
+      }
+
+      currentRoundStatus = "debate";
+      await refreshGame();
+      setTimeout(() => {
+        if (window.pilotRefresh) window.pilotRefresh();
+      }, 100);
+    } finally {
+      assigningRoles = false;
+    }
+
+    return;
+  }
+
+  if (
+    assigningRoles ||
+    currentRoomHostId !==
+      localPlayerId ||
+    !currentRoundId ||
+    currentRoundStatus !==
+      "reveal"
+  ) {
+    return;
+  }
+
+
+  assigningRoles =
+    true;
+
+
+  const button =
+    document.getElementById(
+      "assignRolesBtn"
+    );
+
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "SORTEANDO...";
+
+
+  const {
+    error
+  } = await sb.rpc(
+    "assign_round_roles",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "ASSIGN ROLES ERROR:",
+      error
+    );
+
+    alert(
+      "No se ha podido sortear el impostor."
+    );
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "SORTEAR IMPOSTOR";
+
+    assigningRoles =
+      false;
+
+    return;
+  }
+
+
+  const { error: inventoryError } = await sb.rpc(
+    "assign_round_inventory",
+    { p_round_id: currentRoundId }
+  );
+
+  if (inventoryError) {
+    console.error("ASSIGN INVENTORY ERROR:", inventoryError);
+    alert("El impostor se ha sorteado, pero no se ha podido repartir el inventario.");
+  }
+
+  assigningRoles =
+    false;
+
+  await refreshGame();
+}
+
+
+async function loadOwnRoundRole() {
+
+  if (
+    !currentRoundId ||
+    !currentUserId
+  ) {
+    return null;
+  }
+
+
+  const {
+    data,
+    error
+  } = await sb
+    .from(
+      "round_players"
+    )
+    .select(
+      "role, ready, potions, pills, proclamations"
+    )
+    .eq(
+      "round_id",
+      currentRoundId
+    )
+    .eq(
+      "user_id",
+      currentUserId
+    )
+    .maybeSingle();
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "OWN ROLE LOAD ERROR:",
+      error
+    );
+
+    return null;
+  }
+
+
+  if (
+    !data
+  ) {
+    return null;
+  }
+
+
+  localRoundRole =
+    data.role;
+
+  localRoleReady =
+    Boolean(
+      data.ready
+    );
+
+  localInventory = {
+    potions: Number(data.potions || 0),
+    pills: Number(data.pills || 0),
+    proclamations: Number(data.proclamations || 0)
+  };
+
+
+  return data;
+}
+
+
+async function renderRole() {
+
+  const roleData =
+    await loadOwnRoundRole();
+
+
+  if (
+    !roleData
+  ) {
+
+    showScreen(
+      "started"
+    );
+
+    return;
+  }
+
+
+  const isImpostor =
+    roleData.role ===
+      "impostor";
+
+
+  const oppositeVote =
+    localVoteChoice ===
+      "A"
+        ? "B"
+        : "A";
+
+
+  document
+    .getElementById(
+      "roleTitle"
+    )
+    .textContent =
+      isImpostor
+        ? "ERES EL IMPOSTOR"
+        : "NO ERES EL IMPOSTOR";
+
+
+  document
+    .getElementById(
+      "roleVote"
+    )
+    .textContent =
+      localVoteChoice ||
+      "—";
+
+
+  document
+    .getElementById(
+      "roleInstruction"
+    )
+    .textContent =
+      isImpostor
+        ? `Defiende ${oppositeVote} y evita que te descubran.`
+        : `Defiende ${localVoteChoice || "tu voto"} y delata al impostor.`;
+
+
+  const readyButton =
+    document.getElementById(
+      "roleReadyBtn"
+    );
+
+
+  const waiting =
+    document.getElementById(
+      "roleWaiting"
+    );
+
+
+  if (
+    roleData.ready
+  ) {
+
+    readyButton.disabled =
+      true;
+
+    readyButton.textContent =
+      "PREPARADO";
+
+    waiting.textContent =
+      "ESPERANDO AL RESTO...";
+
+  } else {
+
+    readyButton.disabled =
+      false;
+
+    readyButton.textContent =
+      "ENTENDIDO";
+
+    waiting.textContent =
+      "";
+  }
+
+
+  showScreen(
+    "role"
+  );
+}
+
+
+async function confirmRoleReady() {
+
+  if (
+    !currentRoundId ||
+    currentRoundStatus !==
+      "role" ||
+    localRoleReady
+  ) {
+    return;
+  }
+
+
+  const button =
+    document.getElementById(
+      "roleReadyBtn"
+    );
+
+
+  button.disabled =
+    true;
+
+  button.textContent =
+    "GUARDANDO...";
+
+
+  const {
+    error
+  } = await sb.rpc(
+    "confirm_round_role",
+    {
+      p_round_id:
+        currentRoundId
+    }
+  );
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "CONFIRM ROLE ERROR:",
+      error
+    );
+
+    button.disabled =
+      false;
+
+    button.textContent =
+      "ENTENDIDO";
+
+    alert(
+      "No se ha podido confirmar el rol."
+    );
+
+    return;
+  }
+
+
+  localRoleReady =
+    true;
+
+  button.textContent =
+    "PREPARADO";
+
+
+  document
+    .getElementById(
+      "roleWaiting"
+    )
+    .textContent =
+      "ESPERANDO AL RESTO...";
+
+
+  await refreshGame();
+}
+
+
+
+async function renderDebateGroupVote() {
+  const target = document.getElementById("debateGroupVote");
+  if (!target || currentRoomMode !== "debate") return;
+
+  const voteCount = await getVoteCount();
+  if (!voteCount) {
+    target.textContent = "EL GRUPO HA VOTADO";
+    return;
+  }
+
+  const votesA = Number(voteCount.votes_a || 0);
+  const votesB = Number(voteCount.votes_b || 0);
+
+  if (votesA === votesB) {
+    target.textContent = "EL GRUPO ESTÁ DIVIDIDO";
+    return;
+  }
+
+  const majority = votesA > votesB ? "A" : "B";
+  target.innerHTML =
+    'EL GRUPO HA VOTADO <span class="majority-choice">' + majority + '</span>';
+}
+
+function renderDebate() {
+
+  const debateMode = currentRoomMode === "debate";
+
+  const debateGroupVote = document.getElementById("debateGroupVote");
+
+  if (debateMode) {
+    renderDebateGroupVote();
+  } else if (debateGroupVote) {
+    debateGroupVote.textContent = "TODOS PREPARADOS";
+  }
+
+  document.querySelector("#debate .debate-title").innerHTML =
+    debateMode ? "ABRIMOS<br>EL DEBATE" : "COMIENZA<br>EL DEBATE";
+
+  document.querySelector("#debate .small-note").textContent =
+    debateMode
+      ? "DEFIENDE LO QUE PIENSAS · ESCUCHA · CAMBIA DE OPINIÓN SI QUIERES"
+      : "DEFIENDE TU POSTURA · ENCUENTRA AL IMPOSTOR";
+
+  const dock = document.querySelector("#debate .tool-dock");
+  const toolNote = document.querySelector("#debate .tool-note");
+  if (dock) dock.style.display = debateMode ? "none" : "flex";
+  if (toolNote) toolNote.style.display = debateMode ? "none" : "block";
+
+  document.getElementById("pauseDebateBtn").style.display =
+    debateMode && currentRoomHostId === localPlayerId ? "block" : "none";
+
+  document.getElementById("resetDebateBtn").textContent =
+    debateMode ? "REINICIAR DEBATE" : "REINICIAR PARTIDA";
+
+  document.getElementById("abandonDebateBtn").textContent =
+    debateMode ? "ABANDONAR DEBATE" : "ABANDONAR PARTIDA";
+
+  document.getElementById("absentBtn").textContent =
+    debateMode ? "AUSENTARME DEL DEBATE" : "AUSENTARME DE LA PARTIDA";
+
+  document.getElementById("toolPotionCount").textContent = `×${localInventory.potions}`;
+  document.getElementById("toolPillCount").textContent = `×${localInventory.pills}`;
+  document.getElementById("toolProclamationCount").textContent = `×${localInventory.proclamations}`;
+
+  document
+    .getElementById(
+      "debateQuestion"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.question
+        : "DILEMA";
+
+
+  document
+    .getElementById(
+      "debateOptionA"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.option_a
+        : "";
+
+
+  document
+    .getElementById(
+      "debateOptionB"
+    )
+    .textContent =
+      currentDilemma
+        ? currentDilemma.option_b
+        : "";
+
+
+  document.getElementById("resetDebateBtn").style.display =
+    debateMode ? "none" : (currentRoomHostId === localPlayerId ? "block" : "none");
+
+
+  showScreen(
+    "debate"
+  );
+}
+
+
+async function castVote(
+  choice
+) {
+
+  if (
+    !currentRoundId ||
+    currentRoundStatus !==
+      "voting"
+  ) {
+    return;
+  }
+
+
+  document
+    .getElementById(
+      "gameError"
+    )
+    .textContent =
+      "";
+
+
+  const previousChoice =
+    localVoteChoice;
+
+
+  if (
+    previousChoice ===
+    choice
+  ) {
+
+    const {
+      error
+    } = await sb
+      .from(
+        "votes"
+      )
+      .delete()
+      .eq(
+        "round_id",
+        currentRoundId
+      )
+      .eq(
+        "user_id",
+        currentUserId
+      );
+
+
+    if (
+      error
+    ) {
+
+      console.error(
+        "VOTE DELETE ERROR:",
+        error
+      );
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido retirar el voto.";
+
+      return;
+    }
+
+
+    localVoteChoice =
+      null;
+
+    await refreshGame();
+
+    return;
+  }
+
+
+  if (
+    previousChoice
+  ) {
+
+    const {
+      error
+    } = await sb
+      .from(
+        "votes"
+      )
+      .update({
+        choice:
+          choice
+      })
+      .eq(
+        "round_id",
+        currentRoundId
+      )
+      .eq(
+        "user_id",
+        currentUserId
+      );
+
+
+    if (
+      error
+    ) {
+
+      console.error(
+        "VOTE UPDATE ERROR:",
+        error
+      );
+
+      document
+        .getElementById(
+          "gameError"
+        )
+        .textContent =
+          "No se ha podido cambiar el voto.";
+
+      return;
+    }
+
+
+    localVoteChoice =
+      choice;
+
+    await refreshGame();
+
+    return;
+  }
+
+
+  const {
+    error
+  } = await sb
+    .from(
+      "votes"
+    )
+    .insert({
+
+      round_id:
+        currentRoundId,
+
+      player_id:
+        localPlayerId,
+
+      user_id:
+        currentUserId,
+
+      choice:
+        choice
+
+    });
+
+
+  if (
+    error
+  ) {
+
+    console.error(
+      "VOTE INSERT ERROR:",
+      error
+    );
+
+    document
+      .getElementById(
+        "gameError"
+      )
+      .textContent =
+        "No se ha podido registrar el voto.";
+
+    return;
+  }
+
+
+  localVoteChoice =
+    choice;
+
+  await refreshGame();
+}
+
+function subscribeToRounds() {
+
+  if (
+    roundsChannel
+  ) {
+    return;
+  }
+
+
+  roundsChannel =
+    sb
+      .channel(
+        `rounds-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "rounds",
+          filter:
+            `room_id=eq.${currentRoomId}`
+        },
+        () => {
+          refreshGame();
+        }
+      )
+      .subscribe();
+}
+
+
+function startGameRefresh() {
+
+  if (
+    gameTimer
+  ) {
+    return;
+  }
+
+
+  gameTimer =
+    setInterval(
+      () => {
+
+        if (
+          currentRoomId &&
+          currentRoomStatus ===
+            "playing" &&
+          document.visibilityState ===
+            "visible"
+        ) {
+
+          refreshGame();
+        }
+
+      },
+      1000
+    );
+}
+
+
+async function confirmResetGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId
+  ) {
+    return;
+  }
+
+
+  const ok =
+    confirm(
+      "¿Cerrar esta sala para TODOS y empezar de cero?\n\nLos perfiles guardados NO se borrarán."
+    );
+
+
+  if (!ok) {
+    return;
+  }
+
+
+  await resetGame();
+
+}
+
+
+async function resetGame() {
+
+  if (
+    currentRoomHostId !==
+    localPlayerId ||
+    !currentRoomId
+  ) {
+    return;
+  }
+
+
+  try {
+
+    const roomIdToReset =
+      currentRoomId;
+
+
+    const {
+      error:
+        deleteRoomError
+    } = await sb
+      .from(
+        "rooms"
+      )
+      .delete()
+      .eq(
+        "id",
+        roomIdToReset
+      );
+
+
+    if (
+      deleteRoomError
+    ) {
+      throw deleteRoomError;
+    }
+
+
+    /*
+      El anfitrión NO espera a ninguna otra operación.
+      En cuanto la sala se ha borrado correctamente,
+      vuelve localmente a HOME de forma inmediata.
+    */
+    cleanupRoom();
+
+    showScreen(
+      "home"
+    );
+
+
+    /*
+      Limpieza secundaria.
+      Ya no bloquea la navegación del anfitrión.
+    */
+    sb
+      .from(
+        "players"
+      )
+      .delete()
+      .eq(
+        "room_id",
+        roomIdToReset
+      )
+      .then(
+        ({
+          error:
+            deletePlayersError
+        }) => {
+
+          if (
+            deletePlayersError
+          ) {
+
+            console.error(
+              "PLAYER CLEANUP AFTER RESET:",
+              deletePlayersError
+            );
+          }
+        }
+      );
+
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "No se ha podido cerrar la sala."
+    );
+
+  }
+
+}
+
+
+function prototypeAbsent() {
+  alert("AUSENTARSE queda incorporado al flujo. En el siguiente paso conectaremos el estado PRESENTE / AUSENTE a Supabase para que la plaza se conserve y pueda reanudarse.");
+}
+
+function prototypeAbandon() {
+  const farewell = prompt(
+    "¿ASÍ QUE TE VAS?\n\nPuedes desaparecer en silencio o dejar unas últimas palabras.\n\nMensaje de despedida (opcional):",
+    ""
+  );
+
+  if (farewell === null) return;
+
+  alert("ABANDONAR queda definido como irreversible para esta sala. Antes de activarlo de verdad añadiremos el bloqueo persistente en Supabase para impedir que esa identidad vuelva a entrar.");
+}
+
+function prototypePause() {
+  alert("PAUSAR DEBATE queda reservado al anfitrión. La persistencia y reanudación se conectarán a Supabase junto con los estados PRESENTE / AUSENTE / ABANDONÓ.");
+}
+
+async function confirmLeaveRoom() {
+
+  if (
+    confirm(
+      "¿Abandonar la sala?"
+    )
+  ) {
+
+    await leaveRoom();
+
+  }
+
+}
+
+
+async function leaveRoom() {
+
+  const {
+    data: players
+  } = await sb
+    .from(
+      "players"
+    )
+    .select(
+      "player_id, created_at"
+    )
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .order(
+      "created_at"
+    );
+
+
+  const remaining =
+    players.filter(
+      player =>
+        player.player_id !==
+        localPlayerId
+    );
+
+
+  if (
+    currentRoomHostId ===
+    localPlayerId &&
+    remaining.length
+  ) {
+
+    await sb
+      .from(
+        "rooms"
+      )
+      .update({
+
+        host_id:
+          remaining[0]
+            .player_id
+
+      })
+      .eq(
+        "id",
+        currentRoomId
+      );
+
+  }
+
+
+  await sb
+    .from(
+      "players"
+    )
+    .delete()
+    .eq(
+      "room_id",
+      currentRoomId
+    )
+    .eq(
+      "player_id",
+      localPlayerId
+    );
+
+
+  if (
+    remaining.length ===
+    0
+  ) {
+
+    await sb
+      .from(
+        "rooms"
+      )
+      .delete()
+      .eq(
+        "id",
+        currentRoomId
+      );
+
+  }
+
+
+  cleanupRoom();
+
+  goHome();
+
+}
+
+
+function subscribeRealtime() {
+
+  cleanupChannels();
+
+
+  playersChannel =
+    sb
+      .channel(
+        `players-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "players",
+          filter:
+            `room_id=eq.${currentRoomId}`
+        },
+        () => {
+
+          if (
+            currentRoomStatus !==
+            "playing"
+          ) {
+
+            refreshLobby();
+          }
+        }
+      )
+      .subscribe();
+
+
+  roomChannel =
+    sb
+      .channel(
+        `room-${currentRoomId}`
+      )
+      .on(
+        "postgres_changes",
+        {
+          event:
+            "*",
+          schema:
+            "public",
+          table:
+            "rooms",
+          filter:
+            `id=eq.${currentRoomId}`
+        },
+        payload => {
+
+          if (
+            payload &&
+            payload.eventType ===
+              "DELETE"
+          ) {
+
+            cleanupRoom();
+
+            goHome();
+
+            return;
+          }
+
+          refreshLobby();
+        }
+      )
+      .subscribe();
+
+}
+
+
+function startSafetyRefresh() {
+
+  clearInterval(
+    lobbyTimer
+  );
+
+
+  lobbyTimer =
+    setInterval(
+      () => {
+
+        if (
+          currentRoomId &&
+          document.visibilityState ===
+          "visible"
+        ) {
+
+          refreshLobby();
+
+        }
+
+      },
+      1000
+    );
+
+}
+
+
+function saveRoomSession() {
+
+  localStorage.setItem(
+    "dilema_room_session",
+    JSON.stringify({
+
+      roomId:
+        currentRoomId,
+
+      roomCode:
+        currentRoomCode,
+
+      roomMode:
+        currentRoomMode
+
+    })
+  );
+
+}
+
+
+async function restoreRoomSession() {
+
+  try {
+
+    await ensureAnonymousAuth();
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      error
+    );
+
+    return;
+  }
+
+  const raw =
+    localStorage.getItem(
+      "dilema_room_session"
+    );
+
+  if (!raw) {
+    return;
+  }
+
+
+  try {
+
+    const session =
+      JSON.parse(raw);
+
+
+    currentRoomId =
+      session.roomId;
+
+
+    const room =
+      await getRoom();
+
+
+    if (!room) {
+
+      cleanupRoom();
+
+      return;
+
+    }
+
+
+    const {
+      data: player
+    } = await sb
+      .from(
+        "players"
+      )
+      .select(
+        "player_id, user_id"
+      )
+      .eq(
+        "room_id",
+        currentRoomId
+      )
+      .eq(
+        "player_id",
+        localPlayerId
+      )
+      .maybeSingle();
+
+
+    if (!player) {
+
+      cleanupRoom();
+
+      return;
+
+    }
+
+    if (
+      !player.user_id
+    ) {
+
+      const {
+        error:
+          backfillUserError
+      } = await sb
+        .from(
+          "players"
+        )
+        .update({
+          user_id:
+            currentUserId
+        })
+        .eq(
+          "room_id",
+          currentRoomId
+        )
+        .eq(
+          "player_id",
+          localPlayerId
+        );
+
+      if (
+        backfillUserError
+      ) {
+
+        console.error(
+          "PLAYER USER_ID BACKFILL ERROR:",
+          backfillUserError
+        );
+      }
+    }
+
+
+    currentRoomCode =
+      room.code;
+
+    currentRoomHostId =
+      room.host_id;
+
+    currentExpectedPlayers =
+      room.expected_players;
+
+    currentRoomStatus =
+      room.status;
+
+    currentRoomMode =
+      room.mode || session.roomMode || "game";
+
+
+    await enterRoom();
+
+
+  } catch {
+
+    cleanupRoom();
+
+  }
+
+}
+
+
+function cleanupChannels() {
+
+  if (
+    playersChannel
+  ) {
+
+    sb.removeChannel(
+      playersChannel
+    );
+
+    playersChannel =
+      null;
+
+  }
+
+
+  if (
+    roomChannel
+  ) {
+
+    sb.removeChannel(
+      roomChannel
+    );
+
+    roomChannel =
+      null;
+
+  }
+
+
+  if (
+    roundsChannel
+  ) {
+
+    sb.removeChannel(
+      roundsChannel
+    );
+
+    roundsChannel =
+      null;
+
+  }
+
+}
+
+
+function cleanupRoom() {
+
+  cleanupChannels();
+
+  clearInterval(
+    lobbyTimer
+  );
+
+  clearInterval(
+    gameTimer
+  );
+
+  clearTimeout(
+    revealTimer
+  );
+
+  lobbyTimer =
+    null;
+
+  gameTimer =
+    null;
+
+  revealTimer =
+    null;
+
+  currentRoundId =
+    null;
+
+  currentRoundStatus =
+    null;
+
+  currentDilemma =
+    null;
+
+  localVoteChoice =
+    null;
+
+  localRoundRole =
+    null;
+
+  localRoleReady =
+    false;
+
+  assigningRoles =
+    false;
+
+  currentRoomId =
+    null;
+
+  currentRoomCode =
+    null;
+
+  currentRoomHostId =
+    null;
+
+  currentExpectedPlayers =
+    null;
+
+  currentRoomStatus =
+    null;
+
+  currentRoomMode =
+    "game";
+
+  selectedSavedProfileId =
+    null;
+
+  localStorage.removeItem(
+    "dilema_room_session"
+  );
+
+  /*
+    IMPORTANTE:
+    NO BORRAMOS "dilema_profiles".
+    Los perfiles sobreviven a abandonar,
+    reiniciar y terminar una sala.
+  */
+
+}
+
+
+window.addEventListener(
+  "DOMContentLoaded",
+  async () => {
+
+    try {
+
+      await ensureAnonymousAuth();
+
+      console.log(
+        "DILEMA AUTH READY:",
+        currentUserId
+      );
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        error
+      );
+
+      alert(
+        "No se pudo iniciar DILEMA. Recarga la página."
+      );
+
+      return;
+    }
+
+    renderAvatarTabs();
+
+    renderAvatars();
+
+    refreshMicrophrases();
+
+    await restoreRoomSession();
+
+  }
+);
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function () {
+  let n = 0;
+
+  function markHostWaitingLabels() {
+    const candidates = document.querySelectorAll(
+      "#waitingStatus, #waitingRoleDraw, .waiting-status, .small-note"
+    );
+
+    candidates.forEach(function (el) {
+      const text = (el.textContent || "").trim();
+      if (/^ESPERANDO AL ANFITRIÓN(?:\.\.\.)?$/.test(text)) {
+        el.classList.add("host-wait-animated");
+      }
+    });
+  }
+
+  function updateHostWaitingLabels() {
+    markHostWaitingLabels();
+
+    document.querySelectorAll(".host-wait-animated").forEach(function (el) {
+      el.textContent = "ESPERANDO AL ANFITRIÓN";
+    });
+
+    n = (n + 1) % 4;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    updateHostWaitingLabels();
+    setInterval(updateHostWaitingLabels, 500);
+  });
+})();
+</script>
+
+
+<style>
+#debatePilotPanel{width:100%;margin-top:18px;padding-top:18px;border-top:1px solid #292929}
+.pilot-state{text-align:center;color:#888;font-size:11px;letter-spacing:1.5px;margin-bottom:12px}
+.pilot-twist{display:none;width:100%;padding:18px;border:1px solid #fff;border-radius:14px;margin:12px 0 16px;text-align:center}
+.pilot-twist b{display:block;font-size:11px;letter-spacing:2px;color:#888;margin-bottom:10px}
+.pilot-twist span{font-size:17px;font-weight:800;line-height:1.35}
+.pilot-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pilot-actions button{margin:0;min-height:54px;padding:10px;font-size:12px}
+#pilotEvent{display:none;margin:14px 0;padding:18px;border-radius:14px;background:#fff;color:#000;text-align:center;font-size:18px;font-weight:900}
+#pilotCloseBox{display:none;margin-top:14px;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+#pilotCloseBox p{font-weight:900;margin-bottom:12px}
+#pilotRevote{display:none;margin-top:14px}
+#pilotRevote .vote-option{margin-bottom:9px}
+</style>
+<style>
+/* V0.1.15 interaction rule: no actionable choice is preselected.
+   White is reserved for a choice made by this user. */
+#debateChoice .btn-primary,
+#debateChoice .btn-secondary {
+  background:#0b0b0b !important;
+  color:#fff !important;
+  border:1px solid #3a3a3a !important;
+}
+#debateChoice .btn-primary:active,
+#debateChoice .btn-secondary:active {
+  background:#fff !important;
+  color:#000 !important;
+}
+</style>
+<script>
+(function(){
+ let lastEventId=0, busy=false, initializedRound=null;
+
+ function el(id){return document.getElementById(id)}
+ function ensurePanel(){
+   const debate=document.getElementById("debate");
+   if(!debate || el("debatePilotPanel")) return;
+   const panel=document.createElement("div");
+   panel.id="debatePilotPanel";
+   panel.innerHTML=
+    '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
+    '<div id="pilotHistory" class="pilot-history"></div>'+
+    '<div id="pilotEvent"></div>'+
+    '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
+    '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
+    '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
+    '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama">📣</button></div>'+
+    '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button></div>'+
+    '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
+      '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
+   const note=debate.querySelector(".small-note");
+   if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
+   const oa=debate.querySelector(".debate-option:nth-child(1)"),ob=debate.querySelector(".debate-option:nth-child(2)");
+   if(oa){oa.id="pilotVoteA";oa.setAttribute("role","button");oa.onclick=()=>pilotTopVote("A");oa.insertAdjacentHTML("beforeend",'<div id="pilotCountA" class="pilot-vote-count">0</div>');}
+   if(ob){ob.id="pilotVoteB";ob.setAttribute("role","button");ob.onclick=()=>pilotTopVote("B");ob.insertAdjacentHTML("beforeend",'<div id="pilotCountB" class="pilot-vote-count">0</div>');}
+ }
+ async function rpc(name,args){
+   const r=await sb.rpc(name,args);
+   if(r.error){console.error(name,r.error);throw r.error}
+   return r.data;
+ }
+ async function init(){
+   if(currentRoomMode!=="debate"||!currentRoundId) return;
+   ensurePanel();
+   if(initializedRound!==currentRoundId){
+     await rpc("init_debate_engine",{p_round_id:currentRoundId});
+     initializedRound=currentRoundId;
+   }
+ }
+ async function latestTwist(){
+   const r=await sb.from("debate_twists").select("id,text,trigger,vote_cycle,created_at").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle();
+   return r.data||null;
+ }
+ async function ownProclamation(){
+   const r=await sb.from("debate_proclamations").select("id,used_at,proclamation_id").eq("round_id",currentRoundId).eq("user_id",currentUserId).maybeSingle();
+   return r.data||null;
+ }
+ async function latestEvent(){
+   const r=await sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle();
+   if(r.data&&r.data.id>lastEventId){lastEventId=r.data.id;const box=el("pilotEvent");box.textContent=r.data.text;box.style.display="block";setTimeout(()=>{if(box)box.style.display="none"},5000)}
+ }
+ window.pilotRefresh=async function(){
+   if(busy) return;
+   if(!currentRoundId || !document.getElementById("debate")?.classList.contains("active")) return;
+   busy=true;
+   try{
+    const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
+    if(s.phase==="finished"){busy=false;await pilotCollectiveEnd();return;}
+    const tw=await latestTwist();
+    const state=el("pilotState");
+    if(state){
+      const parts=[
+        ["GIRO",s.requests,s.players],
+        ["PROCLAMA",s.proclamations_used,s.proclamations_assigned],
+        ["AUSENTE",s.absent,s.total_active],["PAUSA",s.paused?1:0,1],["ABANDONO",s.abandoned,(s.total_active||0)+(s.abandoned||0)]
+      ];
+      state.innerHTML=parts.map(([k,n,d])=>'<span class="'+(Number(n)>0?'pilot-hot':'')+'">'+k+' '+n+'/'+d+'</span>').join(' · ')+' · CICLO '+s.cycle;
+    }
+    const tbox=el("pilotTwist"), hint=el("pilotRevoteHint");
+    if(tw && Number(tw.vote_cycle)===Number(s.cycle)){
+      tbox.style.display="block";el("pilotTwistText").textContent=tw.text;
+      hint.style.display=s.phase==="twist"?"block":"none";
+    }else{tbox.style.display="none";hint.style.display="none"}
+    const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
+    if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
+    if(va&&vb){
+      const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
+      const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
+      va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
+      vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
+      const complete=(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
+      const split=Number(s.votes_a)!==Number(s.votes_b);
+      va.classList.toggle("pilot-win",complete&&split&&Number(s.votes_a)>Number(s.votes_b));
+      vb.classList.toggle("pilot-win",complete&&split&&Number(s.votes_b)>Number(s.votes_a));
+      va.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_a)<Number(s.votes_b));
+      vb.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_b)<Number(s.votes_a));
+    }
+    const gb=el("pilotGiroBtn");
+    if(gb){
+      const ownReq=await sb.from("debate_twist_requests").select("id").eq("round_id",currentRoundId).eq("vote_cycle",s.cycle).eq("user_id",currentUserId).maybeSingle();
+      const mine=!!ownReq.data;
+      gb.classList.toggle("pilot-selected",mine);
+      gb.disabled=!s.request_open||mine;
+    }
+    const cb=el("pilotCloseBox");
+    if(cb){
+      cb.style.display=s.phase==="closing"?"block":"none";
+      const yes=cb.querySelector('[data-close="YES"]'), no=cb.querySelector('[data-close="NO"]');
+      if(s.phase==="closing"){
+        const ownClose=await sb.from("debate_close_votes").select("choice").eq("round_id",currentRoundId).eq("proposal_number",s.close_proposal).eq("user_id",currentUserId).maybeSingle();
+        const mine=ownClose.data?ownClose.data.choice:null;
+        if(yes) yes.classList.toggle("pilot-selected",mine==="YES");
+        if(no) no.classList.toggle("pilot-selected",mine==="NO");
+      }else{
+        if(yes) yes.classList.remove("pilot-selected");
+        if(no) no.classList.remove("pilot-selected");
+      }
+    }
+    const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
+    if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=(!pr||pr.used_at)?"📣̸":"📣";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",!pr||!!pr.used_at)}
+    await latestEvent();
+    if(currentRoomHostId===localPlayerId && s.phase==="debate" && s.players>1 && ((s.votes_a===s.players&&s.votes_b===0)||(s.votes_b===s.players&&s.votes_a===0))){
+      const existing=tw&&Number(tw.vote_cycle)===Number(s.cycle);
+      if(!existing){
+        await rpc("launch_debate_twist",{p_round_id:currentRoundId,p_trigger:"unanimity"});
+        setTimeout(pilotRefresh,150);
+      }
+    }
+   }catch(e){console.error("PILOT",e)}
+   finally{busy=false}
+ };
+ window.pilotRequestTwist=async function(){
+   try{
+    await init(); const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
+    await rpc("request_debate_twist",{p_round_id:currentRoundId});
+    const localGiro=el("pilotGiroBtn"); if(localGiro){localGiro.classList.add("pilot-selected");localGiro.disabled=true;}
+    await pilotRefresh();
+   }catch(e){alert("No se ha podido pedir el GIRO.");}
+ };
+ window.pilotTopVote=async function(choice){
+   try{
+     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
+     if(s.phase!=="twist") return;
+     const va=el("pilotVoteA"),vb=el("pilotVoteB"); if(va&&vb){va.classList.toggle("pilot-my-vote",choice==="A");vb.classList.toggle("pilot-my-vote",choice==="B");}
+     await pilotRevoteChoice(choice);
+   }catch(e){console.error(e)}
+ };
+ window.pilotRevoteChoice=async function(choice){
+   try{
+    const va=el("pilotVoteA"),vb=el("pilotVoteB");
+    if(va&&vb){va.classList.toggle("pilot-my-vote",choice==="A");vb.classList.toggle("pilot-my-vote",choice==="B");}
+    await rpc("cast_debate_revote",{p_round_id:currentRoundId,p_choice:choice});
+    await rpc("complete_debate_revote",{p_round_id:currentRoundId});
+    await pilotRefresh();
+   }catch(e){alert("No se ha podido registrar el revoto.");}
+ };
+ window.pilotUseProclamation=async function(){
+   try{await rpc("use_debate_proclamation",{p_round_id:currentRoundId});await pilotRefresh()}catch(e){alert("No tienes una PROCLAMA disponible.");}
+ };
+ window.pilotProposeClose=async function(){try{
+   await rpc("propose_debate_close",{p_round_id:currentRoundId});
+   const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.remove("pilot-selected"));}
+   await pilotRefresh();
+ }catch(e){alert("No se ha podido proponer el cierre.");}};
+ let collectiveEndRunning=false;
+ async function pilotCollectiveEnd(){
+   if(collectiveEndRunning) return;
+   collectiveEndRunning=true;
+   let overlay=document.getElementById("collectiveEndOverlay");
+   if(!overlay){
+     overlay=document.createElement("div");overlay.id="collectiveEndOverlay";
+     overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:#080808;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;color:#fff";
+     overlay.innerHTML='<div><div style="font-size:12px;letter-spacing:3px;color:#8993a3;margin-bottom:18px">DILEMA</div><div style="font-size:30px;font-weight:900;line-height:1.12">LA MESA HA DECIDIDO<br>PONER FIN AL DEBATE.</div></div>';
+     document.body.appendChild(overlay);
+   }
+   overlay.style.display="flex";
+   setTimeout(async()=>{
+     try{
+       const {error}=await sb.from("rooms").update({status:"waiting",mode:"debate"}).eq("id",currentRoomId);
+       if(error) console.error(error);
+     }catch(e){}
+     currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
+     overlay.remove();showScreen("room");await refreshLobby();collectiveEndRunning=false;
+   },2600);
+ }
+ window.pilotCloseVote=async function(choice){try{
+   const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.close===choice));}
+   const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done){await pilotCollectiveEnd();}
+ }catch(e){alert("No se ha podido votar el cierre.");}};
+ document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(async()=>{
+   if(currentRoomMode==="debate"&&currentRoomId&&currentRoundId&&document.getElementById("debate")?.classList.contains("active")&&document.visibilityState==="visible"){
+     try{
+       const rr=await sb.from("rooms").select("status,mode").eq("id",currentRoomId).maybeSingle();
+       if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&localStorage.getItem("dilema_room_session")){
+         /* waiting is also the normal lobby state. Do not force the host back to
+            the lobby here: it breaks ELEGIR DILEMA. A real restart is handled
+            by the room/restart flow itself. */
+       }
+     }catch(e){}
+     pilotRefresh();
+   }
+ },1200)});
+})();
+</script>
+
+<style>
+#pilotPauseBanner{display:none;width:100%;padding:18px;margin:0 0 16px;border:1px solid #fff;border-radius:14px;text-align:center;font-weight:900;letter-spacing:2px}
+#pilotPresence{margin-top:12px}
+</style>
+<script>
+(function(){
+ function E(id){return document.getElementById(id)}
+ function addV15(){
+   const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
+   const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
+   const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+   p.appendChild(x);
+   const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
+   if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
+ }
+ async function R(n,a){const r=await sb.rpc(n,a);if(r.error)throw r.error;return r.data}
+ let absent=false,paused=false;
+ window.pilotToggleAbsent=async function(){
+   try{absent=!absent;await R("set_debate_presence",{p_room_id:currentRoomId,p_presence:absent?"absent":"present"});E("pilotAbsentBtn").textContent=absent?"VOLVER AL DEBATE":"AUSENTARME";E("pilotAbsentBtn").classList.toggle("pilot-selected",absent);}catch(e){absent=!absent;alert("No se ha podido cambiar tu presencia.")}
+ };
+ window.pilotTogglePause=async function(){
+   if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
+   try{paused=!paused;await R("set_debate_paused",{p_round_id:currentRoundId,p_paused:paused});E("pilotPauseBtn").textContent=paused?"REANUDAR":"PAUSAR";await pilotRefresh()}catch(e){paused=!paused;alert("No se ha podido pausar el debate.")}
+ };
+ window.pilotAbandon=async function(){
+   const msg=prompt("¿ASÍ QUE TE VAS?\\n\\nÚltimas palabras (opcional):",""); if(msg===null)return;
+   if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
+   try{
+     await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:msg});
+     cleanupRoom();
+     history.replaceState(null,"",location.pathname+location.search);
+     showScreen("home");
+   }catch(e){console.error("ABANDON ERROR",e);alert("No se ha podido abandonar el debate.")}
+ };
+ const oldRefresh=window.pilotRefresh;
+ window.pilotRefresh=async function(){
+   addV15(); await oldRefresh();
+   try{
+     if(!currentRoundId)return;
+     const s=await R("get_debate_state",{p_round_id:currentRoundId});paused=!!s.paused;
+     const banner=E("pilotPauseBanner"); if(banner)banner.style.display=paused?"block":"none";
+     let isHost=currentRoomHostId===localPlayerId;
+     try{
+       const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
+       if(hr.data){currentRoomHostId=hr.data.host_id;isHost=currentRoomHostId===localPlayerId;}
+     }catch(e){}
+     const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
+     const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
+     const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
+     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
+
+     {const q=E("pilotGiroBtn");if(q&&paused)q.disabled=true;}
+   }catch(e){}
+ };
+ const originalRender=window.renderDebate;
+ window.renderDebate=function(){
+   originalRender();
+   if(currentRoomMode==="debate"){
+     addV15();
+     const title=document.querySelector("#debate .debate-title");if(title)title.innerHTML="ABRIMOS<br>EL DEBATE";
+     const top=E("debateGroupVote");if(top&&top.textContent==="TODOS PREPARADOS")top.textContent="EL GRUPO HA VOTADO";
+     const note=document.querySelector("#debate .small-note");if(note)note.textContent="DEFIENDE LO QUE PIENSAS · ESCUCHA · CAMBIA DE OPINIÓN SI QUIERES";
+     const dock=document.querySelector("#debate .tool-dock");if(dock)dock.style.display="none";
+     const tn=document.querySelector("#debate .tool-note");if(tn)tn.style.display="none";
+     const hc=E("hostDebateControls");if(hc)hc.style.display="none";
+     const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
+     const legacyPause=E("pauseDebateBtn");if(legacyPause)legacyPause.style.display="none";
+   }
+ };
+ const originalReset=window.resetGame;
+ window.resetGame=async function(){
+   const wasDebate=currentRoomMode==="debate";
+   if(!wasDebate)return originalReset();
+   if(currentRoomHostId!==localPlayerId||!currentRoomId)return;
+   const rid=currentRoomId;
+   try{
+     await sb.from("rooms").delete().eq("id",rid);
+     await sb.from("players").delete().eq("room_id",rid);
+   }catch(e){console.error(e)}
+   cleanupRoom();showScreen("home");
+ };
+ document.addEventListener("DOMContentLoaded",()=>setTimeout(addV15,200));
+})();
+</script>
+</body>
+</html>
