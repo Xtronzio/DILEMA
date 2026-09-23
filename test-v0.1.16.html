@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 001 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 002 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1113,6 +1113,9 @@
  position:static!important;float:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
  width:100%!important;max-width:none!important;height:54px!important;margin:0!important
 }
+</style><style>
+/* V0.1.16-002: a launched GIRO clears visual request state until revote completes */
+#debatePilotPanel #pilotGiroBtn:disabled{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
 </style></head>
 
 <body>
@@ -6257,10 +6260,17 @@ window.addEventListener(
     }
     const gb=el("pilotGiroBtn");
     if(gb){
-      const ownReq=await sb.from("debate_twist_requests").select("id").eq("round_id",currentRoundId).eq("vote_cycle",s.cycle).eq("user_id",currentUserId).maybeSingle();
-      const mine=!!ownReq.data;
-      gb.classList.toggle("pilot-selected",mine);
-      gb.disabled=!s.request_open||mine;
+      /* During a GIRO/revote, PEDIR GIRO belongs to the previous cycle:
+         it must be neutral and unavailable on every device until revote completes. */
+      if(s.phase==="twist"){
+        gb.classList.remove("pilot-selected");
+        gb.disabled=true;
+      }else{
+        const ownReq=await sb.from("debate_twist_requests").select("id").eq("round_id",currentRoundId).eq("vote_cycle",s.cycle).eq("user_id",currentUserId).maybeSingle();
+        const mine=!!ownReq.data;
+        gb.classList.toggle("pilot-selected",mine);
+        gb.disabled=!s.request_open||mine;
+      }
     }
     const cb=el("pilotCloseBox");
     if(cb){
