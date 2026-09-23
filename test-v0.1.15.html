@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015P — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015Q — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6152,7 +6152,9 @@ window.addEventListener(
      try{
        const rr=await sb.from("rooms").select("status,mode").eq("id",currentRoomId).maybeSingle();
        if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&localStorage.getItem("dilema_room_session")){
-         currentRoundId=null;currentRoundStatus=null;currentDilemma=null;showScreen("room");await refreshRoom();return;
+         /* waiting is also the normal lobby state. Do not force the host back to
+            the lobby here: it breaks ELEGIR DILEMA. A real restart is handled
+            by the room/restart flow itself. */
        }
      }catch(e){}
      pilotRefresh();
