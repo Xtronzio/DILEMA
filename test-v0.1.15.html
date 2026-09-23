@@ -2733,9 +2733,41 @@ async function joinRoomWithProfile(
   }
 
 
-  await insertPlayer(
-    profile
-  );
+  const { data: oldPlayer } = await sb.from("players")
+    .select("id,abandoned_at")
+    .eq("room_id",currentRoomId)
+    .eq("player_id",localPlayerId)
+    .maybeSingle();
+
+  if (oldPlayer) {
+    const { error: reviveError } = await sb.from("players").update({
+      user_id: currentUserId,
+      name: profile.name,
+      avatar: profile.avatar,
+      motto: profile.motto || null,
+      presence: "present",
+      abandoned_at: null,
+      farewell: null
+    }).eq("id",oldPlayer.id);
+    if (reviveError) {
+      console.error("REJOIN ERROR:",reviveError);
+      alert("No se ha podido volver a entrar en la sala.");
+      return;
+    }
+    saveRoomSession();
+    await enterRoom();
+    return;
+  }
+
+  try {
+    await insertPlayer(profile);
+  } catch (error) {
+    console.error("JOIN PLAYER ERROR:", error);
+    alert("No se ha podido entrar en la sala.");
+    cleanupRoom();
+    showScreen("home");
+    return;
+  }
 
   saveRoomSession();
 
@@ -2744,37 +2776,18 @@ async function joinRoomWithProfile(
 }
 
 
-async function insertPlayer(
-  profile
-) {
-
-  await sb
-    .from(
-      "players"
-    )
+async function insertPlayer(profile) {
+  const { error } = await sb
+    .from("players")
     .insert({
-
-      room_id:
-        currentRoomId,
-
-      player_id:
-        localPlayerId,
-
-      user_id:
-        currentUserId,
-
-      name:
-        profile.name,
-
-      avatar:
-        profile.avatar,
-
-      motto:
-        profile.motto ||
-        null
-
+      room_id: currentRoomId,
+      player_id: localPlayerId,
+      user_id: currentUserId,
+      name: profile.name,
+      avatar: profile.avatar,
+      motto: profile.motto || null
     });
-
+  if (error) throw error;
 }
 
 
