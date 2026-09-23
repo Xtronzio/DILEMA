@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015W — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015X — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1019,6 +1019,14 @@
 #pilotHostGroup{display:none;margin:0!important;padding-top:2px!important;width:100%!important}
 #pilotHostGroup #pilotHostBadge{display:block!important;width:100%!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;font-size:10px!important;line-height:1.3!important;letter-spacing:2px!important}
 #pilotHostGroup #pilotPauseBtn{display:block!important;width:100%!important;min-height:54px!important;margin:0!important}
+</style><style>
+/* 015X: no flashing in live debate state */
+#debatePilotPanel *,#debate .debate-option,#debate .pilot-vote-count{animation:none!important;transition:none!important}
+#debate .pilot-vote-count{opacity:1!important}
+#pilotGiroBtn:disabled,#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+#pilotGiroBtn:disabled{opacity:1!important}
+#pilotGiroBtn.pilot-selected:disabled{background:#fff!important;color:#000!important;border-color:#fff!important}
+#pilotPauseBtn.pilot-selected{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
 </style></head>
 
 <body>
@@ -6067,7 +6075,7 @@ window.addEventListener(
     '<div id="pilotHistory" class="pilot-history"></div>'+
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
-    '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · VOTA ARRIBA</div>'+
+    '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
     '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
     '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama">📣</button></div>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button>'+
@@ -6127,13 +6135,16 @@ window.addEventListener(
     }else{tbox.style.display="none";hint.style.display="none"}
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
     if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
-    if(va&&vb){va.classList.remove("pilot-win","pilot-lose");
+    if(va&&vb){
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",s.cycle).eq("user_id",currentUserId).maybeSingle();
       va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
-      if((s.votes_a+s.votes_b)>=s.players&&s.players>0&&s.votes_a!==s.votes_b){
-        (s.votes_a>s.votes_b?va:vb).classList.add("pilot-win");(s.votes_a>s.votes_b?vb:va).classList.add("pilot-lose");
-      }
+      const complete=(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
+      const split=Number(s.votes_a)!==Number(s.votes_b);
+      va.classList.toggle("pilot-win",complete&&split&&Number(s.votes_a)>Number(s.votes_b));
+      vb.classList.toggle("pilot-win",complete&&split&&Number(s.votes_b)>Number(s.votes_a));
+      va.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_a)<Number(s.votes_b));
+      vb.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_b)<Number(s.votes_a));
     }
     const gb=el("pilotGiroBtn");
     if(gb){
@@ -6188,6 +6199,8 @@ window.addEventListener(
  };
  window.pilotRevoteChoice=async function(choice){
    try{
+    const va=el("pilotVoteA"),vb=el("pilotVoteB");
+    if(va&&vb){va.classList.toggle("pilot-my-vote",choice==="A");vb.classList.toggle("pilot-my-vote",choice==="B");}
     await rpc("cast_debate_revote",{p_round_id:currentRoundId,p_choice:choice});
     await rpc("complete_debate_revote",{p_round_id:currentRoundId});
     await pilotRefresh();
@@ -6289,7 +6302,7 @@ window.addEventListener(
      const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
-     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
+     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
      ["pilotGiroBtn","pilotProclamaBtn"].forEach(id=>{const q=E(id);if(q&&paused)q.disabled=true});
    }catch(e){}
