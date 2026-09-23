@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015Z — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 016A — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -2735,16 +2735,25 @@ async function joinRoomWithProfile(profile) {
 }
 
 async function insertPlayer(profile) {
-  const { error } = await sb
+  const { data: existing, error: findError } = await sb
     .from("players")
-    .insert({
-      room_id: currentRoomId,
-      player_id: localPlayerId,
-      user_id: currentUserId,
-      name: profile.name,
-      avatar: profile.avatar,
-      motto: profile.motto || null
-    });
+    .select("id,player_id,abandoned_at")
+    .eq("room_id",currentRoomId)
+    .eq("player_id",localPlayerId)
+    .maybeSingle();
+  if(findError) throw findError;
+  if(existing){
+    const {error}=await sb.from("players").update({
+      user_id:currentUserId,name:profile.name,avatar:profile.avatar,motto:profile.motto||null,
+      presence:"present",abandoned_at:null,farewell:null
+    }).eq("id",existing.id);
+    if(error) throw error;
+    return;
+  }
+  const { error } = await sb.from("players").insert({
+    room_id:currentRoomId,player_id:localPlayerId,user_id:currentUserId,
+    name:profile.name,avatar:profile.avatar,motto:profile.motto||null,presence:"present"
+  });
   if (error) throw error;
 }
 
@@ -2894,6 +2903,7 @@ async function refreshLobby() {
       "room_id",
       currentRoomId
     )
+    .is("abandoned_at",null)
     .order(
       "created_at",
       {
@@ -3736,7 +3746,8 @@ async function startGame() {
     const { count } = await sb
       .from("players")
       .select("*", { count: "exact", head: true })
-      .eq("room_id", currentRoomId);
+      .eq("room_id", currentRoomId)
+      .is("abandoned_at",null);
 
     if (count !== currentExpectedPlayers) {
       alert("La sala no está completa.");
