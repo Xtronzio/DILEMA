@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015X — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015Y — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6113,9 +6113,10 @@ window.addEventListener(
    if(r.data&&r.data.id>lastEventId){lastEventId=r.data.id;const box=el("pilotEvent");box.textContent=r.data.text;box.style.display="block";setTimeout(()=>{if(box)box.style.display="none"},5000)}
  }
  window.pilotRefresh=async function(){
-   if(busy) return; busy=true;
+   if(busy) return;
+   if(!currentRoundId || !document.getElementById("debate")?.classList.contains("active")) return;
+   busy=true;
    try{
-    await init();
     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
     if(s.phase==="finished"){busy=false;await pilotCollectiveEnd();return;}
     const tw=await latestTwist();
@@ -6170,7 +6171,6 @@ window.addEventListener(
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
     if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=(!pr||pr.used_at)?"📣̸":"📣";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",!pr||!!pr.used_at)}
     await latestEvent();
-    if(s.phase==="finished"){alert("DEBATE FINALIZADO");}
     if(currentRoomHostId===localPlayerId && s.phase==="debate" && s.players>1 && ((s.votes_a===s.players&&s.votes_b===0)||(s.votes_b===s.players&&s.votes_a===0))){
       const existing=tw&&Number(tw.vote_cycle)===Number(s.cycle);
       if(!existing){
@@ -6214,7 +6214,10 @@ window.addEventListener(
    const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.remove("pilot-selected"));}
    await pilotRefresh();
  }catch(e){alert("No se ha podido proponer el cierre.");}};
+ let collectiveEndRunning=false;
  async function pilotCollectiveEnd(){
+   if(collectiveEndRunning) return;
+   collectiveEndRunning=true;
    let overlay=document.getElementById("collectiveEndOverlay");
    if(!overlay){
      overlay=document.createElement("div");overlay.id="collectiveEndOverlay";
@@ -6229,7 +6232,7 @@ window.addEventListener(
        if(error) console.error(error);
      }catch(e){}
      currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
-     overlay.remove();showScreen("room");await refreshLobby();
+     overlay.remove();showScreen("room");await refreshLobby();collectiveEndRunning=false;
    },2600);
  }
  window.pilotCloseVote=async function(choice){try{
@@ -6237,7 +6240,7 @@ window.addEventListener(
    const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done){await pilotCollectiveEnd();}
  }catch(e){alert("No se ha podido votar el cierre.");}};
  document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(async()=>{
-   if(currentRoomMode==="debate"&&currentRoomId&&document.visibilityState==="visible"){
+   if(currentRoomMode==="debate"&&currentRoomId&&currentRoundId&&document.getElementById("debate")?.classList.contains("active")&&document.visibilityState==="visible"){
      try{
        const rr=await sb.from("rooms").select("status,mode").eq("id",currentRoomId).maybeSingle();
        if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&localStorage.getItem("dilema_room_session")){
