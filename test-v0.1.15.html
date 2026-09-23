@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015V — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015W — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1010,6 +1010,15 @@
 #pilotCloseBox [data-close]{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
 #pilotCloseBox [data-close].pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
 #resetDebateBtn{display:none!important}
+</style><style>
+/* 015W: stable selection + balanced lower controls */
+#debate .debate-option.pilot-my-vote{animation:none!important;transition:none!important;opacity:1!important;border:2px solid #fff!important;box-shadow:none!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;margin-top:14px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{min-height:54px!important}
+#pilotHostGroup{display:none;margin:0!important;padding-top:2px!important;width:100%!important}
+#pilotHostGroup #pilotHostBadge{display:block!important;width:100%!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;font-size:10px!important;line-height:1.3!important;letter-spacing:2px!important}
+#pilotHostGroup #pilotPauseBtn{display:block!important;width:100%!important;min-height:54px!important;margin:0!important}
 </style></head>
 
 <body>
@@ -6118,9 +6127,10 @@ window.addEventListener(
     }else{tbox.style.display="none";hint.style.display="none"}
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
     if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
-    if(va&&vb){va.classList.remove("pilot-win","pilot-lose","pilot-my-vote");vb.classList.remove("pilot-win","pilot-lose","pilot-my-vote");
+    if(va&&vb){va.classList.remove("pilot-win","pilot-lose");
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",s.cycle).eq("user_id",currentUserId).maybeSingle();
-      if(my.data){(my.data.choice==="A"?va:vb).classList.add("pilot-my-vote")}
+      va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
+      vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
       if((s.votes_a+s.votes_b)>=s.players&&s.players>0&&s.votes_a!==s.votes_b){
         (s.votes_a>s.votes_b?va:vb).classList.add("pilot-win");(s.votes_a>s.votes_b?vb:va).classList.add("pilot-lose");
       }
