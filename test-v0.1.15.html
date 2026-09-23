@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015S — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015T — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -988,7 +988,7 @@
 </style><style>
 #resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}
 #pilotHostBadge{grid-column:1/-1!important;margin:6px 0 -2px!important}
-</style></head>
+</style><style>#pilotHostReset,#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}</style></head>
 
 <body>
 
@@ -6192,7 +6192,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button><div id="pilotHostBadge" style="display:none">ERES ANFITRIÓN</div><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button><button id="pilotHostReset" class="btn btn-danger" onclick="pilotRestartDebate()">REINICIAR</button>';
+   x.innerHTML='<button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button><div id="pilotHostBadge" style="display:none">ERES ANFITRIÓN</div><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
@@ -6205,16 +6205,6 @@ window.addEventListener(
  window.pilotTogglePause=async function(){
    if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
    try{paused=!paused;await R("set_debate_paused",{p_round_id:currentRoundId,p_paused:paused});E("pilotPauseBtn").textContent=paused?"REANUDAR":"PAUSAR";await pilotRefresh()}catch(e){paused=!paused;alert("No se ha podido pausar el debate.")}
- };
- window.pilotRestartDebate=async function(){
-   if(currentRoomHostId!==localPlayerId||!currentRoomId)return;
-   if(!confirm("¿REINICIAR EL DEBATE?\n\nTodos volverán al hall."))return;
-   try{
-     await R("restart_debate_to_hall",{p_room_id:currentRoomId});
-     currentRoundId=null; currentRoundStatus=null; currentDilemma=null;
-     showScreen("room");
-     await refreshRoom();
-   }catch(e){console.error(e);alert("No se ha podido reiniciar el debate.");}
  };
  window.pilotAbandon=async function(){
    const msg=prompt("¿ASÍ QUE TE VAS?\\n\\nÚltimas palabras (opcional):",""); if(msg===null)return;
@@ -6242,7 +6232,7 @@ window.addEventListener(
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const badge=E("pilotHostBadge");if(badge)badge.style.display=isHost?"block":"none";
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
-     const rb=E("pilotHostReset");if(rb)rb.style.display=isHost?"block":"none";
+
      ["pilotGiroBtn","pilotProclamaBtn"].forEach(id=>{const q=E(id);if(q&&paused)q.disabled=true});
    }catch(e){}
  };
