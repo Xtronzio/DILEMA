@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 016D — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 016E — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1055,6 +1055,33 @@
   min-height:auto!important
 }
 .host-wait-animated{animation:none!important;transition:none!important}
+</style><style>
+/* 016E: player controls and host controls are separate, ordered blocks */
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin-top:14px!important;gap:0!important}
+#pilotPresence .pilot-presence-row{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important;width:100%!important;margin:0!important
+}
+#pilotPresence .pilot-presence-row>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;height:54px!important;margin:0!important;padding:0 10px!important;
+ font-size:11px!important;line-height:1!important;text-align:center!important
+}
+#pilotHostGroup{
+ position:static!important;width:100%!important;margin:20px 0 0!important;padding:18px 0 0!important;
+ border-top:1px solid #292929!important
+}
+#pilotHostBadge{
+ position:static!important;display:block!important;width:100%!important;margin:0 0 12px!important;padding:0!important;
+ text-align:center!important;color:#fff!important;font-size:11px!important;font-weight:900!important;
+ line-height:16px!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important;gap:9px!important}
+#pilotHostGroup .pilot-host-actions>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;height:54px!important;margin:0!important;padding:0 12px!important;
+ font-size:12px!important;line-height:1!important;text-align:center!important
+}
 </style></head>
 
 <body>
@@ -6314,7 +6341,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div>';
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
