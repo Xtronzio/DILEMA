@@ -964,6 +964,11 @@
   }
 </style>
 
+<style>
+#debatePilotPanel .pilot-state{line-height:2}
+#debatePilotPanel .pilot-hot{color:#fff;font-weight:900}
+#debatePilotPanel .pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+</style>
 </head>
 
 <body>
@@ -1190,7 +1195,7 @@
         NIÑOS
         <span class="construction-label">EN CONSTRUCCIÓN</span>
       </button>
-      <button type="button" class="choice-btn active" data-audience="teen" onclick="selectDebateAudience('teen', this)">ADOLESCENTES</button>
+      <button type="button" class="choice-btn active" data-audience="teen" onclick="selectDebateAudience('teen', this)">TEENS</button>
       <button type="button" class="choice-btn construction-audience" data-audience="adult" disabled>
         ADULTOS
         <span class="construction-label">EN CONSTRUCCIÓN</span>
@@ -4614,11 +4619,9 @@ async function assignRoles() {
     assigningRoles = true;
 
     try {
-      const { error } = await sb
-        .from("rounds")
-        .update({ status: "debate" })
-        .eq("id", currentRoundId)
-        .eq("room_id", currentRoomId);
+      const { data, error } = await sb.rpc("start_debate_engine", {
+        p_round_id: currentRoundId
+      });
 
       if (error) {
         console.error(error);
@@ -4628,6 +4631,9 @@ async function assignRoles() {
 
       currentRoundStatus = "debate";
       await refreshGame();
+      setTimeout(() => {
+        if (window.pilotRefresh) window.pilotRefresh();
+      }, 100);
     } finally {
       assigningRoles = false;
     }
@@ -6090,7 +6096,7 @@ window.addEventListener(
       '<button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
       '<button id="pilotProclamaBtn" class="btn btn-secondary" onclick="pilotUseProclamation()">PROCLAMA</button>'+
       '<button class="btn btn-secondary" onclick="pilotProposeClose()">FINALIZAR</button>'+
-      '<button class="btn btn-secondary" onclick="pilotRefresh()">ACTUALIZAR</button>'+
+      
     '</div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE CERRAR EL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-primary" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
@@ -6129,7 +6135,14 @@ window.addEventListener(
     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
     const tw=await latestTwist();
     const state=el("pilotState");
-    if(state) state.textContent="VOTO "+s.votes_a+"A / "+s.votes_b+"B · GIRO "+s.requests+"/"+s.players+" · CICLO "+s.cycle;
+    if(state){
+      const parts=[
+        ["A",s.votes_a,s.players],["B",s.votes_b,s.players],["GIRO",s.requests,s.players],
+        ["PROCLAMA",s.proclamations_used,s.proclamations_assigned],
+        ["AUSENTE",s.absent,s.total_active],["PAUSA",s.paused?1:0,1],["ABANDONO",s.abandoned,(s.total_active||0)+(s.abandoned||0)]
+      ];
+      state.innerHTML=parts.map(([k,n,d])=>'<span class="'+(Number(n)>0?'pilot-hot':'')+'">'+k+' '+n+'/'+d+'</span>').join(' · ')+' · CICLO '+s.cycle;
+    }
     const tbox=el("pilotTwist"), rev=el("pilotRevote");
     if(tw && Number(tw.vote_cycle)===Number(s.cycle)){
       tbox.style.display="block";el("pilotTwistText").textContent=tw.text;
@@ -6137,10 +6150,10 @@ window.addEventListener(
       el("pilotRevoteA").textContent=currentDilemma?currentDilemma.option_a:"";
       el("pilotRevoteB").textContent=currentDilemma?currentDilemma.option_b:"";
     }else{tbox.style.display="none";rev.style.display="none"}
-    const gb=el("pilotGiroBtn"); if(gb) gb.disabled=!s.request_open;
+    const gb=el("pilotGiroBtn"); if(gb){gb.disabled=!s.request_open;gb.classList.toggle("pilot-selected",Number(s.requests)>0);}
     const cb=el("pilotCloseBox"); if(cb) cb.style.display=s.phase==="closing"?"block":"none";
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
-    if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=!pr?"SIN PROCLAMA":pr.used_at?"PROCLAMA USADA":"PROCLAMA"}
+    if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=!pr?"SIN PROCLAMA":pr.used_at?"PROCLAMA USADA":"PROCLAMA";pb.classList.toggle("pilot-selected",!!pr&&!pr.used_at)}
     await latestEvent();
     if(s.phase==="finished"){alert("DEBATE FINALIZADO");}
     if(currentRoomHostId===localPlayerId && s.phase==="debate" && s.players>1 && ((s.votes_a===s.players&&s.votes_b===0)||(s.votes_b===s.players&&s.votes_a===0))){
@@ -6197,7 +6210,7 @@ window.addEventListener(
  async function R(n,a){const r=await sb.rpc(n,a);if(r.error)throw r.error;return r.data}
  let absent=false,paused=false;
  window.pilotToggleAbsent=async function(){
-   try{absent=!absent;await R("set_debate_presence",{p_room_id:currentRoomId,p_presence:absent?"absent":"present"});E("pilotAbsentBtn").textContent=absent?"VOLVER AL DEBATE":"AUSENTARME";}catch(e){absent=!absent;alert("No se ha podido cambiar tu presencia.")}
+   try{absent=!absent;await R("set_debate_presence",{p_room_id:currentRoomId,p_presence:absent?"absent":"present"});E("pilotAbsentBtn").textContent=absent?"VOLVER AL DEBATE":"AUSENTARME";E("pilotAbsentBtn").classList.toggle("pilot-selected",absent);}catch(e){absent=!absent;alert("No se ha podido cambiar tu presencia.")}
  };
  window.pilotTogglePause=async function(){
    if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
@@ -6215,7 +6228,7 @@ window.addEventListener(
      if(!currentRoundId)return;
      const s=await R("get_debate_state",{p_round_id:currentRoundId});paused=!!s.paused;
      const banner=E("pilotPauseBanner"); if(banner)banner.style.display=paused?"block":"none";
-     const pb=E("pilotPauseBtn");if(pb){pb.style.display=currentRoomHostId===localPlayerId?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR"}
+     const pb=E("pilotPauseBtn");if(pb){pb.style.display=currentRoomHostId===localPlayerId?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.toggle("pilot-selected",paused)}
      ["pilotGiroBtn","pilotProclamaBtn"].forEach(id=>{const q=E(id);if(q&&paused)q.disabled=true});
    }catch(e){}
  };
