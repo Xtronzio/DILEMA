@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015N — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015O — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -2667,35 +2667,31 @@ async function createRoom(
 async function joinRoomWithProfile(profile) {
   try {
     await ensureAnonymousAuth();
-    const room = await getRoom();
-    if (!room || room.status !== "waiting") {
-      alert("La sala ya ha comenzado.");
-      return;
-    }
-    const { error } = await sb.rpc("join_debate_room", {
-      p_room_id: currentRoomId,
+    const code = (currentRoomCode || document.getElementById("joinCode").value || "").trim().toUpperCase();
+    const { data: room, error } = await sb.rpc("join_debate_by_code", {
+      p_code: code,
       p_player_id: localPlayerId,
       p_name: profile.name,
       p_avatar: profile.avatar,
       p_motto: profile.motto || null
     });
-    if (error) throw error;
+    if (error || !room) throw (error || new Error("JOIN FAILED"));
 
+    currentRoomId = Number(room.id);
     currentRoomCode = room.code;
     currentRoomHostId = room.host_id;
-    currentExpectedPlayers = room.expected_players;
+    currentExpectedPlayers = Number(room.expected_players);
     currentRoomStatus = room.status;
     currentRoomMode = room.mode || "debate";
+
     saveRoomSession();
-    refreshing = false;
     showScreen("room");
     await refreshLobby();
     subscribeRealtime();
     startSafetyRefresh();
   } catch (error) {
     console.error("JOIN ROOM ERROR:", error);
-    document.getElementById("joinError").textContent =
-      error && error.message && /full/i.test(error.message) ? "LA SALA ESTÁ COMPLETA." : "NO SE HA PODIDO ENTRAR EN LA SALA.";
+    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
     showScreen("join");
   }
 }
