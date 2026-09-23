@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 016F — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 016G — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1093,6 +1093,26 @@
 #pilotHostGroup{width:100%!important;margin:20px 0 0!important;padding:16px 0 0!important;border-top:1px solid #292929!important}
 #pilotHostBadge{width:100%!important;text-align:center!important;margin:0 0 10px!important}
 #pilotHostGroup #pilotPauseBtn{width:100%!important;height:54px!important;margin:0!important}
+</style><style>
+/* 016G: host controls are a separate full-width block */
+#pilotPresence{display:block!important;width:100%!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotHostGroup{
+ display:none;position:static!important;float:none!important;clear:both!important;
+ width:100%!important;max-width:none!important;grid-column:1 / -1!important;
+ margin:24px 0 0!important;padding:20px 0 0!important;
+ border-top:1px solid #3a3a3a!important
+}
+#pilotHostBadge{
+ position:static!important;float:none!important;width:100%!important;
+ margin:0 0 12px!important;padding:0!important;text-align:center!important;
+ color:#fff!important;font-size:11px!important;font-weight:900!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:block!important;width:100%!important;margin:0!important}
+#pilotHostGroup #pilotPauseBtn{
+ position:static!important;float:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;max-width:none!important;height:54px!important;margin:0!important
+}
 </style></head>
 
 <body>
