@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST · 015T — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015U — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6048,10 +6048,10 @@ window.addEventListener(
     '<div class="pilot-actions">'+
       '<button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
       '<button id="pilotProclamaBtn" class="btn btn-secondary" onclick="pilotUseProclamation()">PROCLAMA</button>'+
-      '<button class="btn btn-secondary" onclick="pilotProposeClose()">FINALIZAR</button>'+
+      '<button class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button>'+
       
     '</div>'+
-    '<div id="pilotCloseBox"><p>ALGUIEN QUIERE CERRAR EL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
+    '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-primary" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
    if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
@@ -6086,6 +6086,7 @@ window.addEventListener(
    try{
     await init();
     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
+    if(s.phase==="finished"){busy=false;await pilotCollectiveEnd();return;}
     const tw=await latestTwist();
     const state=el("pilotState");
     if(state){
@@ -6161,9 +6162,27 @@ window.addEventListener(
    const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.remove("pilot-selected"));}
    await pilotRefresh();
  }catch(e){alert("No se ha podido proponer el cierre.");}};
+ async function pilotCollectiveEnd(){
+   let overlay=document.getElementById("collectiveEndOverlay");
+   if(!overlay){
+     overlay=document.createElement("div");overlay.id="collectiveEndOverlay";
+     overlay.style.cssText="position:fixed;inset:0;z-index:99999;background:#080808;display:flex;align-items:center;justify-content:center;text-align:center;padding:32px;color:#fff";
+     overlay.innerHTML='<div><div style="font-size:12px;letter-spacing:3px;color:#8993a3;margin-bottom:18px">DILEMA</div><div style="font-size:30px;font-weight:900;line-height:1.12">LA MESA HA DECIDIDO<br>PONER FIN AL DEBATE.</div></div>';
+     document.body.appendChild(overlay);
+   }
+   overlay.style.display="flex";
+   setTimeout(async()=>{
+     try{
+       const {error}=await sb.from("rooms").update({status:"waiting",mode:"debate"}).eq("id",currentRoomId);
+       if(error) console.error(error);
+     }catch(e){}
+     currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
+     overlay.remove();showScreen("room");await refreshLobby();
+   },2600);
+ }
  window.pilotCloseVote=async function(choice){try{
    const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.close===choice));}
-   const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done) alert("DEBATE FINALIZADO");
+   const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done){await pilotCollectiveEnd();}
  }catch(e){alert("No se ha podido votar el cierre.");}};
  document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(async()=>{
    if(currentRoomMode==="debate"&&currentRoomId&&document.visibilityState==="visible"){
