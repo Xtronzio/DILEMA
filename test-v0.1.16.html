@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 004 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 005 — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -5812,6 +5812,16 @@ function saveRoomSession() {
 
 
 async function restoreRoomSession() {
+
+  const params=new URLSearchParams(location.search);
+  if(params.get("fresh")==="1"){
+    cleanupChannels();
+    localStorage.removeItem("dilema_room_session");
+    currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
+    currentRoomStatus=null;currentRoomMode="game";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
+    showScreen("home");
+    return;
+  }
 
   try {
 
