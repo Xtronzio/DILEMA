@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.15 TEST — exact common typography for the four marked labels */
+  /* DILEMA V0.1.15 TEST · 015L — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -2152,51 +2152,23 @@ function newProfile() {
 }
 
 
-function useSavedProfile(
-  id
-) {
+async function useSavedProfile(id) {
+  const profile = getProfiles().find(p => p.id === id);
+  if (!profile) return;
 
-  const profile =
-    getProfiles()
-      .find(
-        p =>
-          p.id === id
-      );
+  selectedSavedProfileId = id;
+  selectedAvatar = profile.avatar;
+  selectedAvatarCategory = findAvatarCategory(profile.avatar);
+  document.getElementById("playerName").value = profile.name;
+  document.getElementById("playerMotto").value = profile.motto || "";
 
-  if (!profile) {
-    return;
+  try {
+    await continueWithProfile(profile);
+  } catch (error) {
+    console.error("PROFILE CONTINUE ERROR:", error);
+    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
+    showScreen("join");
   }
-
-  selectedSavedProfileId =
-    id;
-
-  selectedAvatar =
-    profile.avatar;
-
-  selectedAvatarCategory =
-    findAvatarCategory(
-      profile.avatar
-    );
-
-  document
-    .getElementById(
-      "playerName"
-    )
-    .value =
-      profile.name;
-
-  document
-    .getElementById(
-      "playerMotto"
-    )
-    .value =
-      profile.motto ||
-      "";
-
-  continueWithProfile(
-    profile
-  );
-
 }
 
 
