@@ -6219,7 +6219,12 @@ window.addEventListener(
  window.pilotAbandon=async function(){
    const msg=prompt("¿ASÍ QUE TE VAS?\\n\\nÚltimas palabras (opcional):",""); if(msg===null)return;
    if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
-   try{await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:msg});cleanupRoom();showScreen("home")}catch(e){alert("No se ha podido abandonar el debate.")}
+   try{
+     await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:msg});
+     cleanupRoom();
+     history.replaceState(null,"",location.pathname+location.search);
+     showScreen("home");
+   }catch(e){alert("No se ha podido abandonar el debate.")}
  };
  const oldRefresh=window.pilotRefresh;
  window.pilotRefresh=async function(){
