@@ -1186,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R5</div>
+    <div class="version">DILEMA · V0.1.16-010C-R6</div>
   </main>
 
 
@@ -6290,8 +6290,8 @@ window.addEventListener(
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
     '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
-    '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
-    '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama" disabled>📣</button></div>'+
+    '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
+    '<button id="pilotRevoteRequestBtn" class="btn btn-secondary" type="button" disabled>PEDIR RE-VOTO</button>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()" disabled>FIN DEBATE</button></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
@@ -6400,7 +6400,7 @@ window.addEventListener(
       }
     }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
-    if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate";pb.textContent=(!pr||pr.used_at)?"📣̸":"📣";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
+    if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate";pb.textContent=(!pr||pr.used_at)?"📣 PROCLAMAR · 0/1":"📣 PROCLAMAR · 1/1";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
     await latestEvent();
     if(currentRoomHostId===localPlayerId && s.phase==="debate" && s.players>1 && ((s.votes_a===s.players&&s.votes_b===0)||(s.votes_b===s.players&&s.votes_a===0))){
       const existing=tw&&Number(tw.vote_cycle)===Number(s.cycle);
@@ -6510,7 +6510,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotProclamaBtn" class="btn btn-secondary" onclick="pilotUseProclamation()" disabled>📣 PROCLAMAR</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
@@ -6782,6 +6782,45 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   #debatePilotPanel .pilot-giro-cell{grid-template-columns:minmax(0,1fr) 40px!important;gap:5px!important}
   #debatePilotPanel #pilotGiroBtn,#debatePilotPanel #pilotEndBtn,
   #pilotPresence .pilot-presence-row>button{font-size:10px!important}
+}
+</style>
+<style>
+/* R6: two balanced action rows and host identity */
+#debatePilotPanel .pilot-main-actions,
+#pilotPresence .pilot-presence-row{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;width:100%!important
+}
+#debatePilotPanel .pilot-main-actions>button,
+#pilotPresence .pilot-presence-row>button,
+#pilotPresence #pilotProclamaBtn{
+  width:100%!important;min-width:0!important;min-height:56px!important;
+  height:auto!important;margin:0!important;padding:9px 5px!important;
+  font-size:10px!important;font-weight:900!important;line-height:1.15!important;
+  white-space:normal!important;overflow-wrap:normal!important;text-align:center!important
+}
+#pilotPresence{margin-top:9px!important}
+#pilotHostGroup{
+  width:100%!important;margin:20px 0 0!important;padding:14px!important;
+  border:1px solid #7653bb!important;border-radius:14px!important;
+  background:#1b1329!important
+}
+#pilotHostBadge{
+  margin:0 0 9px!important;padding:10px!important;border:1px solid #a78bfa!important;
+  border-radius:9px!important;background:#342252!important;color:#fff!important
+}
+#pilotHostRoomCode{
+  margin:0 0 10px!important;border-color:#7653bb!important;
+  color:#d6c4ff!important;font-size:11px!important
+}
+#pilotHostGroup #pilotPauseBtn:not(:disabled){
+  width:100%!important;background:#7653bb!important;color:#fff!important;
+  border:1px solid #a78bfa!important
+}
+@media(max-width:360px){
+  #debatePilotPanel .pilot-main-actions,#pilotPresence .pilot-presence-row{gap:5px!important}
+  #debatePilotPanel .pilot-main-actions>button,#pilotPresence .pilot-presence-row>button,
+  #pilotPresence #pilotProclamaBtn{font-size:9px!important;padding:8px 3px!important}
 }
 </style>
 </body>
