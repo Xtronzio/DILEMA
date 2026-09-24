@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010K — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010L — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6312,6 +6312,9 @@ window.addEventListener(
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
    if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
+   // 010L: mount the lower control layer at the exact moment the debate panel is created.
+   // addV15 is declared later, so defer one task until the full script has loaded.
+   setTimeout(()=>window.dispatchEvent(new CustomEvent("dilema:pilot-mounted")),0);
    const oa=debate.querySelector(".debate-option:nth-child(1)"),ob=debate.querySelector(".debate-option:nth-child(2)");
    if(oa){oa.id="pilotVoteA";oa.setAttribute("role","button");oa.onclick=()=>pilotTopVote("A");oa.insertAdjacentHTML("beforeend",'<div id="pilotCountA" class="pilot-vote-count">0</div>');}
    if(ob){ob.id="pilotVoteB";ob.setAttribute("role","button");ob.onclick=()=>pilotTopVote("B");ob.insertAdjacentHTML("beforeend",'<div id="pilotCountB" class="pilot-vote-count">0</div>');}
@@ -6620,6 +6623,7 @@ window.addEventListener(
    originalRender();
    if(currentRoomMode==="debate"){
      addV15();
+     window.dispatchEvent(new CustomEvent("dilema:pilot-mounted"));
      // Host identity must survive the transition into debate.
      (async()=>{
        try{
@@ -6657,6 +6661,7 @@ window.addEventListener(
    }catch(e){console.error(e)}
    cleanupRoom();showScreen("home");
  };
+ window.addEventListener("dilema:pilot-mounted",()=>addV15());
  document.addEventListener("DOMContentLoaded",()=>setTimeout(addV15,200));
  // 010I: one source of truth for presence/abandon actions, including legacy visible controls.
  window.prototypeAbsent=function(){return window.pilotToggleAbsent&&window.pilotToggleAbsent();};
