@@ -1186,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R8</div>
+    <div class="version">DILEMA · V0.1.16-010C-R9</div>
   </main>
 
 
@@ -6789,7 +6789,11 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 }
 </style>
 <style>
-/* R6: two balanced action rows and host identity */
+/* R9: let the presence row span the full debate panel. */
+#debatePilotPanel #pilotPresence{
+  display:block!important;width:100%!important;
+  grid-template-columns:none!important
+}
 #debatePilotPanel .pilot-main-actions,
 #pilotPresence .pilot-presence-row{
   display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
@@ -6802,7 +6806,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   height:auto!important;margin:0!important;padding:9px 5px!important;
   box-sizing:border-box!important;font-size:clamp(9px,2.6vw,11px)!important;
   font-weight:900!important;line-height:1.25!important;
-  white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;
+  white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;
   text-align:center!important
 }
 #pilotPresence{margin-top:9px!important}
