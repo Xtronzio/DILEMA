@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010I — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010J — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1172,6 +1172,10 @@
 .pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
 .pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
 .pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+</style><style>
+/* 010J: authoritative host visibility; last rule wins over legacy V15 CSS */
+#pilotHostGroup{display:none!important}
+#pilotHostGroup.dilema-host-active{display:block!important}
 </style></head>
 
 <body>
@@ -4768,6 +4772,10 @@ function renderResult(
 async function assignRoles() {
 
   if (currentRoomMode === "debate") {
+    try{
+      const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
+      if(hr.data)currentRoomHostId=hr.data.host_id;
+    }catch(e){}
     if (
       assigningRoles ||
       currentRoomHostId !== localPlayerId ||
@@ -6589,7 +6597,7 @@ window.addEventListener(
      }catch(e){console.error("HOST REPAIR",e)}
      const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
-     const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
+     const hg=E("pilotHostGroup");if(hg){hg.classList.toggle("dilema-host-active",isHost);hg.style.setProperty("display",isHost?"block":"none","important");}
      const hrc=E("pilotHostRoomCode");if(hrc&&isHost)hrc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
@@ -6601,6 +6609,21 @@ window.addEventListener(
    originalRender();
    if(currentRoomMode==="debate"){
      addV15();
+     // Host identity must survive the transition into debate.
+     (async()=>{
+       try{
+         const hr=await sb.from("rooms").select("host_id,code").eq("id",currentRoomId).maybeSingle();
+         if(hr.data){
+           currentRoomHostId=hr.data.host_id;
+           currentRoomCode=hr.data.code||currentRoomCode;
+           const hg=E("pilotHostGroup"),hc=E("pilotHostRoomCode"),hp=E("pilotPauseBtn");
+           const mine=currentRoomHostId===localPlayerId;
+           if(hg){hg.classList.toggle("dilema-host-active",mine);hg.style.setProperty("display",mine?"block":"none","important");}
+           if(hc&&mine)hc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
+           if(hp)hp.style.setProperty("display",mine?"block":"none","important");
+         }
+       }catch(e){console.error("HOST RENDER",e)}
+     })();
      const title=document.querySelector("#debate .debate-title");if(title)title.innerHTML="ABRIMOS<br>EL DEBATE";
      const top=E("debateGroupVote");if(top&&top.textContent==="TODOS PREPARADOS")top.textContent="EL GRUPO HA VOTADO";
      const note=document.querySelector("#debate .small-note");if(note)note.textContent="DEFIENDE LO QUE PIENSAS · ESCUCHA · CAMBIA DE OPINIÓN SI QUIERES";
