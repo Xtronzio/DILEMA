@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010C — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010D — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6502,7 +6502,12 @@ window.addEventListener(
      openMessagePicker("¿ASÍ QUE TE VAS?",choices.map(x=>x.text),async(text)=>{
        if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
        await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:text});
-       closeMessagePicker(); cleanupRoom(); history.replaceState(null,"",location.pathname+location.search); showScreen("home");
+       closeMessagePicker();
+       cleanupRoom();
+       history.replaceState(null,"",location.pathname+location.search);
+       document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+       const hall=document.getElementById("home");
+       if(hall)hall.classList.add("active");
      },true);
    }catch(e){console.error("ABANDON ERROR",e);alert("No se ha podido preparar la despedida.")}
  };
