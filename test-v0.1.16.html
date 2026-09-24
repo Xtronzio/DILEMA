@@ -2625,6 +2625,15 @@ function findAvatarCategory(
 
 async function findRoom() {
 
+  try {
+    await ensureAnonymousAuth();
+  } catch (error) {
+    console.error("No se pudo autenticar al entrar en la sala:", error);
+    document.getElementById("joinError").textContent =
+      "No se pudo iniciar la sesión. Inténtalo de nuevo.";
+    return;
+  }
+
   const code =
     document
       .getElementById(
@@ -2652,10 +2661,15 @@ async function findRoom() {
     .maybeSingle();
 
 
-  if (
-    error ||
-    !data
-  ) {
+  if (error) {
+
+    console.error("No se pudo consultar la sala:", error);
+    document.getElementById("joinError").textContent =
+      "No se pudo consultar la sala. Inténtalo de nuevo.";
+    return;
+  }
+
+  if (!data) {
 
     document
       .getElementById(
