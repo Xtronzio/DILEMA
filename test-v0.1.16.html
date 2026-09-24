@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R11</div>
+    <div class="version">DILEMA · V0.1.16-010C-R12</div>
   </main>
 
 
@@ -6309,7 +6309,7 @@ window.addEventListener(
    panel.innerHTML=
     '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
     '<div id="pilotHistory" class="pilot-history"></div>'+
-    '<div id="pilotUnanimity" class="pilot-proposal-box" style="display:none"><p>LA MESA ESTÁ DE ACUERDO.<br>A VER CUÁNTO DURA.</p><div class="pilot-unanimity-actions"><button type="button" onclick="pilotContinueDebate()">SEGUIR DEBATIENDO</button><button type="button" onclick="pilotRequestTwist()">DARLE UN GIRO</button><button type="button" onclick="pilotProposeClose()">FIN DEBATE</button></div></div>'+
+    '<div id="pilotUnanimity" class="pilot-proposal-box" style="display:none"><p>LA MESA ESTÁ DE ACUERDO.<br>A VER CUÁNTO DURA.</p><div class="pilot-unanimity-actions"><button type="button" data-unanimity-choice="CONTINUE" onclick="pilotVoteUnanimity(\'CONTINUE\')">SEGUIR DEBATIENDO</button><button type="button" data-unanimity-choice="GIRO" onclick="pilotVoteUnanimity(\'GIRO\')">DARLE UN GIRO</button><button type="button" data-unanimity-choice="FINISH" onclick="pilotVoteUnanimity(\'FINISH\')">FIN DEBATE</button></div><small id="pilotUnanimityProgress" class="giro-progress"></small></div>'+
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
     '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
@@ -6410,8 +6410,15 @@ window.addEventListener(
     const giroOpen=!!giroProposal&&giroProposal.status==="open"&&s.phase==="debate";
     if(revoteButton&&giroOpen)revoteButton.disabled=true;
     const unanimityBox=el("pilotUnanimity");
-    if(unanimityBox)unanimityBox.style.display=unanimous&&!s.paused&&!giroOpen&&!revoteOpen&&
-      !sessionStorage.getItem("dilema_unanimity_dismissed_"+currentRoundId+"_"+s.cycle)?"block":"none";
+    if(unanimityBox){
+      const decision=unanimous?await rpc("get_debate_unanimity_state",{p_round_id:currentRoundId}):null;
+      const choose=!!decision&&!decision.outcome&&!s.paused&&!giroOpen&&!revoteOpen;
+      unanimityBox.style.display=choose?"block":"none";
+      if(choose){
+        el("pilotUnanimityProgress").textContent=(decision.voted||0)+" / "+decision.players+" HAN VOTADO · MAYORÍA DECIDE";
+        unanimityBox.querySelectorAll("[data-unanimity-choice]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.unanimityChoice===decision.mine));
+      }
+    }
     if(gvb&&giroOpen){
       const gp=gvb.querySelector("p");
       if(gp)gp.innerHTML='ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?<br><span class="giro-progress">'+(giroProposal.voted||0)+' / '+(giroProposal.players||s.players)+' HAN VOTADO</span>';
@@ -6455,11 +6462,13 @@ window.addEventListener(
     await pilotRefresh();
    }catch(e){alert("No se ha podido proponer el GIRO.");}
  };
- window.pilotContinueDebate=function(){
-   const s=el("pilotState")?.textContent||"";
-   const cycle=s.match(/CICLO\s+(\d+)/)?.[1];
-   if(cycle)sessionStorage.setItem("dilema_unanimity_dismissed_"+currentRoundId+"_"+cycle,"1");
-   const box=el("pilotUnanimity");if(box)box.style.display="none";
+ window.pilotVoteUnanimity=async function(choice){
+   const box=el("pilotUnanimity");
+   if(box)box.querySelectorAll("[data-unanimity-choice]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.unanimityChoice===choice));
+   try{
+     await rpc("cast_debate_unanimity_choice",{p_round_id:currentRoundId,p_choice:choice});
+     await pilotRefresh();
+   }catch(e){console.error("UNANIMITY VOTE",e);alert("No se ha podido registrar la decisión de la mesa.");await pilotRefresh();}
  };
  window.pilotRequestRevote=async function(){
    const button=el("pilotRevoteRequestBtn");if(button)button.disabled=true;
