@@ -1163,6 +1163,14 @@
 /* V0.1.16-010C */
 .giro-progress{display:block;margin-top:10px;color:#8d8d8d;font-size:10px;letter-spacing:1.6px;font-weight:700}
 .pilot-host-room-code{width:100%;margin:-4px 0 10px;padding:8px 10px;border:1px solid #333;border-radius:9px;text-align:center;color:#aaa;font-size:9px;font-weight:800;letter-spacing:1.5px;line-height:1.3}
+</style><style>
+.pilot-presence-request-box{display:none;margin:14px 0;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+.pilot-presence-request-box>b{display:block;font-size:12px;letter-spacing:1.2px}
+.presence-msg{margin:12px 0;font-size:16px;font-weight:900}
+.presence-question{margin:10px 0;font-size:11px;color:#aaa;letter-spacing:1.2px}
+.pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
+.pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
+.pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
 </style></head>
 
 <body>
@@ -1178,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R3</div>
+    <div class="version">DILEMA · V0.1.16-010C-R4</div>
   </main>
 
 
@@ -2332,15 +2340,12 @@ async function useSavedProfile(id) {
   selectedSavedProfileId = id;
   selectedAvatar = profile.avatar;
   selectedAvatarCategory = findAvatarCategory(profile.avatar);
-  document.getElementById("playerName").value = profile.name;
-  document.getElementById("playerMotto").value = profile.motto || "";
 
   try {
     await continueWithProfile(profile);
   } catch (error) {
     console.error("PROFILE CONTINUE ERROR:", error);
-    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
-    showScreen("join");
+    alert("NO SE HA PODIDO CONTINUAR CON EL PERFIL.");
   }
 }
 
@@ -6284,6 +6289,7 @@ window.addEventListener(
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
+    '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
@@ -6502,9 +6508,29 @@ window.addEventListener(
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
  }
  async function R(n,a){const r=await sb.rpc(n,a);if(r.error)throw r.error;return r.data}
- let absent=false,paused=false;
+ let paused=false;
  window.pilotToggleAbsent=async function(){
-   try{absent=!absent;await R("set_debate_presence",{p_room_id:currentRoomId,p_presence:absent?"absent":"present"});E("pilotAbsentBtn").textContent=absent?"VOLVER AL DEBATE":"AUSENTARME";E("pilotAbsentBtn").classList.toggle("pilot-selected",absent);}catch(e){absent=!absent;alert("No se ha podido cambiar tu presencia.")}
+   try{
+     const pr=await R("get_presence_request",{p_round_id:currentRoundId});
+     if(pr&&pr.my_presence==="absent"){
+       if(pr.id&&pr.action==="return"&&pr.requester_id===localPlayerId){
+         alert("Tu reincorporación ya está pendiente de la mesa.");return;
+       }
+       await R("propose_presence_change",{p_round_id:currentRoundId,p_action:"return",p_message:null});
+       await pilotRefresh();return;
+     }
+     const choices=await R("get_farewell_choices",{p_room_id:currentRoomId,p_limit:4});
+     openMessagePicker("ME AUSENTO",choices.map(x=>x.text),async(text)=>{
+       await R("leave_debate_temporarily",{p_round_id:currentRoundId,p_message:text});
+       closeMessagePicker();await pilotRefresh();
+     },true);
+   }catch(e){console.error("PRESENCE ERROR",e);alert("No se ha podido cambiar tu presencia.")}
+ };
+ window.pilotPresenceVote=async function(choice){
+   try{
+     const pr=await R("get_presence_request",{p_round_id:currentRoundId});if(!pr||!pr.id)return;
+     await R("cast_presence_request_vote",{p_request_id:pr.id,p_choice:choice});await pilotRefresh();
+   }catch(e){console.error("PRESENCE VOTE ERROR",e);alert("No se ha podido registrar el voto.")}
  };
  window.pilotTogglePause=async function(){
    if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
@@ -6527,6 +6553,19 @@ window.addEventListener(
      if(!currentRoundId)return;
      const s=await R("get_debate_state",{p_round_id:currentRoundId});paused=!!s.paused;
      const banner=E("pilotPauseBanner"); if(banner)banner.style.display=paused?"block":"none";
+     let pr=null;
+     try{pr=await R("get_presence_request",{p_round_id:currentRoundId})}catch(e){console.error("PRESENCE REFRESH ERROR",e)}
+     const requestBox=E("pilotPresenceRequestBox"),absenceButton=E("pilotAbsentBtn");
+     if(absenceButton&&pr)absenceButton.textContent=pr.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
+     if(requestBox){
+       if(pr&&pr.id){
+         requestBox.innerHTML='<b>UN JUGADOR QUIERE VOLVER A LA MESA</b><div class="presence-msg"></div><div class="presence-question">¿LA MESA LO APRUEBA?</div><div class="pilot-actions"><button data-pv="YES" onclick="pilotPresenceVote(\'YES\')">SÍ</button><button data-pv="NO" onclick="pilotPresenceVote(\'NO\')">NO</button></div><small></small>';
+         requestBox.querySelector(".presence-msg").textContent=pr.message||"";
+         requestBox.querySelector("small").textContent=(Number(pr.yes||0)+Number(pr.no||0))+" HAN VOTADO";
+         requestBox.style.display="block";
+         requestBox.querySelectorAll("[data-pv]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.pv===pr.mine));
+       }else requestBox.style.display="none";
+     }
      let isHost=currentRoomHostId===localPlayerId;
      try{
        const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
@@ -6612,7 +6651,9 @@ window.openMessagePicker=function(title,choices,onSubmit,allowSilent){
  document.getElementById("messagePickerTitle").textContent=title;box.innerHTML="";
  (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>onSubmit(t);box.appendChild(b)});
  messagePickerSubmit=onSubmit;messagePickerAllowSilent=!!allowSilent;
- document.getElementById("messagePickerSilent").style.display=allowSilent?"block":"none";
+ const silent=document.getElementById("messagePickerSilent");
+ silent.style.display=allowSilent?"block":"none";
+ silent.textContent=title==="ME AUSENTO"?"AUSENTARME SIN DECIR NADA":"IRME SIN DECIR NADA";
  o.classList.add("open");o.setAttribute("aria-hidden","false");
 };
 window.closeMessagePicker=function(){const o=document.getElementById("messagePickerOverlay");o.classList.remove("open");o.setAttribute("aria-hidden","true");messagePickerSubmit=null};
@@ -6662,7 +6703,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    };
    (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>safeSubmit(t,b);box.appendChild(b)});
    messagePickerSubmit=(text,btn)=>safeSubmit(text,btn);messagePickerAllowSilent=!!allowSilent;
-   document.getElementById("messagePickerSilent").style.display=allowSilent?"block":"none";
+   const silent=document.getElementById("messagePickerSilent");
+   silent.style.display=allowSilent?"block":"none";
+   silent.textContent=title==="ME AUSENTO"?"AUSENTARME SIN DECIR NADA":"IRME SIN DECIR NADA";
    o.classList.add("open");o.setAttribute("aria-hidden","false");
  };
  window.messagePickerCustom=function(){
