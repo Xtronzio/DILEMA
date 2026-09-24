@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010H — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010I — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6540,6 +6540,10 @@ window.addEventListener(
      const choices=await R("get_farewell_choices",{p_room_id:currentRoomId,p_limit:4});
      openMessagePicker("¿ASÍ QUE TE VAS?",choices.map(x=>x.text),async(text)=>{
        if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
+       if(currentRoomHostId===localPlayerId){
+         const peers=await sb.from("players").select("player_id,created_at").eq("room_id",currentRoomId).is("abandoned_at",null).neq("player_id",localPlayerId).order("created_at",{ascending:true}).limit(1);
+         if(peers.data&&peers.data[0])await sb.from("rooms").update({host_id:peers.data[0].player_id}).eq("id",currentRoomId);
+       }
        await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:text});
        closeMessagePicker();
        cleanupRoom();
@@ -6572,8 +6576,17 @@ window.addEventListener(
      let isHost=currentRoomHostId===localPlayerId;
      try{
        const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
-       if(hr.data){currentRoomHostId=hr.data.host_id;isHost=currentRoomHostId===localPlayerId;}
-     }catch(e){}
+       const ap=await sb.from("players").select("player_id,created_at").eq("room_id",currentRoomId).is("abandoned_at",null).order("created_at",{ascending:true});
+       const activeIds=(ap.data||[]).map(x=>x.player_id);
+       if(hr.data){
+         currentRoomHostId=hr.data.host_id;
+         if(activeIds.length&&!activeIds.includes(currentRoomHostId)){
+           await sb.from("rooms").update({host_id:activeIds[0]}).eq("id",currentRoomId);
+           currentRoomHostId=activeIds[0];
+         }
+         isHost=currentRoomHostId===localPlayerId;
+       }
+     }catch(e){console.error("HOST REPAIR",e)}
      const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
@@ -6611,6 +6624,9 @@ window.addEventListener(
    cleanupRoom();showScreen("home");
  };
  document.addEventListener("DOMContentLoaded",()=>setTimeout(addV15,200));
+ // 010I: one source of truth for presence/abandon actions, including legacy visible controls.
+ window.prototypeAbsent=function(){return window.pilotToggleAbsent&&window.pilotToggleAbsent();};
+ window.prototypeAbandon=function(){return window.pilotAbandon&&window.pilotAbandon();};
 })();
 </script>
 
@@ -6721,5 +6737,13 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  };
 })();
 </script>
-</body>
+<script>
+/* 010I capture wiring: visible controls cannot fall back to obsolete prototype handlers */
+document.addEventListener("click",function(ev){
+ const b=ev.target.closest("#absentBtn,#abandonDebateBtn");
+ if(!b||currentRoomMode!=="debate")return;
+ ev.preventDefault();ev.stopImmediatePropagation();
+ if(b.id==="absentBtn")window.pilotToggleAbsent(); else window.pilotAbandon();
+},true);
+</script></body>
 </html>
