@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010L — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010M — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1182,6 +1182,13 @@
 #pilotPresence{display:block!important}
 #pilotPresence .pilot-presence-row{display:grid!important}
 #assignRolesBtn.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+</style><style>
+/* 010M primary debate controls: created with the debate panel, not by a later patch */
+.pilot-version{text-align:center;margin:0 0 10px;color:#666;font-size:10px;letter-spacing:1.4px}
+#pilotPresence{display:block!important;margin-top:14px}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
+#pilotPresence .pilot-presence-row button{width:100%}
+#pilotHostGroup.dilema-host-active{display:block!important}
 </style></head>
 
 <body>
@@ -6297,7 +6304,7 @@ window.addEventListener(
    const panel=document.createElement("div");
    panel.id="debatePilotPanel";
    panel.innerHTML=
-    '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
+    '<div id="pilotVersion" class="pilot-version">DILEMA · V0.1.16-010M</div>'+ '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
     '<div id="pilotHistory" class="pilot-history"></div>'+
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
@@ -6308,6 +6315,10 @@ window.addEventListener(
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
+    '<div id="pilotPresence" class="pilot-actions">'+
+      '<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div>'+
+      '<div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>'+
+    '</div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
