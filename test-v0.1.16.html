@@ -1186,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R4</div>
+    <div class="version">DILEMA · V0.1.16-010C-R5</div>
   </main>
 
 
@@ -1419,13 +1419,13 @@
     <div class="title">TENEMOS UN DILEMA</div>
     <div class="subtitle">Es vuestro dilema. DILEMA no lo cambia.</div>
 
-    <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA"></textarea>
-    <textarea id="customA" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN A"></textarea>
-    <textarea id="customB" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN B"></textarea>
+    <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA" oninput="updateCustomDebateButton()"></textarea>
+    <textarea id="customA" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN A" oninput="updateCustomDebateButton()"></textarea>
+    <textarea id="customB" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN B" oninput="updateCustomDebateButton()"></textarea>
 
     <div id="customError" class="error"></div>
 
-    <button class="btn btn-primary" onclick="startCustomDebate()">
+    <button id="customDebateBtn" class="btn btn-primary" onclick="startCustomDebate()" disabled>
       LANZAR DILEMA
     </button>
   </section>
@@ -3756,7 +3756,14 @@ function openCustomDebate() {
   document.getElementById("customA").value = "";
   document.getElementById("customB").value = "";
   document.getElementById("customError").textContent = "";
+  updateCustomDebateButton();
   showScreen("customDebate");
+}
+
+function updateCustomDebateButton() {
+  const button = document.getElementById("customDebateBtn");
+  button.disabled = !["customQuestion", "customA", "customB"]
+    .every(id => document.getElementById(id).value.trim());
 }
 
 function selectDebateAudience(audience, button) {
@@ -4724,14 +4731,9 @@ function renderResult(
       localPlayerId;
 
 
-  document
-    .getElementById(
-      "assignRolesBtn"
-    )
-    .style.display =
-      isHost
-        ? "block"
-        : "none";
+  const beginButton = document.getElementById("assignRolesBtn");
+  beginButton.style.display = isHost ? "block" : "none";
+  beginButton.disabled = !isHost || assigningRoles || currentRoundStatus !== "reveal";
 
 
   document
@@ -4779,6 +4781,7 @@ async function assignRoles() {
     }
 
     assigningRoles = true;
+    document.getElementById("assignRolesBtn").disabled = true;
 
     try {
       const { data, error } = await sb.rpc("start_debate_engine", {
@@ -4798,6 +4801,9 @@ async function assignRoles() {
       }, 100);
     } finally {
       assigningRoles = false;
+      if (currentRoundStatus === "reveal") {
+        document.getElementById("assignRolesBtn").disabled = false;
+      }
     }
 
     return;
@@ -6284,9 +6290,9 @@ window.addEventListener(
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
     '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
-    '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()">PEDIR GIRO</button>'+
-    '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama">📣</button></div>'+
-    '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()">FIN DEBATE</button></div>'+
+    '<div class="pilot-main-actions"><div class="pilot-giro-cell"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
+    '<button id="pilotProclamaBtn" class="pilot-proclama-icon" onclick="pilotUseProclamation()" aria-label="Proclama" title="Proclama" disabled>📣</button></div>'+
+    '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()" disabled>FIN DEBATE</button></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
@@ -6377,6 +6383,8 @@ window.addEventListener(
       gb.classList.remove("pilot-selected");
       gb.disabled=s.phase!=="debate"||!s.request_open||giroOpen;
     }
+    const endButton=el("pilotEndBtn");
+    if(endButton)endButton.disabled=s.phase!=="debate"||!!s.paused;
     const cb=el("pilotCloseBox");
     if(cb){
       cb.style.display=s.phase==="closing"?"block":"none";
@@ -6392,7 +6400,7 @@ window.addEventListener(
       }
     }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
-    if(pb){pb.disabled=!pr||!!pr.used_at;pb.textContent=(!pr||pr.used_at)?"📣̸":"📣";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",!pr||!!pr.used_at)}
+    if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate";pb.textContent=(!pr||pr.used_at)?"📣̸":"📣";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
     await latestEvent();
     if(currentRoomHostId===localPlayerId && s.phase==="debate" && s.players>1 && ((s.votes_a===s.players&&s.votes_b===0)||(s.votes_b===s.players&&s.votes_a===0))){
       const existing=tw&&Number(tw.vote_cycle)===Number(s.cycle);
@@ -6556,7 +6564,14 @@ window.addEventListener(
      let pr=null;
      try{pr=await R("get_presence_request",{p_round_id:currentRoundId})}catch(e){console.error("PRESENCE REFRESH ERROR",e)}
      const requestBox=E("pilotPresenceRequestBox"),absenceButton=E("pilotAbsentBtn");
-     if(absenceButton&&pr)absenceButton.textContent=pr.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
+     if(absenceButton&&pr){
+       absenceButton.textContent=pr.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
+       absenceButton.disabled=!!(pr.my_presence==="absent"&&pr.id&&pr.requester_id===localPlayerId);
+     }
+     const giroButton=E("pilotGiroBtn"),endButton=E("pilotEndBtn"),proclamationButton=E("pilotProclamaBtn");
+     if(giroButton)giroButton.disabled=giroButton.disabled||paused||pr?.my_presence==="absent";
+     if(endButton)endButton.disabled=endButton.disabled||pr?.my_presence==="absent";
+     if(proclamationButton)proclamationButton.disabled=proclamationButton.disabled||pr?.my_presence==="absent";
      if(requestBox){
        if(pr&&pr.id){
          requestBox.innerHTML='<b>UN JUGADOR QUIERE VOLVER A LA MESA</b><div class="presence-msg"></div><div class="presence-question">¿LA MESA LO APRUEBA?</div><div class="pilot-actions"><button data-pv="YES" onclick="pilotPresenceVote(\'YES\')">SÍ</button><button data-pv="NO" onclick="pilotPresenceVote(\'NO\')">NO</button></div><small></small>';
@@ -6575,7 +6590,7 @@ window.addEventListener(
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
      const hrc=E("pilotHostRoomCode");if(hrc&&isHost)hrc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
-     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
+     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.disabled=!isHost||!currentRoundId;pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
      {const q=E("pilotGiroBtn");if(q&&paused)q.disabled=true;}
    }catch(e){}
@@ -6718,5 +6733,56 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  };
 })();
 </script>
+<style>
+/* R5: availability and balanced controls */
+#proposeDilemmaBtn.ready:not(:disabled),
+#customDebateBtn:not(:disabled),
+#result #assignRolesBtn:not(:disabled),
+#room #startGameBtn:not(:disabled){
+  background:#fff!important;color:#0b0b0b!important;border:1px solid #fff!important;
+  opacity:1!important
+}
+#proposeDilemmaBtn:disabled,
+#customDebateBtn:disabled,
+#result #assignRolesBtn:disabled,
+#room #startGameBtn:disabled{
+  background:#0b0b0b!important;color:#666!important;border:1px solid #303030!important;
+  opacity:1!important;cursor:default!important
+}
+#debatePilotPanel .pilot-main-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;align-items:stretch!important;width:100%!important
+}
+#debatePilotPanel .pilot-giro-cell{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;
+  gap:8px!important;min-width:0!important
+}
+#debatePilotPanel #pilotGiroBtn,#debatePilotPanel #pilotEndBtn,
+#pilotPresence .pilot-presence-row>button,#pilotHostGroup #pilotPauseBtn{
+  min-width:0!important;width:100%!important;min-height:54px!important;
+  height:auto!important;margin:0!important;padding:10px 8px!important;
+  line-height:1.15!important;text-align:center!important
+}
+#pilotPresence .pilot-presence-row{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;width:100%!important
+}
+#pilotHostGroup{width:100%!important;margin-top:20px!important}
+#debatePilotPanel button:disabled,#pilotPresence button:disabled{
+  background:#0b0b0b!important;color:#666!important;border-color:#303030!important;
+  opacity:1!important;cursor:default!important
+}
+#pilotProclamaBtn:disabled{color:#666!important}
+#pilotGiroVoteBox button.pilot-selected,#pilotCloseBox button.pilot-selected,
+#pilotPresenceRequestBox button.pilot-selected{
+  background:#fff!important;color:#0b0b0b!important;border-color:#fff!important
+}
+@media(max-width:360px){
+  #debatePilotPanel .pilot-main-actions,#pilotPresence .pilot-presence-row{gap:7px!important}
+  #debatePilotPanel .pilot-giro-cell{grid-template-columns:minmax(0,1fr) 40px!important;gap:5px!important}
+  #debatePilotPanel #pilotGiroBtn,#debatePilotPanel #pilotEndBtn,
+  #pilotPresence .pilot-presence-row>button{font-size:10px!important}
+}
+</style>
 </body>
 </html>
