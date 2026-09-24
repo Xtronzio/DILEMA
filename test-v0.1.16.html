@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010N — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010G — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1172,27 +1172,7 @@
 .pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
 .pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
 .pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
-</style><style>
-/* 010J: authoritative host visibility; last rule wins over legacy V15 CSS */
-#pilotHostGroup{display:none!important}
-#pilotHostGroup.dilema-host-active{display:block!important}
-</style><style>
-/* 010K: repaired debate control mount */
-#debate #absentBtn,#debate #abandonDebateBtn{display:none!important}
-#pilotPresence{display:block!important}
-#pilotPresence .pilot-presence-row{display:grid!important}
-#assignRolesBtn.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
-</style><style>
-/* 010M primary debate controls: created with the debate panel, not by a later patch */
-.pilot-version{text-align:center;margin:0 0 10px;color:#666;font-size:10px;letter-spacing:1.4px}
-#pilotPresence{display:block!important;margin-top:14px}
-#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
-#pilotPresence .pilot-presence-row button{width:100%}
-#pilotHostGroup.dilema-host-active{display:block!important}
-</style><style>
-/* 010N test build marker: always visible on every screen */
-body::after{content:"DILEMA · V0.1.16-010N";position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:9px;letter-spacing:1.5px;color:#555;z-index:999999;pointer-events:none}
-</style></head>
+</style><style>body::after{content:"DILEMA · V0.1.16-010O";position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:9px;letter-spacing:1.5px;color:#555;z-index:999999;pointer-events:none}</style></head>
 
 <body>
 
@@ -1207,7 +1187,7 @@ body::after{content:"DILEMA · V0.1.16-010N";position:fixed;left:0;right:0;botto
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010N</div>
+    <div class="version">DILEMA · V0.1.16-010O</div>
   </main>
 
 
@@ -1674,7 +1654,7 @@ body::after{content:"DILEMA · V0.1.16-010N";position:fixed;left:0;right:0;botto
     <button
       id="absentBtn"
       class="btn btn-secondary"
-      onclick="pilotToggleAbsent()"
+      onclick="prototypeAbsent()"
     >
       AUSENTARME
     </button>
@@ -1682,7 +1662,7 @@ body::after{content:"DILEMA · V0.1.16-010N";position:fixed;left:0;right:0;botto
     <button
       id="abandonDebateBtn"
       class="btn btn-danger"
-      onclick="pilotAbandon()"
+      onclick="prototypeAbandon()"
     >
       ABANDONAR
     </button>
@@ -3849,20 +3829,12 @@ async function startCustomDebate() {
   await launchDebateDilemma(data);
 }
 
-let launchingDebateDilemma=false;
 async function launchDebateDilemma(dilemma) {
-  if(launchingDebateDilemma)return;
-  launchingDebateDilemma=true;
-  try{
-  if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
-  const { data: priorRounds, error: priorError } = await sb.from("rounds").select("round_number").eq("room_id",currentRoomId).order("round_number",{ascending:false}).limit(1);
-  if(priorError)throw priorError;
-  const nextRoundNumber=priorRounds&&priorRounds.length?Number(priorRounds[0].round_number||0)+1:1;
   const { data: round, error: roundError } = await sb
     .from("rounds")
     .insert({
       room_id: currentRoomId,
-      round_number: nextRoundNumber,
+      round_number: 1,
       dilemma_id: dilemma.id,
       status: "voting",
       started_at: new Date().toISOString()
@@ -3896,7 +3868,6 @@ async function launchDebateDilemma(dilemma) {
   subscribeToRounds();
   startGameRefresh();
   await refreshGame();
-  }finally{launchingDebateDilemma=false;}
 }
 
 
@@ -4788,12 +4759,6 @@ function renderResult(
 async function assignRoles() {
 
   if (currentRoomMode === "debate") {
-    const startBtn=document.getElementById("assignRolesBtn");
-    if(startBtn){startBtn.classList.add("pilot-selected");startBtn.style.setProperty("background","#fff","important");startBtn.style.setProperty("color","#000","important");startBtn.disabled=true;}
-    try{
-      const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
-      if(hr.data)currentRoomHostId=hr.data.host_id;
-    }catch(e){}
     if (
       assigningRoles ||
       currentRoomHostId !== localPlayerId ||
@@ -4823,7 +4788,6 @@ async function assignRoles() {
       }, 100);
     } finally {
       assigningRoles = false;
-      if(startBtn){startBtn.classList.remove("pilot-selected");startBtn.style.removeProperty("background");startBtn.style.removeProperty("color");startBtn.disabled=false;}
     }
 
     return;
@@ -6307,7 +6271,7 @@ window.addEventListener(
    const panel=document.createElement("div");
    panel.id="debatePilotPanel";
    panel.innerHTML=
-    '<div id="pilotVersion" class="pilot-version">DILEMA · V0.1.16-010N</div>'+ '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
+    '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
     '<div id="pilotHistory" class="pilot-history"></div>'+
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
@@ -6318,17 +6282,10 @@ window.addEventListener(
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
-    '<div id="pilotPresence" class="pilot-actions">'+
-      '<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div>'+
-      '<div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>'+
-    '</div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
    const note=debate.querySelector(".small-note");
    if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
-   // 010L: mount the lower control layer at the exact moment the debate panel is created.
-   // addV15 is declared later, so defer one task until the full script has loaded.
-   setTimeout(()=>window.dispatchEvent(new CustomEvent("dilema:pilot-mounted")),0);
    const oa=debate.querySelector(".debate-option:nth-child(1)"),ob=debate.querySelector(".debate-option:nth-child(2)");
    if(oa){oa.id="pilotVoteA";oa.setAttribute("role","button");oa.onclick=()=>pilotTopVote("A");oa.insertAdjacentHTML("beforeend",'<div id="pilotCountA" class="pilot-vote-count">0</div>');}
    if(ob){ob.id="pilotVoteB";ob.setAttribute("role","button");ob.onclick=()=>pilotTopVote("B");ob.insertAdjacentHTML("beforeend",'<div id="pilotCountB" class="pilot-vote-count">0</div>');}
@@ -6503,7 +6460,7 @@ window.addEventListener(
        if(error) console.error(error);
      }catch(e){}
      currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
-     overlay.remove();refreshingGame=false;showScreen("room");await refreshLobby();collectiveEndRunning=false;
+     overlay.remove();showScreen("room");await refreshLobby();collectiveEndRunning=false;
    },2600);
  }
  window.pilotCloseVote=async function(choice){try{
@@ -6534,13 +6491,11 @@ window.addEventListener(
 (function(){
  function E(id){return document.getElementById(id)}
  function addV15(){
-   const p=E("debatePilotPanel"); if(!p) return;
-   if(!E("pilotPauseBanner")){const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);}
-   if(!E("pilotPresence")){
-     const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-     x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
-     p.appendChild(x);
-   }
+   const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
+   const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
+   const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+   p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
  }
@@ -6576,10 +6531,6 @@ window.addEventListener(
      const choices=await R("get_farewell_choices",{p_room_id:currentRoomId,p_limit:4});
      openMessagePicker("¿ASÍ QUE TE VAS?",choices.map(x=>x.text),async(text)=>{
        if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
-       if(currentRoomHostId===localPlayerId){
-         const peers=await sb.from("players").select("player_id,created_at").eq("room_id",currentRoomId).is("abandoned_at",null).neq("player_id",localPlayerId).order("created_at",{ascending:true}).limit(1);
-         if(peers.data&&peers.data[0])await sb.from("rooms").update({host_id:peers.data[0].player_id}).eq("id",currentRoomId);
-       }
        await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:text});
        closeMessagePicker();
        cleanupRoom();
@@ -6612,20 +6563,11 @@ window.addEventListener(
      let isHost=currentRoomHostId===localPlayerId;
      try{
        const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
-       const ap=await sb.from("players").select("player_id,created_at").eq("room_id",currentRoomId).is("abandoned_at",null).order("created_at",{ascending:true});
-       const activeIds=(ap.data||[]).map(x=>x.player_id);
-       if(hr.data){
-         currentRoomHostId=hr.data.host_id;
-         if(activeIds.length&&!activeIds.includes(currentRoomHostId)){
-           await sb.from("rooms").update({host_id:activeIds[0]}).eq("id",currentRoomId);
-           currentRoomHostId=activeIds[0];
-         }
-         isHost=currentRoomHostId===localPlayerId;
-       }
-     }catch(e){console.error("HOST REPAIR",e)}
+       if(hr.data){currentRoomHostId=hr.data.host_id;isHost=currentRoomHostId===localPlayerId;}
+     }catch(e){}
      const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
-     const hg=E("pilotHostGroup");if(hg){hg.classList.toggle("dilema-host-active",isHost);hg.style.setProperty("display",isHost?"block":"none","important");}
+     const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
      const hrc=E("pilotHostRoomCode");if(hrc&&isHost)hrc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
@@ -6637,22 +6579,6 @@ window.addEventListener(
    originalRender();
    if(currentRoomMode==="debate"){
      addV15();
-     window.dispatchEvent(new CustomEvent("dilema:pilot-mounted"));
-     // Host identity must survive the transition into debate.
-     (async()=>{
-       try{
-         const hr=await sb.from("rooms").select("host_id,code").eq("id",currentRoomId).maybeSingle();
-         if(hr.data){
-           currentRoomHostId=hr.data.host_id;
-           currentRoomCode=hr.data.code||currentRoomCode;
-           const hg=E("pilotHostGroup"),hc=E("pilotHostRoomCode"),hp=E("pilotPauseBtn");
-           const mine=currentRoomHostId===localPlayerId;
-           if(hg){hg.classList.toggle("dilema-host-active",mine);hg.style.setProperty("display",mine?"block":"none","important");}
-           if(hc&&mine)hc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
-           if(hp)hp.style.setProperty("display",mine?"block":"none","important");
-         }
-       }catch(e){console.error("HOST RENDER",e)}
-     })();
      const title=document.querySelector("#debate .debate-title");if(title)title.innerHTML="ABRIMOS<br>EL DEBATE";
      const top=E("debateGroupVote");if(top&&top.textContent==="TODOS PREPARADOS")top.textContent="EL GRUPO HA VOTADO";
      const note=document.querySelector("#debate .small-note");if(note)note.textContent="DEFIENDE LO QUE PIENSAS · ESCUCHA · CAMBIA DE OPINIÓN SI QUIERES";
@@ -6675,11 +6601,7 @@ window.addEventListener(
    }catch(e){console.error(e)}
    cleanupRoom();showScreen("home");
  };
- window.addEventListener("dilema:pilot-mounted",()=>addV15());
  document.addEventListener("DOMContentLoaded",()=>setTimeout(addV15,200));
- // 010I: one source of truth for presence/abandon actions, including legacy visible controls.
- window.prototypeAbsent=function(){return window.pilotToggleAbsent&&window.pilotToggleAbsent();};
- window.prototypeAbandon=function(){return window.pilotAbandon&&window.pilotAbandon();};
 })();
 </script>
 
@@ -6790,13 +6712,5 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  };
 })();
 </script>
-<script>
-/* 010I capture wiring: visible controls cannot fall back to obsolete prototype handlers */
-document.addEventListener("click",function(ev){
- const b=ev.target.closest("#absentBtn,#abandonDebateBtn");
- if(!b||currentRoomMode!=="debate")return;
- ev.preventDefault();ev.stopImmediatePropagation();
- if(b.id==="absentBtn")window.pilotToggleAbsent(); else window.pilotAbandon();
-},true);
-</script></body>
+</body>
 </html>
