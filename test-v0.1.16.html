@@ -1126,6 +1126,7 @@
 #debateSuggested #intensityChoices{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 #debateSuggested .choice-chip{background:#0b0b0b!important;color:#8e96a3!important;border:1px solid #343434!important}
 #debateSuggested .choice-chip.selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+#debateSuggested .choice-chip:disabled{background:#0b0b0b!important;color:#444!important;border-color:#252525!important;opacity:1!important;cursor:default!important}
 #proposeDilemmaBtn:disabled{
  background:#0b0b0b!important;color:#555!important;border:1px solid #292929!important;opacity:1!important
 }
@@ -1186,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R10</div>
+    <div class="version">DILEMA · V0.1.16-010C-R11</div>
   </main>
 
 
@@ -3673,8 +3674,10 @@ const startPhrases = [
 ];
 
 const debateCategories = [
-  "ALEATORIO","AMISTAD","AMOR","FAMILIA","INSTI","REDES","DINERO","FUTURO","MORAL","WTF"
+  "ALEATORIO","AMIGOS","ÉTICA","OCIO","PAREJA","PRIVACIDAD","REDES",
+  "AMISTAD","AMOR","FAMILIA","INSTI","DINERO","FUTURO","MORAL","WTF"
 ];
+let availableDebateDilemmas = null;
 
 const debateIntensities = [
   { label: "CHILL", value: 1 },
@@ -3702,13 +3705,22 @@ function refreshMicrophrases() {
   phraseTarget.textContent = phrase.toUpperCase();
 }
 
-function openSuggestedDebate() {
+async function openSuggestedDebate() {
   selectedDebateAudience = "teen";
   selectedDebateCategory = null;
   selectedDebateIntensity = null;
+  availableDebateDilemmas = null;
   renderDebateFilters();
-  document.getElementById("suggestedError").textContent = "";
+  document.getElementById("suggestedError").textContent = "CONSULTANDO EL CATÁLOGO…";
   showScreen("debateSuggested");
+  const {data,error} = await sb.from("dilemmas")
+    .select("category, intensity").eq("active",true).eq("audience","teen");
+  if(document.getElementById("debateSuggested").classList.contains("active")) {
+    availableDebateDilemmas = error ? null : (data || []);
+    document.getElementById("suggestedError").textContent = error
+      ? "NO SE HA PODIDO CONSULTAR EL CATÁLOGO. VUELVE A ENTRAR PARA REINTENTAR." : "";
+    renderDebateFilters();
+  }
 }
 
 function renderDebateFilters() {
@@ -3721,10 +3733,14 @@ function renderDebateFilters() {
 
   debateCategories.forEach(category => {
     const button = document.createElement("button");
+    const available = !!availableDebateDilemmas?.some(d =>
+      (category === "ALEATORIO" || d.category === category) &&
+      (!selectedDebateIntensity || d.intensity <= selectedDebateIntensity));
     button.type = "button";
     button.className = "choice-chip" +
       (selectedDebateCategory === category ? " selected" : "");
     button.textContent = category;
+    button.disabled = !available;
     button.onclick = () => {
       selectedDebateCategory = category;
       renderDebateFilters();
@@ -3734,10 +3750,14 @@ function renderDebateFilters() {
 
   debateIntensities.forEach(item => {
     const button = document.createElement("button");
+    const available = !!availableDebateDilemmas?.some(d =>
+      d.intensity <= item.value &&
+      (!selectedDebateCategory || selectedDebateCategory === "ALEATORIO" || d.category === selectedDebateCategory));
     button.type = "button";
     button.className = "choice-chip" +
       (selectedDebateIntensity === item.value ? " selected" : "");
     button.textContent = item.label;
+    button.disabled = !available;
     button.onclick = () => {
       selectedDebateIntensity = item.value;
       renderDebateFilters();
@@ -3745,7 +3765,9 @@ function renderDebateFilters() {
     intensities.appendChild(button);
   });
   if(proposeBtn){
-    const ready=!!selectedDebateCategory && !!selectedDebateIntensity;
+    const ready=!!selectedDebateCategory && !!selectedDebateIntensity &&
+      !!availableDebateDilemmas?.some(d => d.intensity <= selectedDebateIntensity &&
+        (selectedDebateCategory === "ALEATORIO" || d.category === selectedDebateCategory));
     proposeBtn.disabled=!ready;
     proposeBtn.classList.toggle("ready",ready);
   }
