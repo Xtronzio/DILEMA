@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010B — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010C — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1159,6 +1159,10 @@
  letter-spacing:2px!important;
  line-height:16px!important
 }
+</style><style>
+/* V0.1.16-010C */
+.giro-progress{display:block;margin-top:10px;color:#8d8d8d;font-size:10px;letter-spacing:1.6px;font-weight:700}
+.pilot-host-room-code{width:100%;margin:-4px 0 10px;padding:8px 10px;border:1px solid #333;border-radius:9px;text-align:center;color:#aaa;font-size:9px;font-weight:800;letter-spacing:1.5px;line-height:1.3}
 </style></head>
 
 <body>
@@ -6339,6 +6343,10 @@ window.addEventListener(
     let giroProposal=null;
     try{giroProposal=await rpc("get_debate_twist_proposal",{p_round_id:currentRoundId});}catch(e){}
     const giroOpen=!!giroProposal&&giroProposal.status==="open"&&s.phase==="debate";
+    if(gvb&&giroOpen){
+      const gp=gvb.querySelector("p");
+      if(gp)gp.innerHTML='ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?<br><span class="giro-progress">'+(giroProposal.voted||0)+' / '+(giroProposal.players||s.players)+' HAN VOTADO</span>';
+    }
     if(gvb){
       gvb.style.display=giroOpen?"block":"none";
       const gy=gvb.querySelector('[data-giro-vote="YES"]'),gn=gvb.querySelector('[data-giro-vote="NO"]');
@@ -6474,7 +6482,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
@@ -6513,6 +6521,7 @@ window.addEventListener(
      const legacyReset=E("resetGameBtn");if(legacyReset)legacyReset.style.display="none";
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
+     const hrc=E("pilotHostRoomCode");if(hrc&&isHost)hrc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
      const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
 
      {const q=E("pilotGiroBtn");if(q&&paused)q.disabled=true;}
