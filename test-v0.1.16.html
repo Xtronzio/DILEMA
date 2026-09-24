@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010G — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010H — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1654,7 +1654,7 @@
     <button
       id="absentBtn"
       class="btn btn-secondary"
-      onclick="prototypeAbsent()"
+      onclick="pilotToggleAbsent()"
     >
       AUSENTARME
     </button>
@@ -1662,7 +1662,7 @@
     <button
       id="abandonDebateBtn"
       class="btn btn-danger"
-      onclick="prototypeAbandon()"
+      onclick="pilotAbandon()"
     >
       ABANDONAR
     </button>
@@ -3829,12 +3829,20 @@ async function startCustomDebate() {
   await launchDebateDilemma(data);
 }
 
+let launchingDebateDilemma=false;
 async function launchDebateDilemma(dilemma) {
+  if(launchingDebateDilemma)return;
+  launchingDebateDilemma=true;
+  try{
+  if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
+  const { data: priorRounds, error: priorError } = await sb.from("rounds").select("round_number").eq("room_id",currentRoomId).order("round_number",{ascending:false}).limit(1);
+  if(priorError)throw priorError;
+  const nextRoundNumber=priorRounds&&priorRounds.length?Number(priorRounds[0].round_number||0)+1:1;
   const { data: round, error: roundError } = await sb
     .from("rounds")
     .insert({
       room_id: currentRoomId,
-      round_number: 1,
+      round_number: nextRoundNumber,
       dilemma_id: dilemma.id,
       status: "voting",
       started_at: new Date().toISOString()
@@ -3868,6 +3876,7 @@ async function launchDebateDilemma(dilemma) {
   subscribeToRounds();
   startGameRefresh();
   await refreshGame();
+  }finally{launchingDebateDilemma=false;}
 }
 
 
@@ -6460,7 +6469,7 @@ window.addEventListener(
        if(error) console.error(error);
      }catch(e){}
      currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
-     overlay.remove();showScreen("room");await refreshLobby();collectiveEndRunning=false;
+     overlay.remove();refreshingGame=false;showScreen("room");await refreshLobby();collectiveEndRunning=false;
    },2600);
  }
  window.pilotCloseVote=async function(choice){try{
