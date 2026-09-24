@@ -1178,7 +1178,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R2</div>
+    <div class="version">DILEMA · V0.1.16-010C-R3</div>
   </main>
 
 
@@ -1821,7 +1821,7 @@ let roundsChannel = null;
 let lobbyTimer = null;
 let gameTimer = null;
 let revealTimer = null;
-let refreshing = false;
+let lobbyRefreshPromise = null;
 let refreshingGame = false;
 
 let currentRoundId = null;
@@ -2894,12 +2894,11 @@ async function insertPlayer(profile) {
 
 
 async function enterRoom() {
-
-  showScreen(
-    "room"
-  );
-
   await refreshLobby();
+
+  if (!currentRoomId) return;
+
+  showScreen("room");
 
   subscribeRealtime();
 
@@ -2911,7 +2910,8 @@ async function enterRoom() {
 async function getRoom() {
 
   const {
-    data
+    data,
+    error
   } = await sb
     .from(
       "rooms"
@@ -2925,6 +2925,7 @@ async function getRoom() {
     )
     .maybeSingle();
 
+  if (error) throw error;
   return data;
 
 }
@@ -2932,19 +2933,16 @@ async function getRoom() {
 
 async function refreshLobby() {
 
-  if (
-    refreshing ||
-    !currentRoomId
-  ) {
-    return;
-  }
-
-  refreshing =
-    true;
+  if (!currentRoomId) return false;
+  if (lobbyRefreshPromise) return lobbyRefreshPromise;
+  const roomId = currentRoomId;
+  lobbyRefreshPromise = (async () => {
 
 
   const room =
     await getRoom();
+
+  if (currentRoomId !== roomId) return false;
 
 
   if (
@@ -2955,10 +2953,7 @@ async function refreshLobby() {
 
     goHome();
 
-    refreshing =
-      false;
-
-    return;
+    return false;
 
   }
 
@@ -3018,15 +3013,13 @@ async function refreshLobby() {
 
     await refreshGame();
 
-    refreshing =
-      false;
-
-    return;
+    return true;
   }
 
 
   const {
-    data: players
+    data: players,
+    error: playersError
   } = await sb
     .from(
       "players"
@@ -3047,6 +3040,8 @@ async function refreshLobby() {
       }
     );
 
+  if (playersError) throw playersError;
+  if (currentRoomId !== roomId) return false;
 
   renderLobby(
     room,
@@ -3054,9 +3049,13 @@ async function refreshLobby() {
   );
 
 
-  refreshing =
-    false;
-
+  return true;
+  })();
+  try {
+    return await lobbyRefreshPromise;
+  } finally {
+    lobbyRefreshPromise = null;
+  }
 }
 
 
@@ -3626,7 +3625,7 @@ async function updateLobbyProfile(
     "room"
   );
 
-  refreshLobby();
+  refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
 
 }
 
@@ -5761,7 +5760,7 @@ function subscribeRealtime() {
             "playing"
           ) {
 
-            refreshLobby();
+            refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
           }
         }
       )
@@ -5800,7 +5799,7 @@ function subscribeRealtime() {
             return;
           }
 
-          refreshLobby();
+          refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
         }
       )
       .subscribe();
@@ -5825,7 +5824,7 @@ function startSafetyRefresh() {
           "visible"
         ) {
 
-          refreshLobby();
+          refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
 
         }
 
