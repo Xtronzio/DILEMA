@@ -1186,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R6</div>
+    <div class="version">DILEMA · V0.1.16-010C-R7</div>
   </main>
 
 
@@ -6664,7 +6664,6 @@ let messagePickerSubmit=null,messagePickerAllowSilent=false;
 window.openMessagePicker=function(title,choices,onSubmit,allowSilent){
  const o=document.getElementById("messagePickerOverlay"),box=document.getElementById("messagePickerChoices");
  document.getElementById("messagePickerTitle").textContent=title;box.innerHTML="";
- (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>onSubmit(t);box.appendChild(b)});
  messagePickerSubmit=onSubmit;messagePickerAllowSilent=!!allowSilent;
  const silent=document.getElementById("messagePickerSilent");
  silent.style.display=allowSilent?"block":"none";
@@ -6716,7 +6715,6 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
      flashPicked(btn);
      try{await onSubmit(text)}catch(e){console.error("MESSAGE ACTION ERROR",e);alert(title.indexOf("VAS")>=0?"No se ha podido abandonar el debate.":"No se ha podido publicar el mensaje.")}
    };
-   (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>safeSubmit(t,b);box.appendChild(b)});
    messagePickerSubmit=(text,btn)=>safeSubmit(text,btn);messagePickerAllowSilent=!!allowSilent;
    const silent=document.getElementById("messagePickerSilent");
    silent.style.display=allowSilent?"block":"none";
@@ -6734,13 +6732,19 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 })();
 </script>
 <style>
-/* R5: availability and balanced controls */
+/* Available actions stay dark; white marks an actual press or selection. */
 #proposeDilemmaBtn.ready:not(:disabled),
 #customDebateBtn:not(:disabled),
 #result #assignRolesBtn:not(:disabled),
 #room #startGameBtn:not(:disabled){
-  background:#fff!important;color:#0b0b0b!important;border:1px solid #fff!important;
+  background:#0b0b0b!important;color:#fff!important;border:1px solid #666!important;
   opacity:1!important
+}
+#proposeDilemmaBtn:not(:disabled):active,
+#customDebateBtn:not(:disabled):active,
+#result #assignRolesBtn:not(:disabled):active,
+#room #startGameBtn:not(:disabled):active{
+  background:#fff!important;color:#0b0b0b!important;border-color:#fff!important
 }
 #proposeDilemmaBtn:disabled,
 #customDebateBtn:disabled,
