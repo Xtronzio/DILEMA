@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010 — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010B — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6595,6 +6595,62 @@ window.openMessagePicker=function(title,choices,onSubmit,allowSilent){
 window.closeMessagePicker=function(){const o=document.getElementById("messagePickerOverlay");o.classList.remove("open");o.setAttribute("aria-hidden","true");messagePickerSubmit=null};
 window.messagePickerCustom=function(){const t=prompt("ESCRIBE TU MENSAJE (MÁX. 120 CARACTERES)","");if(t===null)return;const v=t.trim().slice(0,120);if(v&&messagePickerSubmit)messagePickerSubmit(v)};
 window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePickerSubmit)messagePickerSubmit("")};
+</script>
+
+<style>
+/* V0.1.16-010B validation fixes */
+#room #startGameBtn{
+ background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important;
+ transition:none!important
+}
+#room #startGameBtn:not(:disabled):active{background:#fff!important;color:#000!important;border-color:#fff!important}
+#pilotPresence .pilot-presence-row{
+ grid-template-columns:repeat(2,minmax(120px,1fr))!important;
+ gap:12px!important
+}
+#pilotPresence .pilot-presence-row>button{
+ min-height:54px!important;height:auto!important;padding:10px 16px!important;
+ white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;
+ font-size:10px!important
+}
+.message-picker-choice,.message-picker-cancel{
+ opacity:1!important;cursor:pointer!important;background:#0b0b0b!important;color:#fff!important;
+ border:1px solid #3a3a3a!important
+}
+.message-picker-choice:active,.message-picker-cancel:active,.message-picker-choice.message-picked{
+ background:#fff!important;color:#000!important;border-color:#fff!important
+}
+.message-picker-muted{color:#fff!important}
+.message-picker-cancel{color:#fff!important}
+@media(max-width:360px){
+ #pilotPresence .pilot-presence-row{grid-template-columns:1fr 1fr!important}
+ #pilotPresence .pilot-presence-row>button{padding:9px 8px!important;font-size:9px!important}
+}
+</style>
+<script>
+(function(){
+ function flashPicked(btn){if(!btn)return;btn.classList.add("message-picked");setTimeout(()=>btn.classList.remove("message-picked"),220)}
+ window.openMessagePicker=function(title,choices,onSubmit,allowSilent){
+   const o=document.getElementById("messagePickerOverlay"),box=document.getElementById("messagePickerChoices");
+   document.getElementById("messagePickerTitle").textContent=title;box.innerHTML="";
+   const safeSubmit=async(text,btn)=>{
+     flashPicked(btn);
+     try{await onSubmit(text)}catch(e){console.error("MESSAGE ACTION ERROR",e);alert(title.indexOf("VAS")>=0?"No se ha podido abandonar el debate.":"No se ha podido publicar el mensaje.")}
+   };
+   (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>safeSubmit(t,b);box.appendChild(b)});
+   messagePickerSubmit=(text,btn)=>safeSubmit(text,btn);messagePickerAllowSilent=!!allowSilent;
+   document.getElementById("messagePickerSilent").style.display=allowSilent?"block":"none";
+   o.classList.add("open");o.setAttribute("aria-hidden","false");
+ };
+ window.messagePickerCustom=function(){
+   const t=prompt("ESCRIBE TU MENSAJE (MÁX. 120 CARACTERES)","");if(t===null)return;
+   const v=t.trim().slice(0,120);if(v&&messagePickerSubmit)messagePickerSubmit(v,null);
+ };
+ window.messagePickerSilent=function(){
+   const b=document.getElementById("messagePickerSilent");
+   if(messagePickerAllowSilent&&messagePickerSubmit)messagePickerSubmit("",b);
+ };
+})();
 </script>
 </body>
 </html>
