@@ -6408,6 +6408,7 @@ window.addEventListener(
     let giroProposal=null;
     try{giroProposal=await rpc("get_debate_twist_proposal",{p_round_id:currentRoundId});}catch(e){}
     const giroOpen=!!giroProposal&&giroProposal.status==="open"&&s.phase==="debate";
+    if(revoteButton&&giroOpen)revoteButton.disabled=true;
     const unanimityBox=el("pilotUnanimity");
     if(unanimityBox)unanimityBox.style.display=unanimous&&!s.paused&&!giroOpen&&!revoteOpen&&
       !sessionStorage.getItem("dilema_unanimity_dismissed_"+currentRoundId+"_"+s.cycle)?"block":"none";
