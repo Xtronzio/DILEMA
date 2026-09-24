@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010F — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010G — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -6504,17 +6504,17 @@ window.addEventListener(
  window.pilotToggleAbsent=async function(){
    try{
      const pr=await R("get_presence_request",{p_round_id:currentRoundId});
-     if(pr&&pr.id){alert("Ya hay una solicitud de presencia pendiente.");return}
      if(pr&&pr.my_presence==="absent"){
+       if(pr.id&&pr.action==="return"){alert("Tu reincorporación ya está pendiente de la mesa.");return}
        await R("propose_presence_change",{p_round_id:currentRoundId,p_action:"return",p_message:null});
        await pilotRefresh(); return;
      }
      const choices=await R("get_farewell_choices",{p_room_id:currentRoomId,p_limit:4});
-     openMessagePicker("SOLICITO AUSENTARME",choices.map(x=>x.text),async(text)=>{
-       await R("propose_presence_change",{p_round_id:currentRoundId,p_action:"leave",p_message:text});
+     openMessagePicker("ME AUSENTO",choices.map(x=>x.text),async(text)=>{
+       await R("leave_debate_temporarily",{p_round_id:currentRoundId,p_message:text});
        closeMessagePicker();await pilotRefresh();
-     },false);
-   }catch(e){console.error(e);alert("No se ha podido solicitar el cambio de presencia.")}
+     },true);
+   }catch(e){console.error(e);alert("No se ha podido cambiar tu presencia.")}
  };
  window.pilotPresenceVote=async function(choice){
    try{
@@ -6554,7 +6554,7 @@ window.addEventListener(
      if(ab&&pr)ab.textContent=pr.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
      if(pb){
        if(pr&&pr.id){
-         const verb=pr.action==="leave"?"SOLICITA AUSENTARSE":"QUIERE VOLVER A LA MESA";
+         const verb="QUIERE VOLVER A LA MESA";
          const msg=pr.message?'<div class="presence-msg">«'+String(pr.message).replace(/[<>]/g,"")+'»</div>':'';
          pb.innerHTML='<b>UN JUGADOR '+verb+'</b>'+msg+'<div class="presence-question">¿LA MESA LO APRUEBA?</div><div class="pilot-actions"><button data-pv="YES" onclick="pilotPresenceVote(\'YES\')">SÍ</button><button data-pv="NO" onclick="pilotPresenceVote(\'NO\')">NO</button></div><small>'+(Number(pr.yes||0)+Number(pr.no||0))+' HAN VOTADO</small>';
          pb.style.display="block";pb.querySelectorAll("[data-pv]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.pv===pr.mine));
@@ -6645,7 +6645,9 @@ window.openMessagePicker=function(title,choices,onSubmit,allowSilent){
  document.getElementById("messagePickerTitle").textContent=title;box.innerHTML="";
  (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>onSubmit(t);box.appendChild(b)});
  messagePickerSubmit=onSubmit;messagePickerAllowSilent=!!allowSilent;
- document.getElementById("messagePickerSilent").style.display=allowSilent?"block":"none";
+ const silent=document.getElementById("messagePickerSilent");
+   silent.style.display=allowSilent?"block":"none";
+   silent.textContent=title==="ME AUSENTO"?"AUSENTARME SIN DECIR NADA":"IRME SIN DECIR NADA";
  o.classList.add("open");o.setAttribute("aria-hidden","false");
 };
 window.closeMessagePicker=function(){const o=document.getElementById("messagePickerOverlay");o.classList.remove("open");o.setAttribute("aria-hidden","true");messagePickerSubmit=null};
@@ -6695,7 +6697,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    };
    (choices||[]).slice(0,4).forEach(t=>{const b=document.createElement("button");b.type="button";b.className="message-picker-choice";b.textContent=t;b.onclick=()=>safeSubmit(t,b);box.appendChild(b)});
    messagePickerSubmit=(text,btn)=>safeSubmit(text,btn);messagePickerAllowSilent=!!allowSilent;
-   document.getElementById("messagePickerSilent").style.display=allowSilent?"block":"none";
+   const silent=document.getElementById("messagePickerSilent");
+   silent.style.display=allowSilent?"block":"none";
+   silent.textContent=title==="ME AUSENTO"?"AUSENTARME SIN DECIR NADA":"IRME SIN DECIR NADA";
    o.classList.add("open");o.setAttribute("aria-hidden","false");
  };
  window.messagePickerCustom=function(){
