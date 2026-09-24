@@ -1172,7 +1172,7 @@
 .pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
 .pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
 .pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
-</style><style>body::after{content:"DILEMA · V0.1.16-010O";position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:9px;letter-spacing:1.5px;color:#555;z-index:999999;pointer-events:none}</style></head>
+</style><style>body::after{content:"DILEMA · V0.1.16-010P";position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:9px;letter-spacing:1.5px;color:#555;z-index:999999;pointer-events:none}</style></head>
 
 <body>
 
@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010O</div>
+    <div class="version">DILEMA · V0.1.16-010P</div>
   </main>
 
 
@@ -2340,15 +2340,12 @@ async function useSavedProfile(id) {
   selectedSavedProfileId = id;
   selectedAvatar = profile.avatar;
   selectedAvatarCategory = findAvatarCategory(profile.avatar);
-  document.getElementById("playerName").value = profile.name;
-  document.getElementById("playerMotto").value = profile.motto || "";
 
   try {
     await continueWithProfile(profile);
   } catch (error) {
     console.error("PROFILE CONTINUE ERROR:", error);
-    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
-    showScreen("join");
+    alert("NO SE HA PODIDO CONTINUAR CON EL PERFIL.");
   }
 }
 
