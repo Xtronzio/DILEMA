@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010D — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010E — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -5849,7 +5849,7 @@ async function restoreRoomSession() {
     cleanupChannels();
     localStorage.removeItem("dilema_room_session");
     currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
-    currentRoomStatus=null;currentRoomMode="game";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
+    currentRoomStatus=null;currentRoomMode="debate";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
     showScreen("home");
     return;
   }
@@ -5875,6 +5875,8 @@ async function restoreRoomSession() {
     );
 
   if (!raw) {
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    document.getElementById("home")?.classList.add("active");
     return;
   }
 
@@ -6102,7 +6104,7 @@ function cleanupRoom() {
     null;
 
   currentRoomMode =
-    "game";
+    "debate";
 
   selectedSavedProfileId =
     null;
@@ -6129,7 +6131,7 @@ window.addEventListener(
     if(bootParams.get("fresh")==="1"){
       localStorage.removeItem("dilema_room_session");
       currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
-      currentRoomStatus=null;currentRoomMode="game";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
+      currentRoomStatus=null;currentRoomMode="debate";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
       document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
       document.getElementById("home")?.classList.add("active");
       bootParams.delete("fresh");
