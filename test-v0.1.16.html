@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R12</div>
+    <div class="version">DILEMA · V0.1.16-010C-R13</div>
   </main>
 
 
@@ -6314,10 +6314,9 @@ window.addEventListener(
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
     '<div id="pilotRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">¿SIGUES PENSANDO LO MISMO? · RE-VOTA ARRIBA</div>'+
     '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
-    '<button id="pilotRevoteRequestBtn" class="btn btn-secondary" type="button" onclick="pilotRequestRevote()" disabled>PEDIR RE-VOTO</button>'+
+    '<button id="pilotRevoteRequestBtn" class="btn btn-secondary" type="button" onclick="pilotRequestRevote()" disabled>RE-VOTAR</button>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()" disabled>FIN DEBATE</button></div>'+
-    '<div id="pilotRevoteProposalBox" class="pilot-proposal-box" style="display:none"><p>ALGUIEN PROPONE VOLVER A VOTAR.<br>¿ABRIMOS UN RE-VOTO?</p>'+
-    '<div class="pilot-actions"><button type="button" data-revote-vote="YES" onclick="pilotVoteRevoteProposal(\'YES\')">SÍ</button><button type="button" data-revote-vote="NO" onclick="pilotVoteRevoteProposal(\'NO\')">NO</button></div></div>'+
+    '<div id="pilotOptionalRevoteBox" class="pilot-proposal-box" style="display:none"><p>RE-VOTO ABIERTO<br>SI QUIERES CAMBIAR TU VOTO, ELIGE A O B.</p><div class="pilot-actions"><button type="button" data-optional-choice="A" onclick="pilotOptionalRevote(\'A\')"><b>A</b><span id="pilotOptionalLabelA"></span></button><button type="button" data-optional-choice="B" onclick="pilotOptionalRevote(\'B\')"><b>B</b><span id="pilotOptionalLabelB"></span></button></div></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
@@ -6376,18 +6375,20 @@ window.addEventListener(
       tbox.style.display="block";el("pilotTwistText").textContent=tw.text;
       hint.style.display=s.phase==="twist"?"block":"none";
     }else{tbox.style.display="none";hint.style.display=s.phase==="twist"?"block":"none"}
-    const revoteBox=el("pilotRevoteProposalBox"),revoteButton=el("pilotRevoteRequestBtn");
-    const revoteProposal=await rpc("get_debate_revote_proposal",{p_round_id:currentRoundId});
-    const revoteOpen=!!revoteProposal&&revoteProposal.status==="open"&&s.phase==="debate";
+    const revoteBox=el("pilotOptionalRevoteBox"),revoteButton=el("pilotRevoteRequestBtn");
+    const optionalRevote=await rpc("get_optional_debate_revote",{p_round_id:currentRoundId});
+    const optionalOpen=!!optionalRevote?.open&&s.phase==="debate";
     if(revoteBox){
-      revoteBox.style.display=revoteOpen?"block":"none";
-      if(revoteOpen){
-        revoteBox.querySelector("p").innerHTML='ALGUIEN PROPONE VOLVER A VOTAR.<br>¿ABRIMOS UN RE-VOTO?<br><span class="giro-progress">'+(revoteProposal.voted||0)+' / '+(revoteProposal.players||s.players)+' HAN VOTADO</span>';
-        revoteBox.querySelectorAll("[data-revote-vote]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.revoteVote===revoteProposal.mine));
+      revoteBox.style.display=optionalOpen?"block":"none";
+      if(optionalOpen){
+        el("pilotOptionalLabelA").textContent=currentDilemma?.option_a||"";
+        el("pilotOptionalLabelB").textContent=currentDilemma?.option_b||"";
       }
+      revoteBox.querySelectorAll("[data-optional-choice]").forEach(b=>b.disabled=!!s.paused);
     }
-    if(revoteButton)revoteButton.disabled=s.phase!=="debate"||!!s.paused||revoteOpen||revoteProposal?.status==="accepted";
+    if(revoteButton)revoteButton.disabled=s.phase!=="debate"||!!s.paused||optionalOpen;
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
+    let myVote=null;
     if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
     const unanimous=s.phase==="debate"&&Number(s.players)>1&&
       ((Number(s.votes_a)===Number(s.players)&&Number(s.votes_b)===0)||
@@ -6395,6 +6396,7 @@ window.addEventListener(
     if(va&&vb){
       const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
+      myVote=my.data?.choice||null;
       va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
       const complete=(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
@@ -6404,6 +6406,8 @@ window.addEventListener(
       va.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_a)<Number(s.votes_b));
       vb.classList.toggle("pilot-lose",complete&&split&&Number(s.votes_b)<Number(s.votes_a));
     }
+    if(revoteBox)revoteBox.querySelectorAll("[data-optional-choice]").forEach(b=>b.classList.toggle("pilot-selected",optionalOpen&&b.dataset.optionalChoice===myVote));
+    if(va&&vb){va.style.pointerEvents=s.paused?"none":"";vb.style.pointerEvents=s.paused?"none":"";va.setAttribute("aria-disabled",s.paused?"true":"false");vb.setAttribute("aria-disabled",s.paused?"true":"false");}
     const gb=el("pilotGiroBtn"), gvb=el("pilotGiroVoteBox");
     let giroProposal=null;
     try{giroProposal=await rpc("get_debate_twist_proposal",{p_round_id:currentRoundId});}catch(e){}
@@ -6412,7 +6416,7 @@ window.addEventListener(
     const unanimityBox=el("pilotUnanimity");
     if(unanimityBox){
       const decision=unanimous?await rpc("get_debate_unanimity_state",{p_round_id:currentRoundId}):null;
-      const choose=!!decision&&!decision.outcome&&!s.paused&&!giroOpen&&!revoteOpen;
+      const choose=!!decision&&!decision.outcome&&!s.paused&&!giroOpen;
       unanimityBox.style.display=choose?"block":"none";
       if(choose){
         el("pilotUnanimityProgress").textContent=(decision.voted||0)+" / "+decision.players+" HAN VOTADO · MAYORÍA DECIDE";
@@ -6425,16 +6429,17 @@ window.addEventListener(
     }
     if(gvb){
       gvb.style.display=giroOpen?"block":"none";
+      gvb.querySelectorAll("[data-giro-vote]").forEach(b=>b.disabled=!!s.paused);
       const gy=gvb.querySelector('[data-giro-vote="YES"]'),gn=gvb.querySelector('[data-giro-vote="NO"]');
       if(gy)gy.classList.toggle("pilot-selected",giroOpen&&giroProposal.mine==="YES");
       if(gn)gn.classList.toggle("pilot-selected",giroOpen&&giroProposal.mine==="NO");
     }
     if(gb){
       gb.classList.remove("pilot-selected");
-      gb.disabled=s.phase!=="debate"||!s.request_open||giroOpen||revoteOpen;
+      gb.disabled=s.phase!=="debate"||!!s.paused||!s.request_open||giroOpen;
     }
     const endButton=el("pilotEndBtn");
-    if(endButton)endButton.disabled=s.phase!=="debate"||!!s.paused||revoteOpen;
+    if(endButton)endButton.disabled=s.phase!=="debate";
     const cb=el("pilotCloseBox");
     if(cb){
       cb.style.display=s.phase==="closing"?"block":"none";
@@ -6473,17 +6478,15 @@ window.addEventListener(
  window.pilotRequestRevote=async function(){
    const button=el("pilotRevoteRequestBtn");if(button)button.disabled=true;
    try{
-     await rpc("propose_debate_revote",{p_round_id:currentRoundId});
+     await rpc("open_optional_debate_revote",{p_round_id:currentRoundId});
      await pilotRefresh();
-   }catch(e){console.error("REVOTE PROPOSAL",e);alert("No se ha podido proponer el re-voto.");await pilotRefresh();}
+   }catch(e){console.error("OPEN REVOTE",e);alert("No se ha podido abrir el re-voto.");await pilotRefresh();}
  };
- window.pilotVoteRevoteProposal=async function(choice){
-   const box=el("pilotRevoteProposalBox");
-   if(box)box.querySelectorAll("[data-revote-vote]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.revoteVote===choice));
+ window.pilotOptionalRevote=async function(choice){
    try{
-     await rpc("cast_debate_revote_proposal_vote",{p_round_id:currentRoundId,p_choice:choice});
+     await rpc("cast_optional_debate_revote",{p_round_id:currentRoundId,p_choice:choice});
      await pilotRefresh();
-   }catch(e){console.error("REVOTE PROPOSAL VOTE",e);alert("No se ha podido votar la propuesta de re-voto.");await pilotRefresh();}
+   }catch(e){console.error("OPTIONAL REVOTE",e);alert("No se ha podido cambiar tu voto.");await pilotRefresh();}
  };
  window.pilotGiroVote=async function(choice){
    try{
@@ -6566,7 +6569,7 @@ window.addEventListener(
 </script>
 
 <style>
-#pilotPauseBanner{display:none;width:100%;padding:18px;margin:0 0 16px;border:1px solid #fff;border-radius:14px;text-align:center;font-weight:900;letter-spacing:2px}
+#pilotPauseBanner{display:none;width:100%;padding:18px;margin:0 0 16px;border:1px solid #ff9a34;border-radius:14px;text-align:center;font-weight:900;letter-spacing:2px;color:#ff9a34;background:#0b0b0b}
 #pilotPresence{margin-top:12px}
 </style>
 <script>
@@ -6630,13 +6633,15 @@ window.addEventListener(
      let pr=null;
      try{pr=await R("get_presence_request",{p_round_id:currentRoundId})}catch(e){console.error("PRESENCE REFRESH ERROR",e)}
      const requestBox=E("pilotPresenceRequestBox"),absenceButton=E("pilotAbsentBtn");
-     if(absenceButton&&pr){
-       absenceButton.textContent=pr.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
-       absenceButton.disabled=!!(pr.my_presence==="absent"&&pr.id&&pr.requester_id===localPlayerId);
+     if(absenceButton){
+       absenceButton.textContent=pr?.my_presence==="absent"?"SOLICITAR VOLVER":"AUSENTARME";
+       absenceButton.disabled=paused||!!(pr?.my_presence==="absent"&&pr?.id&&pr?.requester_id===localPlayerId);
      }
      const giroButton=E("pilotGiroBtn"),endButton=E("pilotEndBtn"),proclamationButton=E("pilotProclamaBtn");
      if(giroButton)giroButton.disabled=giroButton.disabled||paused||pr?.my_presence==="absent";
      if(endButton)endButton.disabled=endButton.disabled||pr?.my_presence==="absent";
+     const revoteButton=E("pilotRevoteRequestBtn");if(revoteButton&&paused)revoteButton.disabled=true;
+     E("pilotUnanimity")?.querySelectorAll("[data-unanimity-choice]").forEach(b=>b.disabled=paused);
      if(proclamationButton)proclamationButton.disabled=proclamationButton.disabled||pr?.my_presence==="absent";
      if(requestBox){
        if(pr&&pr.id){
@@ -6644,7 +6649,7 @@ window.addEventListener(
          requestBox.querySelector(".presence-msg").textContent=pr.message||"";
          requestBox.querySelector("small").textContent=(Number(pr.yes||0)+Number(pr.no||0))+" HAN VOTADO";
          requestBox.style.display="block";
-         requestBox.querySelectorAll("[data-pv]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.pv===pr.mine));
+         requestBox.querySelectorAll("[data-pv]").forEach(b=>{b.classList.toggle("pilot-selected",b.dataset.pv===pr.mine);b.disabled=paused;});
        }else requestBox.style.display="none";
      }
      let isHost=currentRoomHostId===localPlayerId;
@@ -6861,6 +6866,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 .pilot-proposal-box .pilot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .pilot-proposal-box button{min-height:54px;width:100%;background:#0b0b0b;color:#fff;border:1px solid #3a3a3a;border-radius:12px}
 .pilot-proposal-box button.pilot-selected{background:#fff;color:#0b0b0b;border-color:#fff}
+#pilotOptionalRevoteBox button{padding:10px 6px;white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+#pilotOptionalRevoteBox button b,#pilotOptionalRevoteBox button span{display:block}
+#pilotOptionalRevoteBox button span{margin-top:5px;font-size:11px}
 .pilot-unanimity-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .pilot-unanimity-actions button{min-width:0;padding:8px 4px;white-space:normal;font-size:10px;line-height:1.2}
 #debatePilotPanel #pilotPresence{
