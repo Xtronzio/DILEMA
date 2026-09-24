@@ -1178,7 +1178,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R</div>
+    <div class="version">DILEMA · V0.1.16-010C-R2</div>
   </main>
 
 
@@ -1796,6 +1796,7 @@ const avatarCategories = {
 let setupExpectedPlayers = 4;
 
 let flowMode = null;
+let profileActionPending = false;
 let editingLobbyProfile = false;
 
 let selectedDebateAudience = "teen";
@@ -2464,6 +2465,11 @@ async function continueWithProfile(
   profile
 ) {
 
+  if (profileActionPending) return;
+  profileActionPending = true;
+
+  try {
+
   if (
     flowMode ===
     "create"
@@ -2479,6 +2485,10 @@ async function continueWithProfile(
       profile
     );
 
+  }
+
+  } finally {
+    profileActionPending = false;
   }
 
 }
@@ -2839,9 +2849,13 @@ async function createRoom(
     data.mode || "game";
 
 
-  await insertPlayer(
-    profile
-  );
+  try {
+    await insertPlayer(profile);
+  } catch (error) {
+    console.error("HOST REGISTRATION ERROR:", error);
+    alert("La sala se creó, pero no se pudo registrar al anfitrión. Recarga antes de intentarlo de nuevo.");
+    return;
+  }
 
   saveRoomSession();
 
@@ -2863,31 +2877,18 @@ async function joinRoomWithProfile(profile) {
     await enterRoom();
   } catch (error) {
     console.error("JOIN ROOM ERROR:", error);
-    document.getElementById("joinError").textContent = "NO SE HA PODIDO ENTRAR EN LA SALA.";
+    document.getElementById("joinError").textContent =
+      error.code === "23505" ? "YA PARTICIPAS EN ESTA SALA DESDE ESTE NAVEGADOR." : "NO SE HA PODIDO ENTRAR EN LA SALA.";
     showScreen("join");
   }
 }
 
 async function insertPlayer(profile) {
-  const { data: existing, error: findError } = await sb
-    .from("players")
-    .select("id,player_id,abandoned_at")
-    .eq("room_id",currentRoomId)
-    .eq("player_id",localPlayerId)
-    .maybeSingle();
-  if(findError) throw findError;
-  if(existing){
-    const {error}=await sb.from("players").update({
-      user_id:currentUserId,name:profile.name,avatar:profile.avatar,motto:profile.motto||null,
-      presence:"present",abandoned_at:null,farewell:null
-    }).eq("id",existing.id);
-    if(error) throw error;
-    return;
-  }
-  const { error } = await sb.from("players").insert({
+  const { error } = await sb.from("players").upsert({
     room_id:currentRoomId,player_id:localPlayerId,user_id:currentUserId,
-    name:profile.name,avatar:profile.avatar,motto:profile.motto||null,presence:"present"
-  });
+    name:profile.name,avatar:profile.avatar,motto:profile.motto||null,
+    presence:"present",abandoned_at:null,farewell:null
+  }, {onConflict:"room_id,player_id"});
   if (error) throw error;
 }
 
@@ -5474,7 +5475,7 @@ function startGameRefresh() {
         }
 
       },
-      1000
+      4000
     );
 }
 
@@ -5829,7 +5830,7 @@ function startSafetyRefresh() {
         }
 
       },
-      1000
+      4000
     );
 
 }
@@ -5837,7 +5838,7 @@ function startSafetyRefresh() {
 
 function saveRoomSession() {
 
-  localStorage.setItem(
+  sessionStorage.setItem(
     "dilema_room_session",
     JSON.stringify({
 
@@ -5861,7 +5862,7 @@ async function restoreRoomSession() {
   const params=new URLSearchParams(location.search);
   if(params.get("fresh")==="1"){
     cleanupChannels();
-    localStorage.removeItem("dilema_room_session");
+    sessionStorage.removeItem("dilema_room_session");
     currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
     currentRoomStatus=null;currentRoomMode="game";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
     showScreen("home");
@@ -5884,7 +5885,7 @@ async function restoreRoomSession() {
   }
 
   const raw =
-    localStorage.getItem(
+    sessionStorage.getItem(
       "dilema_room_session"
     );
 
@@ -6121,7 +6122,7 @@ function cleanupRoom() {
   selectedSavedProfileId =
     null;
 
-  localStorage.removeItem(
+  sessionStorage.removeItem(
     "dilema_room_session"
   );
 
@@ -6141,7 +6142,7 @@ window.addEventListener(
 
     const bootParams=new URLSearchParams(location.search);
     if(bootParams.get("fresh")==="1"){
-      localStorage.removeItem("dilema_room_session");
+      sessionStorage.removeItem("dilema_room_session");
       currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
       currentRoomStatus=null;currentRoomMode="game";currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
       document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
@@ -6473,7 +6474,7 @@ window.addEventListener(
    if(currentRoomMode==="debate"&&currentRoomId&&currentRoundId&&document.getElementById("debate")?.classList.contains("active")&&document.visibilityState==="visible"){
      try{
        const rr=await sb.from("rooms").select("status,mode").eq("id",currentRoomId).maybeSingle();
-       if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&localStorage.getItem("dilema_room_session")){
+       if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&sessionStorage.getItem("dilema_room_session")){
          /* waiting is also the normal lobby state. Do not force the host back to
             the lobby here: it breaks ELEGIR DILEMA. A real restart is handled
             by the room/restart flow itself. */
@@ -6481,7 +6482,7 @@ window.addEventListener(
      }catch(e){}
      pilotRefresh();
    }
- },1200)});
+ },4000)});
 })();
 </script>
 
