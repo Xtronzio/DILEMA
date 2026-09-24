@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010J — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010K — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1176,6 +1176,12 @@
 /* 010J: authoritative host visibility; last rule wins over legacy V15 CSS */
 #pilotHostGroup{display:none!important}
 #pilotHostGroup.dilema-host-active{display:block!important}
+</style><style>
+/* 010K: repaired debate control mount */
+#debate #absentBtn,#debate #abandonDebateBtn{display:none!important}
+#pilotPresence{display:block!important}
+#pilotPresence .pilot-presence-row{display:grid!important}
+#assignRolesBtn.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
 </style></head>
 
 <body>
@@ -4772,6 +4778,8 @@ function renderResult(
 async function assignRoles() {
 
   if (currentRoomMode === "debate") {
+    const startBtn=document.getElementById("assignRolesBtn");
+    if(startBtn){startBtn.classList.add("pilot-selected");startBtn.style.setProperty("background","#fff","important");startBtn.style.setProperty("color","#000","important");startBtn.disabled=true;}
     try{
       const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
       if(hr.data)currentRoomHostId=hr.data.host_id;
@@ -4805,6 +4813,7 @@ async function assignRoles() {
       }, 100);
     } finally {
       assigningRoles = false;
+      if(startBtn){startBtn.classList.remove("pilot-selected");startBtn.style.removeProperty("background");startBtn.style.removeProperty("color");startBtn.disabled=false;}
     }
 
     return;
@@ -6508,11 +6517,13 @@ window.addEventListener(
 (function(){
  function E(id){return document.getElementById(id)}
  function addV15(){
-   const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
-   const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
-   const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
-   p.appendChild(x);
+   const p=E("debatePilotPanel"); if(!p) return;
+   if(!E("pilotPauseBanner")){const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);}
+   if(!E("pilotPresence")){
+     const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
+     x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+     p.appendChild(x);
+   }
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
  }
