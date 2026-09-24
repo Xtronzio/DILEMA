@@ -807,7 +807,7 @@
 
 
 <style>
-  /* DILEMA V0.1.16 · 010M — exact common typography for the four marked labels */
+  /* DILEMA V0.1.16 · 010N — exact common typography for the four marked labels */
   .room-code-label,
   .players-title,
   #waitingStatus,
@@ -1189,6 +1189,9 @@
 #pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
 #pilotPresence .pilot-presence-row button{width:100%}
 #pilotHostGroup.dilema-host-active{display:block!important}
+</style><style>
+/* 010N test build marker: always visible on every screen */
+body::after{content:"DILEMA · V0.1.16-010N";position:fixed;left:0;right:0;bottom:8px;text-align:center;font-size:9px;letter-spacing:1.5px;color:#555;z-index:999999;pointer-events:none}
 </style></head>
 
 <body>
@@ -1204,7 +1207,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA V0.1.16</div>
+    <div class="version">DILEMA · V0.1.16-010N</div>
   </main>
 
 
@@ -6304,7 +6307,7 @@ window.addEventListener(
    const panel=document.createElement("div");
    panel.id="debatePilotPanel";
    panel.innerHTML=
-    '<div id="pilotVersion" class="pilot-version">DILEMA · V0.1.16-010M</div>'+ '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
+    '<div id="pilotVersion" class="pilot-version">DILEMA · V0.1.16-010N</div>'+ '<div id="pilotState" class="pilot-state">DILEMA DEBATE · PILOTO</div>'+
     '<div id="pilotHistory" class="pilot-history"></div>'+
     '<div id="pilotEvent"></div>'+
     '<div id="pilotTwist" class="pilot-twist"><b>GIRO</b><span id="pilotTwistText"></span></div>'+
