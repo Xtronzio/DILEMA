@@ -1186,7 +1186,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R7</div>
+    <div class="version">DILEMA · V0.1.16-010C-R8</div>
   </main>
 
 
@@ -6800,26 +6800,28 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #pilotPresence #pilotProclamaBtn{
   width:100%!important;min-width:0!important;min-height:56px!important;
   height:auto!important;margin:0!important;padding:9px 5px!important;
-  font-size:10px!important;font-weight:900!important;line-height:1.15!important;
-  white-space:normal!important;overflow-wrap:normal!important;text-align:center!important
+  box-sizing:border-box!important;font-size:clamp(9px,2.6vw,11px)!important;
+  font-weight:900!important;line-height:1.25!important;
+  white-space:normal!important;overflow-wrap:anywhere!important;word-break:normal!important;
+  text-align:center!important
 }
 #pilotPresence{margin-top:9px!important}
 #pilotHostGroup{
   width:100%!important;margin:20px 0 0!important;padding:14px!important;
-  border:1px solid #7653bb!important;border-radius:14px!important;
-  background:#1b1329!important
+  border:1px solid #3a3a3a!important;border-radius:14px!important;
+  background:#0b0b0b!important
 }
 #pilotHostBadge{
   margin:0 0 9px!important;padding:10px!important;border:1px solid #a78bfa!important;
-  border-radius:9px!important;background:#342252!important;color:#fff!important
+  border-radius:9px!important;background:#0b0b0b!important;color:#fff!important
 }
 #pilotHostRoomCode{
-  margin:0 0 10px!important;border-color:#7653bb!important;
-  color:#d6c4ff!important;font-size:11px!important
+  margin:0 0 10px!important;border-color:#3a3a3a!important;
+  color:#fff!important;font-size:11px!important
 }
 #pilotHostGroup #pilotPauseBtn:not(:disabled){
-  width:100%!important;background:#7653bb!important;color:#fff!important;
-  border:1px solid #a78bfa!important
+  width:100%!important;background:#0b0b0b!important;color:#fff!important;
+  border:1px solid #3a3a3a!important
 }
 @media(max-width:360px){
   #debatePilotPanel .pilot-main-actions,#pilotPresence .pilot-presence-row{gap:5px!important}
