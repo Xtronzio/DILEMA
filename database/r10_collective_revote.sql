@@ -117,3 +117,18 @@ begin
 end $$;
 revoke all on function public.get_debate_revote_proposal(bigint),public.propose_debate_revote(bigint),public.cast_debate_revote_proposal_vote(bigint,text),public.cast_debate_revote(bigint,text),public.complete_debate_revote(bigint) from public,anon;
 grant execute on function public.get_debate_revote_proposal(bigint),public.propose_debate_revote(bigint),public.cast_debate_revote_proposal_vote(bigint,text),public.cast_debate_revote(bigint,text),public.complete_debate_revote(bigint) to authenticated;
+
+-- Remove the original automatic GIRO in the initial unanimous vote.
+do $$
+declare v_definition text;
+begin
+ select pg_get_functiondef(p.oid) into v_definition
+ from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+ where n.nspname='public' and p.proname='start_debate_engine' and p.prokind='f';
+ if v_definition is null or position('select public.launch_debate_twist(p_round_id,''unanimity'') into v_twist;' in v_definition)=0
+ then raise exception 'Expected unanimity launch not found'; end if;
+ v_definition:=replace(v_definition,
+ 'select public.launch_debate_twist(p_round_id,''unanimity'') into v_twist;',
+ 'v_twist:=null;');
+ execute v_definition;
+end $$;
