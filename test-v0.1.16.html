@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R22</div>
+    <div class="version">DILEMA · V0.1.16-010C-R23</div>
   </main>
 
 
@@ -7150,58 +7150,68 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #proclamationComposer.open{display:flex}
 #proclamationComposer .pc-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;border:1px solid #fff;border-radius:14px;background:#0b0b0b;color:#fff;padding:20px}
 #proclamationComposer h2{text-align:center;font-size:19px;font-weight:900;margin:0 0 16px}
-#proclamationComposer .pc-label{display:block;color:#aaa;font-size:11px;letter-spacing:1.2px;margin:0 0 10px}
-#proclamationComposer textarea{width:100%;min-height:130px;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:14px;font:700 16px/1.35 Arial,sans-serif}
-#proclamationComposer .pc-preview{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #555;border-radius:10px;padding:14px;margin:0 0 18px;font-weight:900}
-#proclamationComposer .pc-options,#proclamationComposer .pc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
-#proclamationComposer .pc-targets{display:grid;gap:8px;margin:0 0 16px}
-#proclamationComposer button{width:100%;min-height:50px;border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;padding:10px}
+#proclamationComposer .pc-label{display:block;color:#aaa;font-size:11px;letter-spacing:1.1px;line-height:1.4;margin:0 0 10px}
+#proclamationComposer textarea{width:100%;min-height:120px;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:14px;font:700 16px/1.35 Arial,sans-serif}
+#proclamationComposer .pc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px}
+#proclamationComposer .pc-heading .pc-label{margin:0}
+#proclamationComposer .pc-heading button{width:auto;min-height:34px;padding:7px 10px;font-size:10px}
+#proclamationComposer .pc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#proclamationComposer .pc-list button{min-height:48px;text-align:left;overflow-wrap:anywhere}
+#proclamationComposer button{border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;padding:10px}
 #proclamationComposer button.selected{border-color:#fff;background:#fff;color:#0b0b0b}
 #proclamationComposer button:disabled{color:#666;border-color:#333}
-#proclamationComposer .pc-error{min-height:18px;text-align:center;color:#ff4d5a;font-size:12px;font-weight:800}
-#proclamationComposer [hidden]{display:none!important}
+#proclamationComposer .pc-count{margin:11px 0 14px;color:#aaa;font-size:11px;letter-spacing:1px;text-align:center}
+#proclamationComposer .pc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#proclamationComposer .pc-actions button{min-height:48px}
+#proclamationComposer .pc-error{min-height:18px;margin-top:12px;text-align:center;color:#ff4d5a;font-size:12px;font-weight:800}
 </style>
 <script>
 (function(){
- let scope=null,target=null,sending=false;
+ let players=[],selected=new Set(),sending=false,loading=false;
  const E=id=>document.getElementById(id);
  function ensure(){
   if(E("proclamationComposer"))return;
   const m=document.createElement("div");m.id="proclamationComposer";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Escribir proclama");
-  m.innerHTML='<div class="pc-card"><h2>PROCLAMA</h2><section id="pcWrite"><label class="pc-label" for="pcText">ESCRIBE TU PROCLAMA · MÁXIMO 180 CARACTERES</label><textarea id="pcText" maxlength="180"></textarea><div class="pc-actions"><button id="pcCancel1" type="button">CANCELAR</button><button id="pcNext" type="button">SIGUIENTE</button></div></section><section id="pcWho" hidden><div id="pcPreview" class="pc-preview"></div><span class="pc-label">¿A QUIÉN VA DIRIGIDA?</span><div class="pc-options"><button id="pcGroup" type="button">GRUPAL</button><button id="pcDirected" type="button">DIRIGIDA</button></div><div id="pcTargets" class="pc-targets" hidden></div><div class="pc-actions"><button id="pcBack" type="button">VOLVER</button><button id="pcPublish" type="button" disabled>PUBLICAR</button></div><button id="pcCancel2" type="button">CANCELAR</button></section><div id="pcError" class="pc-error" role="alert"></div></div>';
+  m.innerHTML='<div class="pc-card"><h2>PROCLAMA</h2><label class="pc-label" for="pcText">ESCRIBE TU PROCLAMA · MÁXIMO 180 CARACTERES</label><textarea id="pcText" maxlength="180"></textarea><div class="pc-heading"><span class="pc-label">DESTINATARIOS</span><button id="pcAll" type="button">SELECCIONAR TODOS</button></div><div id="pcRecipients" class="pc-list"></div><p id="pcCount" class="pc-count"></p><div class="pc-actions"><button id="pcCancel" type="button">CANCELAR</button><button id="pcPublish" type="button">PUBLICAR</button></div><div id="pcError" class="pc-error" role="alert"></div></div>';
   document.body.appendChild(m);
-  const cancel=()=>{if(!sending)m.classList.remove("open")};
-  E("pcCancel1").addEventListener("click",cancel);E("pcCancel2").addEventListener("click",cancel);
-  E("pcNext").addEventListener("click",()=>{
-   const t=E("pcText").value.trim();
-   if(!t||t.length>180){E("pcError").textContent="ESCRIBE UNA PROCLAMA DE HASTA 180 CARACTERES.";return}
-   E("pcError").textContent="";E("pcPreview").textContent=t;E("pcWrite").hidden=true;E("pcWho").hidden=false;
-   scope=null;target=null;E("pcGroup").classList.remove("selected");E("pcDirected").classList.remove("selected");E("pcTargets").hidden=true;E("pcPublish").disabled=true;
-  });
-  E("pcBack").addEventListener("click",()=>{E("pcError").textContent="";E("pcWho").hidden=true;E("pcWrite").hidden=false;E("pcText").focus()});
-  E("pcGroup").addEventListener("click",()=>choose("GRUPAL"));
-  E("pcDirected").addEventListener("click",()=>choose("DIRIGIDA"));
+  E("pcCancel").addEventListener("click",()=>{if(!sending)m.classList.remove("open")});
+  E("pcAll").addEventListener("click",()=>{selected=new Set(players.map(p=>p.player_id));render()});
+  E("pcText").addEventListener("input",render);
   E("pcPublish").addEventListener("click",publish);
  }
- async function choose(value){
-  scope=value;target=null;E("pcGroup").classList.toggle("selected",value==="GRUPAL");E("pcDirected").classList.toggle("selected",value==="DIRIGIDA");
-  E("pcPublish").disabled=value!=="GRUPAL";const list=E("pcTargets");list.innerHTML="";list.hidden=value!=="DIRIGIDA";E("pcError").textContent="";
-  if(value!=="DIRIGIDA")return;
-  const {data,error}=await sb.from("players").select("player_id,name").eq("room_id",currentRoomId).eq("presence","present").is("abandoned_at",null).neq("player_id",localPlayerId).order("created_at");
-  if(scope!=="DIRIGIDA")return;
-  if(error||!data?.length){E("pcError").textContent=error?"NO SE HAN PODIDO CARGAR LOS JUGADORES.":"NO HAY OTRO JUGADOR PRESENTE.";return}
-  data.forEach(p=>{const b=document.createElement("button");b.type="button";b.textContent=p.name||"JUGADOR";b.addEventListener("click",()=>{target=p.player_id;list.querySelectorAll("button").forEach(x=>x.classList.toggle("selected",x===b));E("pcPublish").disabled=false});list.appendChild(b)});
+ function render(){
+  const list=E("pcRecipients");list.replaceChildren();
+  players.forEach(p=>{
+   const b=document.createElement("button");b.type="button";const active=selected.has(p.player_id);
+   b.classList.toggle("selected",active);b.setAttribute("aria-pressed",String(active));
+   b.textContent=(active?"✓  ":"○  ")+(p.name||"JUGADOR");
+   b.addEventListener("click",()=>{if(selected.has(p.player_id))selected.delete(p.player_id);else selected.add(p.player_id);render()});
+   list.appendChild(b);
+  });
+  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+players.length+" SELECCIONADOS · VISIBLE PARA TODA LA MESA";
+  E("pcPublish").disabled=sending||loading||!selected.size||!E("pcText").value.trim();
+ }
+ async function open(){
+  ensure();sending=false;loading=true;players=[];selected.clear();
+  E("pcText").value="";E("pcError").textContent="";E("proclamationComposer").classList.add("open");render();E("pcText").focus();
+  const {data,error}=await sb.from("players").select("player_id,name").eq("room_id",currentRoomId).eq("presence","present").is("abandoned_at",null).order("created_at");
+  if(!E("proclamationComposer").classList.contains("open"))return;
+  loading=false;
+  if(error||!data?.length){E("pcError").textContent="NO SE HA PODIDO CARGAR LA MESA.";render();return}
+  players=data;selected=new Set(data.map(p=>p.player_id));render();
  }
  async function publish(){
-  if(sending||!scope||(scope==="DIRIGIDA"&&!target))return;
-  sending=true;E("pcPublish").disabled=true;E("pcError").textContent="";
+  const t=E("pcText").value.trim();
+  if(sending||loading||!selected.size)return;
+  if(!t||t.length>180){E("pcError").textContent="ESCRIBE UNA PROCLAMA DE HASTA 180 CARACTERES.";return}
+  sending=true;render();E("pcError").textContent="";
   try{
-   const {error}=await sb.rpc("publish_debate_proclamation",{p_round_id:currentRoundId,p_text:E("pcText").value.trim(),p_scope:scope,p_target_player_id:scope==="DIRIGIDA"?target:null});
+   const {error}=await sb.rpc("publish_debate_proclamation_to_players",{p_round_id:currentRoundId,p_text:t,p_recipients:[...selected]});
    if(error)throw error;E("proclamationComposer").classList.remove("open");await pilotRefresh();
-  }catch(e){console.error("PROCLAMA",e);E("pcError").textContent="NO SE HA PODIDO PUBLICAR LA PROCLAMA.";E("pcPublish").disabled=false}
-  finally{sending=false}
+  }catch(e){console.error("PROCLAMA",e);E("pcError").textContent="NO SE HA PODIDO PUBLICAR. COMPRUEBA QUE TODOS SIGUEN EN LA MESA."}
+  finally{sending=false;render()}
  }
- window.pilotUseProclamation=function(){ensure();scope=null;target=null;sending=false;E("pcText").value="";E("pcError").textContent="";E("pcWrite").hidden=false;E("pcWho").hidden=true;E("proclamationComposer").classList.add("open");E("pcText").focus()};
+ window.pilotUseProclamation=open;
 })();
 </script></body>
 </html>
