@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R25</div>
+    <div class="version">DILEMA · V0.1.16-010C-R26</div>
   </main>
 
 
@@ -7172,7 +7172,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #proclamationComposer .pc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px}
 #proclamationComposer .pc-heading .pc-label{margin:0}
 #proclamationComposer .pc-heading button{width:auto;min-height:34px;padding:7px 10px;font-size:10px}
-#proclamationComposer .pc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#proclamationComposer .pc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:min(35dvh,224px);overflow-y:auto;overscroll-behavior:contain;align-content:start;padding-right:4px;scrollbar-width:thin;scrollbar-color:#777 #0b0b0b}
 #proclamationComposer .pc-list button{min-height:48px;text-align:left;overflow-wrap:anywhere}
 #proclamationComposer button{border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;padding:10px}
 #proclamationComposer button.selected{border-color:#fff;background:#fff;color:#0b0b0b}
@@ -7189,7 +7189,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  function ensure(){
   if(E("proclamationComposer"))return;
   const m=document.createElement("div");m.id="proclamationComposer";m.setAttribute("role","dialog");m.setAttribute("aria-modal","true");m.setAttribute("aria-label","Escribir proclama");
-  m.innerHTML='<div class="pc-card"><h2>PROCLAMA</h2><label class="pc-label" for="pcText">ESCRIBE TU PROCLAMA · MÁXIMO 180 CARACTERES</label><textarea id="pcText" maxlength="180"></textarea><div class="pc-heading"><span class="pc-label">DESTINATARIOS</span><button id="pcAll" type="button">SELECCIONAR TODOS</button></div><div id="pcRecipients" class="pc-list"></div><p id="pcCount" class="pc-count"></p><div class="pc-actions"><button id="pcCancel" type="button">CANCELAR</button><button id="pcPublish" type="button">PUBLICAR</button></div><div id="pcError" class="pc-error" role="alert"></div></div>';
+  m.innerHTML='<div class="pc-card"><h2>PROCLAMA</h2><label class="pc-label" for="pcText">ESCRIBE TU PROCLAMA · MÁXIMO 180 CARACTERES</label><textarea id="pcText" maxlength="180"></textarea><div class="pc-heading"><span class="pc-label">DESTINATARIOS</span><button id="pcAll" type="button">TODOS LOS DEMÁS</button></div><div id="pcRecipients" class="pc-list"></div><p id="pcCount" class="pc-count"></p><div class="pc-actions"><button id="pcCancel" type="button">CANCELAR</button><button id="pcPublish" type="button">PUBLICAR</button></div><div id="pcError" class="pc-error" role="alert"></div></div>';
   document.body.appendChild(m);
   E("pcCancel").addEventListener("click",()=>{if(!sending)m.classList.remove("open")});
   E("pcAll").addEventListener("click",()=>{selected=new Set(players.filter(p=>p.player_id!==localPlayerId).map(p=>p.player_id));render()});
@@ -7206,7 +7206,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    list.appendChild(b);
   });
   const eligible=players.filter(p=>p.player_id!==localPlayerId).length;
-  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+eligible+" DESTINATARIOS · "+(eligible&&selected.size===eligible?"ANÓNIMA PARA TODOS":"TU NOMBRE APARECERÁ");
+  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+eligible+" DESTINATARIOS · "+(eligible&&selected.size===eligible?"ANÓNIMA PARA TODOS":"TU NOMBRE APARECERÁ")+(players.length>6?" · DESLIZA LA LISTA":"");
   E("pcPublish").disabled=sending||loading||!selected.size||!E("pcText").value.trim();
  }
  async function open(){
