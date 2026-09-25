@@ -1378,6 +1378,24 @@
 .selection-count{display:block;margin-top:10px;color:#aaa;font-size:10px;letter-spacing:1px}
 #selectionStatus{text-align:center;margin:15px 0}
 #selectionHostBadge{border:1px solid #b78aff;color:#b78aff;border-radius:9px;text-align:center;padding:10px;margin:22px 0}
+</style><style>
+#dilemmaProposal #proposalVote .btn,
+#dilemmaProposal #proposalLaunch,
+#customDebateBtn:not(:disabled){
+ background:#0b0b0b!important;
+ color:#fff!important;
+ border:1px solid #444!important;
+ box-shadow:none!important;
+}
+#dilemmaProposal #proposalVote .btn.is-selected,
+#dilemmaProposal #proposalLaunch.is-selected,
+#customDebateBtn.is-selected{
+ background:#fff!important;
+ color:#0b0b0b!important;
+ border-color:#fff!important;
+}
+#dilemmaProposal #proposalVote .btn:disabled{opacity:.45}
+#dilemmaProposal #proposalVote .btn.is-selected:disabled{opacity:1}
 </style></head>
 
 <body>
@@ -1393,7 +1411,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R31</div>
+    <div class="version">DILEMA · V0.1.16-010C-R32</div>
   </main>
 
 
@@ -1629,7 +1647,7 @@
 
     <div id="customError" class="error"></div>
 
-    <button id="customDebateBtn" class="btn btn-primary" onclick="startCustomDebate()" disabled>
+    <button id="customDebateBtn" class="btn btn-secondary" onclick="startCustomDebate()" disabled>
       PROPONER A LA MESA
     </button>
   </section>
@@ -1641,9 +1659,9 @@
     <div id="proposalQuestion" class="proposal-question"></div>
     <div class="proposal-choices"><div><strong>A</strong><span id="proposalA"></span></div><div><strong>B</strong><span id="proposalB"></span></div></div>
     <div id="proposalCount" class="small-note"></div>
-    <div id="proposalVote" class="proposal-actions"><button type="button" class="btn btn-primary" onclick="voteDilemmaProposal(true)">SÍ, DEBATIMOS</button><button type="button" class="btn btn-secondary" onclick="voteDilemmaProposal(false)">DESCARTAR DILEMA</button></div>
+    <div id="proposalVote" class="proposal-actions"><button type="button" class="btn btn-secondary" data-proposal-choice="yes" onclick="voteDilemmaProposal(true)">SÍ, DEBATIMOS</button><button type="button" class="btn btn-secondary" data-proposal-choice="no" onclick="voteDilemmaProposal(false)">DESCARTAR DILEMA</button></div>
     <div id="proposalPending" class="small-note"></div>
-    <button id="proposalLaunch" type="button" class="btn btn-primary" onclick="startApprovedDilemma()" style="display:none">ABRIR VOTACIÓN A/B</button>
+    <button id="proposalLaunch" type="button" class="btn btn-secondary" onclick="startApprovedDilemma()" style="display:none">ABRIR VOTACIÓN A/B</button>
     <div id="proposalHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
   </section>
   <section id="waitingDilemma" class="screen center">
@@ -4052,6 +4070,7 @@ function openCustomDebate() {
   document.getElementById("customA").value = "";
   document.getElementById("customB").value = "";
   document.getElementById("customError").textContent = "";
+  document.getElementById("customDebateBtn").classList.remove("is-selected");
   updateCustomDebateButton();
   showScreen("customDebate");
 }
@@ -4091,7 +4110,12 @@ async function refreshDilemmaProposal(){
  document.getElementById("proposalB").textContent=proposal.option_b;
  document.getElementById("proposalCount").textContent=`${proposal.yes} SÍ · ${proposal.no} DESCARTAR · ${proposal.total} EN LA MESA`;
  const open=proposal.status==="open";
- document.getElementById("proposalVote").style.display=open&&!proposal.has_voted?"grid":"none";
+ document.getElementById("proposalVote").style.display=open?"grid":"none";
+ for(const button of document.querySelectorAll("#proposalVote [data-proposal-choice]")){
+  const picked=!!proposal.has_voted && (button.dataset.proposalChoice==="yes")===proposal.my_vote;
+  button.classList.toggle("is-selected",picked);
+  button.disabled=!!proposal.has_voted;
+ }
  document.getElementById("proposalPending").textContent=open&&proposal.has_voted?"ESPERANDO LA DECISIÓN DE LA MESA":!open&&currentRoomHostId!==localPlayerId?"APROBADO · ESPERANDO AL ANFITRIÓN":"";
  document.getElementById("proposalLaunch").style.display=!open&&currentRoomHostId===localPlayerId?"block":"none";
  document.getElementById("proposalHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
@@ -4104,23 +4128,24 @@ async function startCustomDebate(){
  const a=document.getElementById("customA").value.trim();
  const b=document.getElementById("customB").value.trim();
  if(!question||!a||!b)return;
+ const submit=document.getElementById("customDebateBtn");submit.disabled=true;submit.classList.add("is-selected");
  const {error}=await sb.rpc("debate_propose_dilemma",{p_room:currentRoomId,p_question:question,p_a:a,p_b:b});
- if(error){console.error("CUSTOM PROPOSAL ERROR:",error);document.getElementById("customError").textContent=error.message;return}
+ if(error){console.error("CUSTOM PROPOSAL ERROR:",error);document.getElementById("customError").textContent=error.message;submit.disabled=false;submit.classList.remove("is-selected");return}
  await refreshDilemmaProposal();
 }
 async function voteDilemmaProposal(yes){
  if(!currentDilemmaProposal)return;
- const buttonArea=document.getElementById("proposalVote");
- buttonArea.style.display="none";
+ const voteButtons=document.querySelectorAll("#proposalVote [data-proposal-choice]");
+ for(const button of voteButtons){button.disabled=true;button.classList.toggle("is-selected",(button.dataset.proposalChoice==="yes")===yes)}
  const {error}=await sb.rpc("debate_vote_proposal",{p_id:currentDilemmaProposal.id,p_yes:yes});
  if(error){console.error("DILEMMA VOTE ERROR:",error);alert("NO SE HA PODIDO REGISTRAR TU DECISIÓN.");}
  await refreshDilemmaProposal();
 }
 async function startApprovedDilemma(){
  if(!currentDilemmaProposal || currentRoomHostId!==localPlayerId)return;
- const btn=document.getElementById("proposalLaunch");btn.disabled=true;
+ const btn=document.getElementById("proposalLaunch");btn.disabled=true;btn.classList.add("is-selected");
  const {error}=await sb.rpc("debate_start_approved",{p_id:currentDilemmaProposal.id});
- if(error){console.error("APPROVED DILEMMA START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA VOTACIÓN.");btn.disabled=false;return}
+ if(error){console.error("APPROVED DILEMMA START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA VOTACIÓN.");btn.disabled=false;btn.classList.remove("is-selected");return}
  currentRoomStatus="playing";currentDilemmaProposal=null;
  subscribeToRounds();startGameRefresh();await refreshGame();
  btn.disabled=false;
