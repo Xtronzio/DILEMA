@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R16</div>
+    <div class="version">DILEMA · V0.1.16-010C-R17</div>
   </main>
 
 
@@ -6614,7 +6614,7 @@ window.addEventListener(
  };
  window.pilotTogglePause=async function(){
    if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
-   try{paused=!paused;await R("set_debate_paused",{p_round_id:currentRoundId,p_paused:paused});E("pilotPauseBtn").textContent=paused?"REANUDAR":"PAUSAR";await pilotRefresh()}catch(e){paused=!paused;alert("No se ha podido pausar el debate.")}
+   try{paused=!paused;await R("set_debate_paused",{p_round_id:currentRoundId,p_paused:paused});await refreshGame();await pilotRefresh()}catch(e){paused=!paused;alert(String(e?.message||"").includes("Another present player")?"Debe quedar otro jugador presente para recibir el papel de anfitrión.":("No se ha podido "+(paused?"reanudar":"pausar")+" el debate."))}
  };
  window.pilotAbandon=async function(){
    try{
