@@ -1428,7 +1428,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R33</div>
+    <div class="version">DILEMA · V0.1.16-010C-R34</div>
   </main>
 
 
@@ -2093,6 +2093,7 @@ let currentRoomMode = "game";
 let playersChannel = null;
 let roomChannel = null;
 let roundsChannel = null;
+let hallSyncQueued = false;
 
 let lobbyTimer = null;
 let gameTimer = null;
@@ -4108,6 +4109,7 @@ async function openSuggestedDebate(){
  if(currentRoomHostId!==localPlayerId)return;
  const {error}=await sb.rpc("debate_begin_selection",{p_room:currentRoomId});
  if(error){console.error("SELECTION START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA ELECCIÓN.");return}
+ announceHallChange("selection");
  await refreshDebateSelection();
 }
 async function refreshDebateSelection(){
@@ -4224,7 +4226,8 @@ async function voteDebateSelection(choice){
  selectionBusy=false;
  if(error){console.error("SELECTION VOTE ERROR:",error);document.getElementById("suggestedError").textContent="NO SE HA PODIDO REGISTRAR EL VOTO.";return}
  document.getElementById("suggestedError").textContent="";
- await refreshLobby();
+ announceHallChange("selection-vote");
+ await refreshDilemmaProposal();
 }
 async function drawRandomDilemma(){
  if(selectionBusy||currentRoomHostId!==localPlayerId)return;
@@ -4232,6 +4235,7 @@ async function drawRandomDilemma(){
  const {error}=await sb.rpc("debate_random_next",{p_room:currentRoomId});
  selectionBusy=false;
  if(error){console.error("RANDOM DILEMMA ERROR:",error);document.getElementById("suggestedError").textContent=error.message;return}
+ announceHallChange("random-dilemma");
  await refreshDilemmaProposal();
 }
 
@@ -4301,6 +4305,7 @@ async function startCustomDebate(){
  const submit=document.getElementById("customDebateBtn");submit.disabled=true;submit.classList.add("is-selected");
  const {error}=await sb.rpc("debate_propose_dilemma",{p_room:currentRoomId,p_question:question,p_a:a,p_b:b});
  if(error){console.error("CUSTOM PROPOSAL ERROR:",error);document.getElementById("customError").textContent=error.message;submit.disabled=false;submit.classList.remove("is-selected");return}
+ announceHallChange("custom-dilemma");
  await refreshDilemmaProposal();
 }
 async function voteDilemmaProposal(yes){
@@ -4309,6 +4314,7 @@ async function voteDilemmaProposal(yes){
  for(const button of voteButtons){button.disabled=true;button.classList.toggle("is-selected",(button.dataset.proposalChoice==="yes")===yes)}
  const {error}=await sb.rpc("debate_vote_proposal",{p_id:currentDilemmaProposal.id,p_yes:yes});
  if(error){console.error("DILEMMA VOTE ERROR:",error);alert("NO SE HA PODIDO REGISTRAR TU DECISIÓN.");}
+ else announceHallChange("proposal-vote");
  await refreshDilemmaProposal();
 }
 async function startApprovedDilemma(){
@@ -4316,6 +4322,7 @@ async function startApprovedDilemma(){
  const btn=document.getElementById("proposalLaunch");btn.disabled=true;btn.classList.add("is-selected");
  const {error}=await sb.rpc("debate_start_approved",{p_id:currentDilemmaProposal.id});
  if(error){console.error("APPROVED DILEMMA START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA VOTACIÓN.");btn.disabled=false;btn.classList.remove("is-selected");return}
+ announceHallChange("approved-dilemma");
  currentRoomStatus="playing";currentDilemmaProposal=null;
  subscribeToRounds();startGameRefresh();await refreshGame();
  btn.disabled=false;
@@ -6219,6 +6226,34 @@ async function leaveRoom() {
 }
 
 
+function announceHallChange(kind) {
+  if (!currentRoomId || !roomChannel) return;
+  void roomChannel.send({type:"broadcast",event:"hall-change",payload:{kind,roomId:currentRoomId}})
+    .catch(error=>console.warn("HALL BROADCAST ERROR:",error));
+}
+
+function queueHallSync(){
+  if(hallSyncQueued || !currentRoomId || currentRoomStatus!=="waiting")return;
+  hallSyncQueued=true;
+  const roomId=currentRoomId;
+  setTimeout(()=>{
+    hallSyncQueued=false;
+    if(currentRoomId!==roomId || currentRoomStatus!=="waiting")return;
+    refreshDilemmaProposal().catch(error=>console.error("HALL SYNC ERROR:",error));
+  },120);
+}
+
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible" || !currentRoomId)return;
+  if(currentRoomStatus==="playing")refreshGame().catch(error=>console.error("FOREGROUND GAME SYNC ERROR:",error));
+  else refreshLobby().catch(error=>console.error("FOREGROUND HALL SYNC ERROR:",error));
+});
+window.addEventListener("pageshow",event=>{
+  if(!event.persisted || !currentRoomId)return;
+  if(currentRoomStatus==="playing")refreshGame().catch(error=>console.error("RESTORED GAME SYNC ERROR:",error));
+  else refreshLobby().catch(error=>console.error("RESTORED HALL SYNC ERROR:",error));
+});
+
 function subscribeRealtime() {
 
   cleanupChannels();
@@ -6260,6 +6295,11 @@ function subscribeRealtime() {
       .channel(
         `room-${currentRoomId}`
       )
+      .on("broadcast",{event:"hall-change"}, payload => {
+        if(payload?.payload?.roomId!==currentRoomId)return;
+        if(currentRoomStatus==="waiting")queueHallSync();
+        else refreshGame().catch(error=>console.error("GAME SYNC ERROR:",error));
+      })
       .on(
         "postgres_changes",
         {
@@ -6554,6 +6594,7 @@ function cleanupRoom() {
     gameTimer
   );
   clearInterval(abandonedRejoinTimer);
+  hallSyncQueued=false;
   abandonedRejoinTimer=null;pendingRejoinRoomId=null;hallRejoinRequestId=null;
 
   clearTimeout(
