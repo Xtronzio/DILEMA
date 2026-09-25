@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R15</div>
+    <div class="version">DILEMA · V0.1.16-010C-R16</div>
   </main>
 
 
@@ -6315,7 +6315,7 @@ window.addEventListener(
     '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
     '<button id="pilotRevoteRequestBtn" class="btn btn-secondary" type="button" onclick="pilotRequestRevote()" disabled>RE-VOTAR</button>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()" disabled>FIN DEBATE</button></div>'+
-    '<div id="pilotOptionalRevoteHint" class="small-label" style="display:none;text-align:center;margin:12px 0">RE-VOTO ABIERTO · PULSA A O B ARRIBA PARA CONFIRMAR O CAMBIAR TU VOTO</div>'+
+    '<div id="pilotOptionalRevoteHint" class="pilot-twist" style="display:none"><b>RE-VOTO ABIERTO</b><span>Pulsa A o B arriba para confirmar o cambiar tu voto.</span></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
@@ -6377,13 +6377,14 @@ window.addEventListener(
     const revoteHint=el("pilotOptionalRevoteHint"),revoteButton=el("pilotRevoteRequestBtn");
     const optionalRevote=await rpc("get_optional_debate_revote",{p_round_id:currentRoundId});
     const optionalOpen=!!optionalRevote?.open&&s.phase==="debate";
+    const twistRevote=s.phase==="twist";
     if(revoteHint)revoteHint.style.display=optionalOpen&&!optionalRevote.mine_done&&!s.paused?"block":"none";
     if(revoteButton)revoteButton.disabled=s.phase!=="debate"||!!s.paused||!!optionalRevote?.used;
-    window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen,votesA:s.votes_a,votesB:s.votes_b};
+    window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen||twistRevote,votesA:s.votes_a,votesB:s.votes_b};
     renderDebateGroupVote();
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
-    if(ca)ca.textContent=optionalOpen?optionalRevote.votes_a||0:s.votes_a||0;
-    if(cbn)cbn.textContent=optionalOpen?optionalRevote.votes_b||0:s.votes_b||0;
+    if(ca)ca.textContent=twistRevote?(s.next_votes_a||0):(optionalOpen?(optionalRevote.votes_a||0):(s.votes_a||0));
+    if(cbn)cbn.textContent=twistRevote?(s.next_votes_b||0):(optionalOpen?(optionalRevote.votes_b||0):(s.votes_b||0));
     const unanimous=!optionalOpen&&s.phase==="debate"&&Number(s.players)>1&&
       ((Number(s.votes_a)===Number(s.players)&&Number(s.votes_b)===0)||
        (Number(s.votes_b)===Number(s.players)&&Number(s.votes_a)===0));
@@ -6392,7 +6393,7 @@ window.addEventListener(
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
       va.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="B");
-      const complete=!optionalOpen&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
+      const complete=!optionalOpen&&!twistRevote&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
       const split=Number(s.votes_a)!==Number(s.votes_b);
       va.classList.toggle("pilot-win",complete&&split&&Number(s.votes_a)>Number(s.votes_b));
       vb.classList.toggle("pilot-win",complete&&split&&Number(s.votes_b)>Number(s.votes_a));
@@ -6871,13 +6872,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 .pilot-unanimity-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 #debateGroupVote .majority-choice{color:#39d353!important}
 #pilotHostGroup #pilotHostBadge{padding:12px 14px!important;margin:0 0 9px!important;line-height:1.25!important;font-size:12px!important;color:#a78bfa!important;border:1px solid #a78bfa!important;border-radius:10px!important;background:#0b0b0b!important}
-#pilotOptionalRevoteHint{
-  max-width:100%;padding:12px 14px;
-  border:1px solid #a78bfa;border-radius:10px;
-  background:#0b0b0b;color:#a78bfa!important;
-  font-size:11px;line-height:1.35;letter-spacing:1.4px;
-  font-weight:900;text-align:center
-}
+#pilotOptionalRevoteHint{max-width:100%;color:#fff!important}
+#pilotOptionalRevoteHint b{color:#888!important}
+#pilotOptionalRevoteHint span{color:#fff!important}
 #waitingStatus.host-wait-animated,#waitingRoleDraw.host-wait-animated,#result .host-wait-animated,#waitingDilemma .title{
   border:1px solid #a78bfa!important;border-radius:10px!important;
   background:#0b0b0b!important;color:#a78bfa!important;
