@@ -1187,7 +1187,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R14</div>
+    <div class="version">DILEMA · V0.1.16-010C-R15</div>
   </main>
 
 
@@ -5167,26 +5167,25 @@ async function confirmRoleReady() {
 
 
 async function renderDebateGroupVote() {
-  const target = document.getElementById("debateGroupVote");
-  if (!target || currentRoomMode !== "debate") return;
-
-  const voteCount = await getVoteCount();
-  if (!voteCount) {
-    target.textContent = "EL GRUPO HA VOTADO";
-    return;
+  const target=document.getElementById("debateGroupVote");
+  if(!target||currentRoomMode!=="debate")return;
+  let view=window.dilemaDebateVoteView;
+  let votesA,votesB;
+  if(view&&view.roundId===currentRoundId){
+    if(view.revoteOpen){target.textContent="RE-VOTO EN CURSO";return;}
+    votesA=Number(view.votesA||0);votesB=Number(view.votesB||0);
+  }else{
+    const voteCount=await getVoteCount();
+    view=window.dilemaDebateVoteView;
+    if(view&&view.roundId===currentRoundId){
+      if(view.revoteOpen){target.textContent="RE-VOTO EN CURSO";return;}
+      votesA=Number(view.votesA||0);votesB=Number(view.votesB||0);
+    }else if(voteCount){
+      votesA=Number(voteCount.votes_a||0);votesB=Number(voteCount.votes_b||0);
+    }else{target.textContent="EL GRUPO HA VOTADO";return;}
   }
-
-  const votesA = Number(voteCount.votes_a || 0);
-  const votesB = Number(voteCount.votes_b || 0);
-
-  if (votesA === votesB) {
-    target.textContent = "EL GRUPO ESTÁ DIVIDIDO";
-    return;
-  }
-
-  const majority = votesA > votesB ? "A" : "B";
-  target.innerHTML =
-    'EL GRUPO HA VOTADO <span class="majority-choice">' + majority + '</span>';
+  if(votesA===votesB){target.textContent="EL GRUPO ESTÁ DIVIDIDO";return;}
+  target.innerHTML='EL GRUPO HA VOTADO <span class="majority-choice">'+(votesA>votesB?"A":"B")+'</span>';
 }
 
 function renderDebate() {
@@ -6379,18 +6378,21 @@ window.addEventListener(
     const optionalRevote=await rpc("get_optional_debate_revote",{p_round_id:currentRoundId});
     const optionalOpen=!!optionalRevote?.open&&s.phase==="debate";
     if(revoteHint)revoteHint.style.display=optionalOpen&&!optionalRevote.mine_done&&!s.paused?"block":"none";
-    if(revoteButton)revoteButton.disabled=s.phase!=="debate"||!!s.paused||optionalOpen;
+    if(revoteButton)revoteButton.disabled=s.phase!=="debate"||!!s.paused||!!optionalRevote?.used;
+    window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen,votesA:s.votes_a,votesB:s.votes_b};
+    renderDebateGroupVote();
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
-    if(ca)ca.textContent=s.votes_a||0;if(cbn)cbn.textContent=s.votes_b||0;
-    const unanimous=s.phase==="debate"&&Number(s.players)>1&&
+    if(ca)ca.textContent=optionalOpen?optionalRevote.votes_a||0:s.votes_a||0;
+    if(cbn)cbn.textContent=optionalOpen?optionalRevote.votes_b||0:s.votes_b||0;
+    const unanimous=!optionalOpen&&s.phase==="debate"&&Number(s.players)>1&&
       ((Number(s.votes_a)===Number(s.players)&&Number(s.votes_b)===0)||
        (Number(s.votes_b)===Number(s.players)&&Number(s.votes_a)===0));
     if(va&&vb){
       const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
-      va.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="A");
-      vb.classList.toggle("pilot-my-vote",!!my.data&&my.data.choice==="B");
-      const complete=(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
+      va.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="A");
+      vb.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="B");
+      const complete=!optionalOpen&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
       const split=Number(s.votes_a)!==Number(s.votes_b);
       va.classList.toggle("pilot-win",complete&&split&&Number(s.votes_a)>Number(s.votes_b));
       vb.classList.toggle("pilot-win",complete&&split&&Number(s.votes_b)>Number(s.votes_a));
@@ -6601,7 +6603,7 @@ window.addEventListener(
        await R("leave_debate_temporarily",{p_round_id:currentRoundId,p_message:text});
        closeMessagePicker();await pilotRefresh();
      },true);
-   }catch(e){console.error("PRESENCE ERROR",e);alert("No se ha podido cambiar tu presencia.")}
+   }catch(e){console.error("PRESENCE ERROR",e);alert(String(e?.message||"").includes("Another present player")?"Debe quedar otro jugador presente para recibir el papel de anfitrión.":"No se ha podido cambiar tu presencia.")}
  };
  window.pilotPresenceVote=async function(choice){
    try{
@@ -6867,6 +6869,15 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 .pilot-proposal-box button{min-height:54px;width:100%;background:#0b0b0b;color:#fff;border:1px solid #3a3a3a;border-radius:12px}
 .pilot-proposal-box button.pilot-selected{background:#fff;color:#0b0b0b;border-color:#fff}
 .pilot-unanimity-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#debateGroupVote .majority-choice{color:#39d353!important}
+#pilotHostGroup #pilotHostBadge{padding:12px 14px!important;margin:0 0 9px!important;line-height:1.25!important;font-size:12px!important;color:#a78bfa!important;border:1px solid #a78bfa!important;border-radius:10px!important;background:#0b0b0b!important}
+#pilotOptionalRevoteHint{
+  max-width:100%;padding:12px 14px;
+  border:1px solid #a78bfa;border-radius:10px;
+  background:#0b0b0b;color:#a78bfa!important;
+  font-size:11px;line-height:1.35;letter-spacing:1.4px;
+  font-weight:900;text-align:center
+}
 #waitingStatus.host-wait-animated,#waitingRoleDraw.host-wait-animated,#result .host-wait-animated,#waitingDilemma .title{
   border:1px solid #a78bfa!important;border-radius:10px!important;
   background:#0b0b0b!important;color:#a78bfa!important;
@@ -6905,8 +6916,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   background:#0b0b0b!important
 }
 #pilotHostBadge{
-  margin:0 0 9px!important;padding:10px!important;border:1px solid #a78bfa!important;
-  border-radius:9px!important;background:#0b0b0b!important;color:#fff!important
+  margin:0 0 9px!important;padding:12px 14px!important;border:1px solid #a78bfa!important;
+  border-radius:10px!important;background:#0b0b0b!important;color:#a78bfa!important;
+  font-size:12px!important;line-height:1.25!important
 }
 #pilotHostRoomCode{
   margin:0 0 10px!important;border-color:#3a3a3a!important;
