@@ -1263,6 +1263,86 @@
   display:block!important;margin-top:12px!important;
   font-size:10px!important;font-weight:800!important;letter-spacing:1.2px!important
 }
+</style><style>
+/* R20 · Avisos de re-voto y contorno uniforme */
+#debatePilotPanel #pilotUnanimity,
+#debatePilotPanel #pilotGiroVoteBox,
+#debatePilotPanel #pilotCloseBox,
+#debatePilotPanel #pilotPresenceRequestBox,
+#debatePilotPanel #pilotEvent,
+#debatePilotPanel #pilotOptionalRevoteHint,
+#debatePilotPanel #pilotRevoteHint{
+  border:1px solid #facc15!important;
+  border-top:1px solid #facc15!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:#10100a!important;
+  background-image:none!important;
+  background-clip:padding-box!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint,
+#debatePilotPanel #pilotRevoteHint{
+  display:none;
+  width:100%!important;
+  margin:24px 0 28px!important;
+  padding:18px 14px!important;
+  border-radius:14px!important;
+  color:#fff!important;
+  text-align:center!important;
+  font-weight:900!important;
+  line-height:1.35!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint b,
+#debatePilotPanel #pilotRevoteHint::before{
+  display:block!important;
+  color:#facc15!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:1.5px!important;
+  margin:0 0 13px!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint b::before{content:"⚠  "}
+#debatePilotPanel #pilotRevoteHint::before{content:"⚠  RE-VOTO ABIERTO"}
+#debatePilotPanel #pilotOptionalRevoteHint span{color:#fff!important;font-size:16px!important;line-height:1.35!important}
+#debatePilotPanel #pilotCloseProgress{display:block;color:#e8d178;margin:12px 0 0;font-size:10px;letter-spacing:1px}
+#debatePilotPanel #pilotGiroVoteBox .giro-progress{display:block;margin-top:12px!important}
+</style><style>
+/* R21 · Solicitar pausa y reanudar son decisiones de la mesa */
+#debatePilotPanel #pilotPauseProposal{
+  display:none;width:100%!important;margin:28px 0 30px!important;
+  padding:18px 14px 16px!important;border:1px solid #facc15!important;
+  border-radius:14px!important;outline:0!important;box-shadow:none!important;
+  background:#10100a!important;color:#fff!important;text-align:center!important
+}
+#debatePilotPanel #pilotPauseProposal::before{
+  content:"⚠  AVISO DE LA MESA";display:block;margin:0 0 14px;
+  color:#facc15;font-size:10px;font-weight:900;letter-spacing:1.5px
+}
+#debatePilotPanel #pilotPauseProposal p{
+  color:#fff!important;font-size:15px!important;font-weight:900!important;
+  line-height:1.35!important;margin:0 0 16px!important
+}
+#debatePilotPanel #pilotPauseProposal .pilot-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#debatePilotPanel #pilotPauseProposal .pilot-actions button{
+  min-height:50px;border-radius:12px;background:#0b0b0b!important;
+  border:1px solid #756932!important;color:#fff!important;font-weight:900!important
+}
+#debatePilotPanel #pilotPauseProposal .pilot-actions button.pilot-selected{
+  background:#facc15!important;border-color:#facc15!important;color:#0b0b0b!important
+}
+#debatePilotPanel #pilotPauseProgress{display:block;margin-top:12px;color:#e8d178!important;font-size:10px;letter-spacing:1px}
+#debatePilotPanel #pilotPresence #pilotPauseAction{
+  display:block;width:100%!important;min-height:48px!important;margin:14px 0 0!important;
+  padding:10px 12px!important;border:1px solid #555!important;border-radius:12px!important;
+  background:#0b0b0b!important;color:#fff!important;font-size:11px!important;
+  font-weight:900!important;letter-spacing:1px!important
+}
+#debatePilotPanel #pilotPresence #pilotPauseAction.pilot-resume-action:not(:disabled){
+  border-color:#ff9a34!important;color:#ff9a34!important
+}
+#debatePilotPanel #pilotPresence #pilotPauseAction:disabled{
+  border-color:#303030!important;color:#666!important;cursor:default!important
+}
 </style></head>
 
 <body>
@@ -1278,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R19</div>
+    <div class="version">DILEMA · V0.1.16-010C-R21</div>
   </main>
 
 
@@ -6409,9 +6489,10 @@ window.addEventListener(
     '<div id="pilotOptionalRevoteHint" class="pilot-twist" style="display:none"><b>RE-VOTO ABIERTO</b><span>Pulsa A o B arriba para confirmar o cambiar tu voto.</span></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
+    '<div id="pilotPauseProposal" class="pilot-proposal-box" style="display:none"><p id="pilotPauseProposalText"></p><div class="pilot-actions"><button type="button" data-pause-vote="YES" onclick="pilotVotePause(\'YES\')">SÍ</button><button type="button" data-pause-vote="NO" onclick="pilotVotePause(\'NO\')">NO</button></div><small id="pilotPauseProgress" class="giro-progress"></small></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
-      '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div></div>';
+      '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div><small id="pilotCloseProgress" class="giro-progress"></small></div>';
    const note=debate.querySelector(".small-note");
    if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
    const oa=debate.querySelector(".debate-option:nth-child(1)"),ob=debate.querySelector(".debate-option:nth-child(2)");
@@ -6520,7 +6601,8 @@ window.addEventListener(
     }
     if(gvb&&giroOpen){
       const gp=gvb.querySelector("p");
-      if(gp)gp.innerHTML='ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?<br><span class="giro-progress">'+(giroProposal.voted||0)+' / '+(giroProposal.players||s.players)+' HAN VOTADO</span>';
+      if(gp)gp.innerHTML='ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?<br><span class="giro-progress">'+(giroProposal.proposer_me?'TU SÍ YA ESTÁ REGISTRADO · ':'')+(giroProposal.voted||0)+' / '+(giroProposal.players||s.players)+' HAN VOTADO</span>';
+      const actions=gvb.querySelector('.pilot-actions');if(actions)actions.style.display=giroProposal.proposer_me?'none':'grid';
     }
     if(gvb){
       gvb.style.display=giroOpen?"block":"none";
@@ -6538,6 +6620,8 @@ window.addEventListener(
     const cb=el("pilotCloseBox");
     if(cb){
       cb.style.display=s.phase==="closing"?"block":"none";
+      const closeActions=cb.querySelector(".pilot-actions");if(closeActions)closeActions.style.display=s.close_proposer_me?"none":"grid";
+      const closeProgress=el("pilotCloseProgress");if(closeProgress&&s.phase==="closing")closeProgress.textContent=(s.close_proposer_me?"TU SÍ YA ESTÁ REGISTRADO · ":"")+(Number(s.close_yes||0)+Number(s.close_no||0))+" / "+s.players+" HAN VOTADO";
       const yes=cb.querySelector('[data-close="YES"]'), no=cb.querySelector('[data-close="NO"]');
       if(s.phase==="closing"){
         const ownClose=await sb.from("debate_close_votes").select("choice").eq("round_id",currentRoundId).eq("proposal_number",s.close_proposal).eq("user_id",currentUserId).maybeSingle();
@@ -6677,7 +6761,7 @@ window.addEventListener(
    const p=E("debatePilotPanel"); if(!p||E("pilotPauseBanner")) return;
    const b=document.createElement("div"); b.id="pilotPauseBanner"; b.textContent="DEBATE PAUSADO"; p.insertBefore(b,p.firstChild);
    const x=document.createElement("div"); x.id="pilotPresence"; x.className="pilot-actions";
-   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotProclamaBtn" class="btn btn-secondary" onclick="pilotUseProclamation()" disabled>📣 PROCLAMAR</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div><div class="pilot-host-actions"><button id="pilotPauseBtn" class="btn btn-secondary" onclick="pilotTogglePause()">PAUSAR</button></div></div>';
+   x.innerHTML='<div class="pilot-presence-row"><button id="pilotAbsentBtn" class="btn btn-secondary" onclick="pilotToggleAbsent()">AUSENTARME</button><button id="pilotProclamaBtn" class="btn btn-secondary" onclick="pilotUseProclamation()" disabled>📣 PROCLAMAR</button><button id="pilotAbandonBtn" class="btn btn-danger" onclick="pilotAbandon()">ABANDONAR</button></div><button id="pilotPauseAction" class="btn btn-secondary" type="button" onclick="pilotProposePause()" disabled>SOLICITAR PAUSA</button><div id="pilotHostGroup" style="display:none"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode" class="pilot-host-room-code"></div></div>';
    p.appendChild(x);
    const oldPause=E("pauseDebateBtn"),oldAbsent=E("absentBtn"),oldAbandon=E("abandonDebateBtn"),oldReset=E("resetGameBtn"),oldHostControls=E("hostDebateControls");
    if(oldPause) oldPause.style.display="none"; if(oldAbsent) oldAbsent.style.display="none"; if(oldAbandon) oldAbandon.style.display="none"; if(oldReset) oldReset.style.display="none"; if(oldHostControls) oldHostControls.style.display="none";
@@ -6707,9 +6791,20 @@ window.addEventListener(
      await R("cast_presence_request_vote",{p_request_id:pr.id,p_choice:choice});await pilotRefresh();
    }catch(e){console.error("PRESENCE VOTE ERROR",e);alert("No se ha podido registrar el voto.")}
  };
- window.pilotTogglePause=async function(){
-   if(currentRoomHostId!==localPlayerId){alert("Solo el anfitrión puede pausar el debate.");return}
-   try{paused=!paused;await R("set_debate_paused",{p_round_id:currentRoundId,p_paused:paused});await refreshGame();await pilotRefresh()}catch(e){paused=!paused;alert(String(e?.message||"").includes("Another present player")?"Debe quedar otro jugador presente para recibir el papel de anfitrión.":("No se ha podido "+(paused?"reanudar":"pausar")+" el debate."))}
+ window.pilotProposePause=async function(){
+   const button=E("pilotPauseAction");if(button)button.disabled=true;
+   try{
+     await R("propose_debate_pause",{p_round_id:currentRoundId,p_desired_paused:!paused});
+     await pilotRefresh();
+   }catch(e){console.error("PAUSE PROPOSAL ERROR",e);alert("No se ha podido registrar la propuesta de la mesa.");await pilotRefresh();}
+ };
+ window.pilotVotePause=async function(choice){
+   try{
+     const proposal=await R("get_debate_pause_proposal",{p_round_id:currentRoundId});
+     if(!proposal?.open||proposal.proposer_me)return;
+     await R("cast_debate_pause_vote",{p_proposal_id:proposal.id,p_choice:choice});
+     await pilotRefresh();
+   }catch(e){console.error("PAUSE VOTE ERROR",e);alert("No se ha podido registrar tu voto.");await pilotRefresh();}
  };
  window.pilotAbandon=async function(){
    try{
@@ -6754,6 +6849,26 @@ window.addEventListener(
          requestBox.querySelectorAll("[data-pv]").forEach(b=>{b.classList.toggle("pilot-selected",b.dataset.pv===pr.mine);b.disabled=paused;});
        }else requestBox.style.display="none";
      }
+     const pauseProposal=await R("get_debate_pause_proposal",{p_round_id:currentRoundId});
+     const pauseAction=E("pilotPauseAction");
+     if(pauseAction){
+       pauseAction.textContent=paused?"SOLICITAR REANUDAR":"SOLICITAR PAUSA";
+       pauseAction.classList.toggle("pilot-resume-action",paused);
+       pauseAction.disabled=s.phase!=="debate"||pr?.my_presence==="absent"||!!pauseProposal?.open;
+     }
+     const pauseBox=E("pilotPauseProposal");
+     if(pauseBox){
+       pauseBox.style.display=pauseProposal?.open?"block":"none";
+       if(pauseProposal?.open){
+         E("pilotPauseProposalText").textContent=pauseProposal.desired_paused?"ALGUIEN PROPONE PAUSAR EL DEBATE. ¿LO PAUSAMOS?":"ALGUIEN PROPONE REANUDAR EL DEBATE. ¿VOLVEMOS?";
+         E("pilotPauseProgress").textContent=(pauseProposal.proposer_me?"TU SÍ YA ESTÁ REGISTRADO · ":"")+(pauseProposal.voted||0)+" / "+pauseProposal.players+" HAN VOTADO · MAYORÍA DECIDE";
+         const actions=pauseBox.querySelector(".pilot-actions");if(actions)actions.style.display=pauseProposal.proposer_me?"none":"grid";
+         pauseBox.querySelectorAll("[data-pause-vote]").forEach(b=>{
+           b.classList.toggle("pilot-selected",b.dataset.pauseVote===pauseProposal.mine);
+           b.disabled=pr?.my_presence==="absent";
+         });
+       }
+     }
      let isHost=currentRoomHostId===localPlayerId;
      try{
        const hr=await sb.from("rooms").select("host_id").eq("id",currentRoomId).maybeSingle();
@@ -6763,7 +6878,7 @@ window.addEventListener(
      const legacyHost=E("hostDebateControls");if(legacyHost)legacyHost.style.display="none";
      const hg=E("pilotHostGroup");if(hg)hg.style.display=isHost?"block":"none";
      const hrc=E("pilotHostRoomCode");if(hrc&&isHost)hrc.textContent="CÓDIGO DE DEBATE · "+(currentRoomCode||"----");
-     const pb=E("pilotPauseBtn");if(pb){pb.style.display=isHost?"block":"none";pb.disabled=!isHost||!currentRoundId;pb.textContent=paused?"REANUDAR":"PAUSAR";pb.classList.remove("pilot-selected")}
+     
 
      {const q=E("pilotGiroBtn");if(q&&paused)q.disabled=true;}
    }catch(e){}
