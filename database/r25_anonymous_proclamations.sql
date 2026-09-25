@@ -65,3 +65,9 @@ begin
  end if;
  return public.publish_debate_proclamation_to_players(p_round_id,p_text,v_ids);
 end $function$;
+
+
+-- R25 · Anonimizar proclamas anteriores enviadas a toda la mesa.
+update public.debate_private_proclamations
+set text=regexp_replace(text,'^PROCLAMA DE .* PARA LA MESA · ','PROCLAMA ANÓNIMA PARA LA MESA · ')
+where text like 'PROCLAMA DE % PARA LA MESA · %';
