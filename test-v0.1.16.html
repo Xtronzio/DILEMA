@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R23</div>
+    <div class="version">DILEMA · V0.1.16-010C-R24</div>
   </main>
 
 
@@ -6521,8 +6521,18 @@ window.addEventListener(
    return r.data||null;
  }
  async function latestEvent(){
-   const r=await sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle();
-   if(r.data&&r.data.id>lastEventId){lastEventId=r.data.id;const box=el("pilotEvent");box.textContent=r.data.text;box.style.display="block";setTimeout(()=>{if(box)box.style.display="none"},5000)}
+   const [publicEvent,privateProclamation]=await Promise.all([
+     sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle(),
+     sb.from("debate_private_proclamations").select("id,text").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle()
+   ]);
+   if(publicEvent.error)console.error("DEBATE EVENTS",publicEvent.error);
+   if(privateProclamation.error)console.error("PRIVATE PROCLAMATIONS",privateProclamation.error);
+   const latest=[publicEvent.data,privateProclamation.data].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
+   if(latest&&Number(latest.id)>lastEventId){
+     lastEventId=Number(latest.id);const box=el("pilotEvent");
+     box.textContent=latest.text;box.style.display="block";
+     setTimeout(()=>{if(box&&box.textContent===latest.text)box.style.display="none"},5000);
+   }
  }
  window.pilotRefresh=async function(){
    if(busy) return;
@@ -7188,7 +7198,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    b.addEventListener("click",()=>{if(selected.has(p.player_id))selected.delete(p.player_id);else selected.add(p.player_id);render()});
    list.appendChild(b);
   });
-  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+players.length+" SELECCIONADOS · VISIBLE PARA TODA LA MESA";
+  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+players.length+" SELECCIONADOS · SOLO ELLOS LEERÁN LA PROCLAMA";
   E("pcPublish").disabled=sending||loading||!selected.size||!E("pcText").value.trim();
  }
  async function open(){
