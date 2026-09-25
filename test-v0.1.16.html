@@ -1396,6 +1396,23 @@
 }
 #dilemmaProposal #proposalVote .btn:disabled{opacity:.45}
 #dilemmaProposal #proposalVote .btn.is-selected:disabled{opacity:1}
+</style><style>
+.selection-audience-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 18px}
+.selection-audience-row button{min-width:0;min-height:52px;padding:9px 3px;border:1px solid #444;border-radius:10px;background:#0b0b0b;color:#fff;font-size:10px;font-weight:900;letter-spacing:.6px;cursor:pointer}
+.selection-audience-row button span{display:block;font-size:7px;line-height:1.3;letter-spacing:0;margin-top:4px}
+.selection-audience-row button:disabled{color:#777;border-color:#292929;cursor:default}
+.selection-audience-row #selectionTeensButton.selected{background:#fff;color:#0b0b0b;border-color:#fff}
+.hall-rejoin-vote{width:100%;margin:18px 0 22px;padding:18px 14px;border:1px solid #facc15;border-radius:14px;background:#10100a;text-align:center;color:#fff}
+.hall-rejoin-label{font-size:10px;color:#facc15;font-weight:900;letter-spacing:1.3px;margin-bottom:12px}
+.hall-rejoin-vote strong{display:block;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.hall-rejoin-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 8px}
+#hallRejoinVote .btn{margin:0;min-height:45px;padding:10px;background:#0b0b0b;color:#fff;border:1px solid #706123}
+#hallRejoinVote .btn.is-selected{background:#facc15;color:#0b0b0b;border-color:#facc15}
+#hallRejoinVote .btn.is-selected:disabled{opacity:1}
+#hallRejoinVote small{color:#aaa;letter-spacing:1px}
+#rejoinPending .title{line-height:1.1}
+#rejoinPendingStatus{margin:22px 0 12px;text-align:center;line-height:1.5}
+#rejoinPendingCount{margin:8px 0 35px}
 </style></head>
 
 <body>
@@ -1411,7 +1428,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R32</div>
+    <div class="version">DILEMA · V0.1.16-010C-R33</div>
   </main>
 
 
@@ -1570,6 +1587,12 @@
     <div class="players-title players-title">PARTICIPANTES</div>
 
     <div id="playersList" class="players-list"></div>
+    <div id="hallRejoinVote" class="hall-rejoin-vote" style="display:none">
+      <div class="hall-rejoin-label">⚠ AVISO DE LA MESA</div>
+      <strong id="hallRejoinQuestion"></strong>
+      <div class="hall-rejoin-buttons"><button type="button" class="btn btn-secondary" data-hall-rejoin="YES" onclick="voteHallRejoin('YES')">SÍ</button><button type="button" class="btn btn-secondary" data-hall-rejoin="NO" onclick="voteHallRejoin('NO')">NO</button></div>
+      <small id="hallRejoinCount"></small>
+    </div>
 
     <button
       id="startGameBtn"
@@ -1592,6 +1615,14 @@
 
   </section>
 
+
+  <section id="rejoinPending" class="screen center">
+    <div class="game-category">REGRESO A LA MESA</div>
+    <div class="title">¿VOLVEMOS A DEBATIR?</div>
+    <div id="rejoinPendingStatus" class="small-note">ENVIANDO TU SOLICITUD…</div>
+    <div id="rejoinPendingCount" class="small-note"></div>
+    <button type="button" class="btn btn-secondary" onclick="leaveRejoinPending()">VOLVER AL INICIO</button>
+  </section>
 
   <section id="debateChoice" class="screen center">
     <div class="game-category">SALA COMPLETA</div>
@@ -1616,7 +1647,11 @@
     <div class="game-category" id="selectionStep">PRIMER ACUERDO DE LA MESA</div>
     <div class="title" id="selectionTitle">¿QUÉ DEBATIMOS?</div>
     <div class="subtitle" id="selectionSubtitle">Elegid juntos la intensidad y el conflicto.</div>
-    <div id="selectionTeens" class="selection-audience">TEENS</div>
+    <div id="selectionAudience" class="selection-audience-row">
+      <button type="button" disabled>KIDS<span>EN CONSTRUCCIÓN</span></button>
+      <button type="button" id="selectionTeensButton" onclick="chooseSelectionAudience()">TEENS</button>
+      <button type="button" disabled>ADULTOS<span>EN CONSTRUCCIÓN</span></button>
+    </div>
     <div id="selectionFilters">
       <div class="small-label">INTENSIDAD</div>
       <div id="intensityChoices" class="selection-intensities"></div>
@@ -2062,6 +2097,10 @@ let roundsChannel = null;
 let lobbyTimer = null;
 let gameTimer = null;
 let revealTimer = null;
+let abandonedRejoinTimer = null;
+let pendingRejoinRoomId = null;
+let rejoinRefreshBusy = false;
+let hallRejoinRequestId = null;
 let lobbyRefreshPromise = null;
 let refreshingGame = false;
 
@@ -2931,38 +2970,35 @@ async function findRoom() {
   }
 
 
-  if (
-    data.status !==
-    "waiting"
-  ) {
-
-    document
-      .getElementById(
-        "joinError"
-      )
-      .textContent =
-        "ESTA SALA YA HA COMENZADO.";
-
+  const {data:existing,error:existingError}=await sb.from("players")
+    .select("id,abandoned_at,presence")
+    .eq("room_id",data.id)
+    .eq("player_id",localPlayerId)
+    .eq("user_id",currentUserId)
+    .maybeSingle();
+  if(existingError){
+    console.error("REJOIN LOOKUP ERROR:",existingError);
+    document.getElementById("joinError").textContent="NO SE HA PODIDO COMPROBAR TU PLAZA.";
     return;
-
   }
-
-
-  currentRoomId =
-    data.id;
-
-  currentRoomCode =
-    data.code;
-
-  currentRoomHostId =
-    data.host_id;
-
-  currentExpectedPlayers =
-    data.expected_players;
-
-  currentRoomMode =
-    data.mode || "game";
-
+  if(data.status!=="waiting" && !(data.mode==="debate"&&existing)){
+    document.getElementById("joinError").textContent="ESTA SALA YA HA COMENZADO.";
+    return;
+  }
+  currentRoomId=data.id;
+  currentRoomCode=data.code;
+  currentRoomHostId=data.host_id;
+  currentExpectedPlayers=data.expected_players;
+  currentRoomStatus=data.status;
+  currentRoomMode=data.mode||"game";
+  if(existing?.abandoned_at){
+    if(data.mode!=="debate"){document.getElementById("joinError").textContent="NO PUEDES VOLVER A ESTA PARTIDA.";return}
+    await beginAbandonedRejoin();return;
+  }
+  if(existing){
+    saveRoomSession();
+    await enterRoom();return;
+  }
   openProfileChoice(
     "join"
   );
@@ -3110,6 +3146,8 @@ async function joinRoomWithProfile(profile) {
       alert("La sala ya ha comenzado.");
       return;
     }
+    const {data:former}=await sb.from("players").select("abandoned_at").eq("room_id",currentRoomId).eq("player_id",localPlayerId).eq("user_id",currentUserId).maybeSingle();
+    if(former?.abandoned_at){await beginAbandonedRejoin();return}
     await insertPlayer(profile);
     saveRoomSession();
     await enterRoom();
@@ -3131,19 +3169,125 @@ async function insertPlayer(profile) {
 }
 
 
+async function beginAbandonedRejoin(){
+ if(!currentRoomId)return;
+ pendingRejoinRoomId=currentRoomId;
+ document.getElementById("rejoinPendingStatus").textContent="ENVIANDO TU SOLICITUD…";
+ document.getElementById("rejoinPendingCount").textContent="";
+ showScreen("rejoinPending");
+ const {error}=await sb.rpc("request_abandoned_rejoin",{p_room_id:pendingRejoinRoomId});
+ if(error){
+  console.error("REJOIN REQUEST ERROR:",error);
+  document.getElementById("rejoinPendingStatus").textContent="NO SE HA PODIDO SOLICITAR TU REGRESO.";
+  document.getElementById("rejoinPendingCount").textContent=error.message||"VUELVE A INTENTARLO.";
+  return;
+ }
+ await refreshAbandonedRejoin();
+ if(abandonedRejoinTimer)clearInterval(abandonedRejoinTimer);
+ if(pendingRejoinRoomId)abandonedRejoinTimer=setInterval(()=>{
+  if(document.visibilityState==="visible")void refreshAbandonedRejoin();
+ },3500);
+}
+async function refreshAbandonedRejoin(){
+ if(!pendingRejoinRoomId||rejoinRefreshBusy)return;
+ rejoinRefreshBusy=true;
+ const roomId=pendingRejoinRoomId;
+ try{
+  const {data,error}=await sb.rpc("get_abandoned_rejoin_state",{p_room_id:roomId});
+  if(error)throw error;
+  if(roomId!==pendingRejoinRoomId)return;
+  if(!data.abandoned && data.presence==="present"){
+    clearInterval(abandonedRejoinTimer);abandonedRejoinTimer=null;pendingRejoinRoomId=null;
+    currentRoomId=roomId;currentRoomStatus=data.room_status;saveRoomSession();
+    await enterRoom();return;
+  }
+  if(data.request_status==="rejected"){
+    clearInterval(abandonedRejoinTimer);abandonedRejoinTimer=null;
+    document.getElementById("rejoinPendingStatus").textContent="LA MESA NO HA APROBADO TU REGRESO.";
+    document.getElementById("rejoinPendingCount").textContent="";
+    return;
+  }
+  document.getElementById("rejoinPendingStatus").textContent="HAS SOLICITADO VOLVER. LA MESA ESTÁ DECIDIENDO.";
+  if(data.round_id){
+   const {data:vote}=await sb.rpc("get_presence_request",{p_round_id:data.round_id});
+   if(roomId===pendingRejoinRoomId&&vote?.id)
+    document.getElementById("rejoinPendingCount").textContent=vote.yes+" SÍ · "+vote.no+" NO";
+  }
+ }catch(error){console.error("REJOIN STATUS ERROR:",error)}
+ finally{rejoinRefreshBusy=false}
+}
+function leaveRejoinPending(){
+ cleanupRoom();showScreen("home");
+}
+async function refreshHallRejoinVote(room){
+ const box=document.getElementById("hallRejoinVote");
+ box.style.display="none";hallRejoinRequestId=null;
+ if(room.mode!=="debate"||room.status!=="waiting")return false;
+ const {data:latest,error}=await sb.from("rounds").select("id").eq("room_id",room.id).order("id",{ascending:false}).limit(1).maybeSingle();
+ if(error||!latest||room.id!==currentRoomId)return false;
+ const {data:request,error:requestError}=await sb.rpc("get_presence_request",{p_round_id:latest.id});
+ if(requestError){console.error("HALL RETURN ERROR:",requestError);return false}
+ if(!request?.id || room.id!==currentRoomId)return false;
+ hallRejoinRequestId=request.id;
+ box.style.display="block";
+ document.getElementById("hallRejoinQuestion").textContent=request.requester+" QUIERE VOLVER A LA MESA. ¿LO APROBÁIS?";
+ document.getElementById("hallRejoinCount").textContent=request.yes+" SÍ · "+request.no+" NO";
+ for(const btn of box.querySelectorAll("[data-hall-rejoin]")){
+  btn.disabled=!!request.mine;
+  btn.classList.toggle("is-selected",request.mine===btn.dataset.hallRejoin);
+ }
+ document.getElementById("startGameBtn").disabled=true;
+ return true;
+}
+async function voteHallRejoin(choice){
+ if(!hallRejoinRequestId)return;
+ const id=hallRejoinRequestId;
+ for(const btn of document.querySelectorAll("#hallRejoinVote [data-hall-rejoin]")){
+  btn.disabled=true;btn.classList.toggle("is-selected",btn.dataset.hallRejoin===choice);
+ }
+ const {error}=await sb.rpc("cast_presence_request_vote",{p_request_id:id,p_choice:choice});
+ if(error){console.error("HALL REJOIN VOTE ERROR:",error);alert("NO SE HA PODIDO REGISTRAR EL VOTO.");}
+ await refreshLobby();
+}
+
 async function enterRoom() {
   await refreshLobby();
 
   if (!currentRoomId) return;
 
-  if(!document.getElementById("dilemmaProposal").classList.contains("active")&&!document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
+  if(currentRoomStatus!=="playing"&&!document.getElementById("dilemmaProposal").classList.contains("active")&&!document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
 
   subscribeRealtime();
 
-  startSafetyRefresh();
+  if(currentRoomStatus!=="playing")startSafetyRefresh();
 
 }
 
+
+let hallVersionCheckKey=null;
+async function checkHallVersion(completedRoundId){
+ if(!currentRoomId||!completedRoundId)return false;
+ const key=currentRoomId+":"+completedRoundId;
+ if(hallVersionCheckKey===key)return false;
+ hallVersionCheckKey=key;
+ try{
+  const checkUrl=new URL(location.pathname,location.origin);
+  checkUrl.searchParams.set("_version_check",String(Date.now()));
+  const response=await fetch(checkUrl.href,{cache:"no-store"});
+  if(!response.ok)return false;
+  const html=await response.text();
+  const published=html.match(/<div class="version">([^<]+)<\/div>/)?.[1]?.trim();
+  const running=document.querySelector(".version")?.textContent?.trim();
+  if(!published||!running||published===running)return false;
+  const next=new URL(location.href);
+  const revision=published.match(/-R(\d+)$/)?.[1];
+  if(revision)next.searchParams.set("r",revision);
+  next.searchParams.delete("fresh");
+  next.searchParams.delete("_refresh");
+  location.replace(next.href);
+  return true;
+ }catch(error){console.error("HALL VERSION CHECK ERROR:",error);return false}
+}
 
 async function getRoom() {
 
@@ -3196,6 +3340,7 @@ async function refreshLobby() {
   }
 
 
+  const returningRoundId = room.mode==="debate" && room.status==="waiting" ? currentRoundId : null;
   currentRoomCode =
     room.code;
 
@@ -3211,6 +3356,12 @@ async function refreshLobby() {
   currentRoomMode =
     room.mode || "game";
 
+  if(returningRoundId){
+    currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
+    if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
+    showScreen("room");
+    void checkHallVersion(returningRoundId);
+  }
 
   if (
     room.status ===
@@ -3285,7 +3436,9 @@ async function refreshLobby() {
     room,
     players || []
   );
-  if(room.mode==="debate") await refreshDilemmaProposal();
+  const rejoinOpen=room.mode==="debate" ? await refreshHallRejoinVote(room) : false;
+  if(rejoinOpen)showScreen("room");
+  else if(room.mode==="debate")await refreshDilemmaProposal();
 
   return true;
   })();
@@ -3944,6 +4097,7 @@ const debateThemes=["¿A QUIÉN SALVAS?","¿LO CUENTAS?","¿TRAICIONAS?","¿TE M
 let currentDebateSelection=null;
 let selectionDraftIntensity=null;
 let selectionDraftTheme=null;
+let selectionAudienceChosen=false;
 let selectionVisibleStage=null;
 let selectionCatalogMeta=null;
 let selectionBusy=false;
@@ -3967,7 +4121,16 @@ async function refreshDebateSelection(){
   if(!data?.phase || data.phase==="finished"){currentDebateSelection=null;return false}
   const changed=selectionVisibleStage!==roomId+":"+data.stage;
   currentDebateSelection=data;
-  if(changed){selectionVisibleStage=roomId+":"+data.stage;selectionDraftIntensity=null;selectionDraftTheme=null;selectionQuestionsStamp=null}
+  if(changed){
+   selectionVisibleStage=roomId+":"+data.stage;
+   selectionDraftIntensity=null;selectionDraftTheme=null;
+   selectionAudienceChosen=data.phase==="runoff"||!!data.my_vote;
+   if(data.my_vote && (data.phase==="filters"||(data.phase==="runoff"&&!data.theme))){
+    const separator=data.my_vote.indexOf("|");
+    if(separator>0){selectionDraftIntensity=Number(data.my_vote.slice(0,separator));selectionDraftTheme=data.my_vote.slice(separator+1)}
+   }
+   selectionQuestionsStamp=null;
+  }
   renderDebateSelection();
   showScreen("debateSuggested");
   if(!selectionCatalogMeta&&data.phase==="filters"){
@@ -3994,7 +4157,9 @@ function renderDebateSelection(){
  document.getElementById("selectionFilters").style.display=filters?"block":"none";
  document.getElementById("selectionQuestions").style.display=questions?"block":"none";
  document.getElementById("selectionRandom").style.display=random?"block":"none";
- document.getElementById("selectionTeens").style.display=filters?"block":"none";
+ document.getElementById("selectionAudience").style.display=filters?"grid":"none";
+ document.getElementById("selectionTeensButton").classList.toggle("selected",selectionAudienceChosen);
+ document.getElementById("selectionTeensButton").disabled=!!s.my_vote;
  document.getElementById("selectionStep").textContent=random?"MODO ALEATORIO":s.phase==="runoff"?"DESEMPATE":questions?"SEGUNDO ACUERDO DE LA MESA":"PRIMER ACUERDO DE LA MESA";
  document.getElementById("selectionTitle").textContent=random?"EL JUEGO PROPONE":questions?"¿QUÉ DILEMA ELEGIMOS?":"¿QUÉ DEBATIMOS?";
  document.getElementById("selectionSubtitle").textContent=random?"Cada dilema aleatorio se puede aceptar o descartar.":questions?"Votad por una pregunta. Las opciones A/B se verán al empezar.":"Elegid intensidad y conflicto; cada persona tiene un voto.";
@@ -4003,6 +4168,11 @@ function renderDebateSelection(){
  document.getElementById("selectionRandomWaiting").style.display=currentRoomHostId===localPlayerId?"none":"block";
  document.getElementById("selectionDraw").style.display=currentRoomHostId===localPlayerId?"block":"none";
  if(filters)renderSelectionFilters(s);
+}
+function chooseSelectionAudience(){
+ if(!currentDebateSelection||currentDebateSelection.my_vote)return;
+ selectionAudienceChosen=true;
+ renderDebateSelection();
 }
 function renderSelectionFilters(s){
  const choices=document.getElementById("categoryChoices"),intensities=document.getElementById("intensityChoices"),confirm=document.getElementById("selectionConfirm");
@@ -4013,7 +4183,7 @@ function renderSelectionFilters(s){
   const btn=document.createElement("button");btn.type="button";
   btn.className="selection-chip"+(selectionDraftIntensity===value?" selected":"");
   btn.textContent=["","CHILL","CRINGE","WTF"][value];
-  btn.disabled=!!s.my_vote||(runoff&&!allowed.some(x=>x.startsWith(value+"|")));
+  btn.disabled=!!s.my_vote||!selectionAudienceChosen||(runoff&&!allowed.some(x=>x.startsWith(value+"|")));
   btn.onclick=()=>{selectionDraftIntensity=value;if(!selectionThemeAvailable(selectionDraftTheme,value))selectionDraftTheme=null;renderSelectionFilters(s)};
   intensities.appendChild(btn);
  }
@@ -4021,11 +4191,11 @@ function renderSelectionFilters(s){
   const btn=document.createElement("button");btn.type="button";
   btn.className="selection-chip"+(selectionDraftTheme===theme?" selected":"");
   btn.textContent=theme;
-  btn.disabled=!!s.my_vote||!selectionDraftIntensity||(runoff&&!allowed.includes(selectionDraftIntensity+"|"+theme))||!selectionThemeAvailable(theme,selectionDraftIntensity);
+  btn.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity||(runoff&&!allowed.includes(selectionDraftIntensity+"|"+theme))||!selectionThemeAvailable(theme,selectionDraftIntensity);
   btn.onclick=()=>{selectionDraftTheme=theme;renderSelectionFilters(s)};
   choices.appendChild(btn);
  }
- confirm.disabled=!!s.my_vote||!selectionDraftIntensity||!selectionDraftTheme;
+ confirm.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity||!selectionDraftTheme;
  confirm.textContent=s.my_vote?"VOTO REGISTRADO":"VOTAR ESTA ELECCIÓN";
 }
 async function renderDebateQuestions(roomId,stage,ids){
@@ -4044,7 +4214,7 @@ async function renderDebateQuestions(roomId,stage,ids){
  }
 }
 async function voteSelectionFilters(){
- if(!currentDebateSelection||!selectionDraftIntensity||!selectionDraftTheme)return;
+ if(!currentDebateSelection||!selectionAudienceChosen||!selectionDraftIntensity||!selectionDraftTheme)return;
  await voteDebateSelection(selectionDraftIntensity+"|"+selectionDraftTheme);
 }
 async function voteDebateSelection(choice){
@@ -4647,12 +4817,14 @@ async function refreshGame() {
       "playing"
     ) {
       if(currentRoomMode==="debate"){
+        const returningRoundId=currentRoundId;
         currentRoundId=null;
         currentRoundStatus=null;
         currentDilemma=null;
         localVoteChoice=null;
         if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
         showScreen("room");
+        if(returningRoundId)void checkHallVersion(returningRoundId);
         setTimeout(()=>refreshLobby(),0);
       }
       return;
@@ -5932,7 +6104,7 @@ function prototypeAbandon() {
 
   if (farewell === null) return;
 
-  alert("ABANDONAR queda definido como irreversible para esta sala. Antes de activarlo de verdad añadiremos el bloqueo persistente en Supabase para impedir que esa identidad vuelva a entrar.");
+  alert("Si abandonas el debate, podrás solicitar volver; la mesa decidirá si te readmite.");
 }
 
 function prototypePause() {
@@ -6381,6 +6553,8 @@ function cleanupRoom() {
   clearInterval(
     gameTimer
   );
+  clearInterval(abandonedRejoinTimer);
+  abandonedRejoinTimer=null;pendingRejoinRoomId=null;hallRejoinRequestId=null;
 
   clearTimeout(
     revealTimer
@@ -6463,6 +6637,7 @@ window.addEventListener(
       document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
       document.getElementById("home")?.classList.add("active");
       bootParams.delete("fresh");
+      bootParams.delete("_refresh");
       const qs=bootParams.toString();
       history.replaceState(null,"",location.pathname+(qs?"?"+qs:""));
     }
@@ -6847,6 +7022,8 @@ window.addEventListener(
  async function pilotCollectiveEnd(){
    if(collectiveEndRunning) return;
    collectiveEndRunning=true;
+   const completedRoundId=currentRoundId;
+   const completedRoomId=currentRoomId;
    let overlay=document.getElementById("collectiveEndOverlay");
    if(!overlay){
      overlay=document.createElement("div");overlay.id="collectiveEndOverlay";
@@ -6856,12 +7033,15 @@ window.addEventListener(
    }
    overlay.style.display="flex";
    setTimeout(async()=>{
+     if(!completedRoomId||currentRoomId!==completedRoomId){overlay.remove();collectiveEndRunning=false;return}
      try{
-       const {error}=await sb.from("rooms").update({status:"waiting",mode:"debate"}).eq("id",currentRoomId);
+       const {error}=await sb.from("rooms").update({status:"waiting",mode:"debate"}).eq("id",completedRoomId);
        if(error) console.error(error);
      }catch(e){}
      currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
-     overlay.remove();showScreen("room");await refreshLobby();collectiveEndRunning=false;
+     overlay.remove();showScreen("room");await refreshLobby();
+     void checkHallVersion(completedRoundId);
+     collectiveEndRunning=false;
    },2600);
  }
  window.pilotCloseVote=async function(choice){try{
@@ -6944,9 +7124,14 @@ window.addEventListener(
    try{
      const choices=await R("get_farewell_choices",{p_room_id:currentRoomId,p_limit:4});
      openMessagePicker("¿ASÍ QUE TE VAS?",choices.map(x=>x.text),async(text)=>{
-       if(!confirm("ABANDONAR es irreversible para esta sala. ¿Continuar?"))return;
+       if(!confirm("SALDRÁS DEL DEBATE. PARA VOLVER, LA MESA TENDRÁ QUE APROBARLO. ¿CONTINUAR?"))return;
        await R("abandon_debate",{p_room_id:currentRoomId,p_farewell:text});
-       closeMessagePicker(); cleanupRoom(); history.replaceState(null,"",location.pathname+location.search); showScreen("home");
+       closeMessagePicker(); cleanupRoom();
+       const destination=new URL(location.href);
+       destination.searchParams.delete("r");
+       destination.searchParams.set("fresh","1");
+       destination.searchParams.set("_refresh",String(Date.now()));
+       location.replace(destination.href);
      },true);
    }catch(e){console.error("ABANDON ERROR",e);alert("No se ha podido preparar la despedida.")}
  };
