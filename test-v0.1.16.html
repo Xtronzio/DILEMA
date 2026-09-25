@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R27</div>
+    <div class="version">DILEMA · V0.1.16-010C-R28</div>
   </main>
 
 
@@ -1526,6 +1526,8 @@
     >
       INICIAR PARTIDA
     </button>
+
+    <div id="lobbyHostBadge">ERES ANFITRIÓN</div>
 
     <div id="waitingHost" class="small-note">
       <div id="waitingPhrase" class="waiting-phrase">
@@ -3307,6 +3309,9 @@ function renderLobby(
       "waitingHost"
     );
 
+
+  const hostBadge=document.getElementById("lobbyHostBadge");
+  if(hostBadge)hostBadge.style.display=isHost?"block":"none";
 
   if (
     isHost
@@ -6695,7 +6700,7 @@ window.addEventListener(
     if(box)box.querySelectorAll("[data-giro-vote]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.giroVote===choice));
     await rpc("cast_debate_twist_vote",{p_round_id:currentRoundId,p_choice:choice});
     await pilotRefresh();
-   }catch(e){alert("No se ha podido registrar el voto del GIRO.");}
+   }catch(e){console.error("GIRO VOTE",e);alert("No se ha podido registrar el voto del GIRO.");await pilotRefresh();}
  };
  window.pilotTopVote=async function(choice){
    try{
@@ -7175,6 +7180,13 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #debatePilotPanel #pilotOptionalRevoteHint b{color:#facc15!important}
 #debatePilotPanel #pilotOptionalRevoteHint span,#debatePilotPanel #pilotEvent>span{color:#fff!important}
 #debatePilotPanel #pilotEvent .pilot-event-dismiss{display:block;width:100%;min-height:46px;margin:17px 0 0;border:1px solid #666;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;letter-spacing:1.4px}
+</style>
+<style>
+#room #lobbyHostBadge{
+  display:none;width:100%;box-sizing:border-box;margin:14px auto 0;padding:12px 14px;
+  border:1px solid #a78bfa;border-radius:10px;background:#0b0b0b;color:#a78bfa;
+  text-align:center;font-size:12px;font-weight:900;letter-spacing:1.7px;line-height:1.25
+}
 </style>
 <style>
 #proclamationComposer{display:none;position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.92);padding:18px;align-items:center;justify-content:center}
