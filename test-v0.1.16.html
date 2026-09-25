@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R26</div>
+    <div class="version">DILEMA · V0.1.16-010C-R27</div>
   </main>
 
 
@@ -6528,11 +6528,21 @@ window.addEventListener(
    ]);
    if(publicEvent.error)console.error("DEBATE EVENTS",publicEvent.error);
    if(privateProclamation.error)console.error("PRIVATE PROCLAMATIONS",privateProclamation.error);
-   const latest=[publicEvent.data,privateProclamation.data].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
+   const privateEvent=privateProclamation.data&&{...privateProclamation.data,event_type:"private_proclamation"};
+   const latest=[publicEvent.data,privateEvent].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
    if(latest&&Number(latest.id)>lastEventId){
-     lastEventId=Number(latest.id);const box=el("pilotEvent");
-     box.textContent=latest.text;box.style.display="block";
-     setTimeout(()=>{if(box&&box.textContent===latest.text)box.style.display="none"},5000);
+     lastEventId=Number(latest.id);
+     const box=el("pilotEvent"),isProclamation=["proclamation","private_proclamation"].includes(latest.event_type);
+     box.replaceChildren();box.dataset.eventId=String(latest.id);
+     const message=document.createElement("span");message.textContent=latest.text;box.appendChild(message);
+     box.style.display="block";
+     if(isProclamation){
+       const dismiss=document.createElement("button");dismiss.type="button";dismiss.className="pilot-event-dismiss";
+       dismiss.textContent="ENTENDIDO";dismiss.onclick=()=>{if(box.dataset.eventId===String(latest.id))box.style.display="none"};
+       box.appendChild(dismiss);
+     }else{
+       setTimeout(()=>{if(box&&box.dataset.eventId===String(latest.id))box.style.display="none"},5000);
+     }
    }
  }
  window.pilotRefresh=async function(){
@@ -7157,10 +7167,14 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 }
 </style>
 <style>
-/* GIRO: azul en el marco y en el texto; el resto de avisos conserva su color. */
-#debatePilotPanel #pilotTwist{border:1px solid #60a5fa!important;color:#60a5fa!important;background:#0b0b0b!important}
-#debatePilotPanel #pilotTwist b,#debatePilotPanel #pilotTwist span{color:#60a5fa!important}
-#debatePilotPanel #pilotRevoteHint{color:#60a5fa!important}
+/* Avisos: solo marco y título en color; contenido blanco. */
+#debatePilotPanel #pilotTwist{border:1px solid #60a5fa!important;color:#fff!important;background:#0b0b0b!important}
+#debatePilotPanel #pilotTwist b{color:#60a5fa!important}
+#debatePilotPanel #pilotTwist span{color:#fff!important}
+#debatePilotPanel #pilotRevoteHint{color:#fff!important}
+#debatePilotPanel #pilotOptionalRevoteHint b{color:#facc15!important}
+#debatePilotPanel #pilotOptionalRevoteHint span,#debatePilotPanel #pilotEvent>span{color:#fff!important}
+#debatePilotPanel #pilotEvent .pilot-event-dismiss{display:block;width:100%;min-height:46px;margin:17px 0 0;border:1px solid #666;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;letter-spacing:1.4px}
 </style>
 <style>
 #proclamationComposer{display:none;position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.92);padding:18px;align-items:center;justify-content:center}
