@@ -1358,7 +1358,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R24</div>
+    <div class="version">DILEMA · V0.1.16-010C-R25</div>
   </main>
 
 
@@ -6422,8 +6422,9 @@ window.addEventListener(
     markHostWaitingLabels();
 
     document.querySelectorAll(".host-wait-animated").forEach(function (el) {
-      el.dataset.waitBase = "ESPERANDO AL ANFITRIÓN";
-      el.textContent = "ESPERANDO AL ANFITRIÓN" + ".".repeat(n);
+      const ownHostBadge = el.id === "waitingRoleDraw" && currentRoomHostId === localPlayerId;
+      el.dataset.waitBase = ownHostBadge ? "ERES ANFITRIÓN" : "ESPERANDO AL ANFITRIÓN";
+      el.textContent = ownHostBadge ? "ERES ANFITRIÓN" : "ESPERANDO AL ANFITRIÓN" + ".".repeat(n);
     });
 
     n = (n + 1) % 4;
@@ -7156,6 +7157,12 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 }
 </style>
 <style>
+/* GIRO: azul en el marco y en el texto; el resto de avisos conserva su color. */
+#debatePilotPanel #pilotTwist{border:1px solid #60a5fa!important;color:#60a5fa!important;background:#0b0b0b!important}
+#debatePilotPanel #pilotTwist b,#debatePilotPanel #pilotTwist span{color:#60a5fa!important}
+#debatePilotPanel #pilotRevoteHint{color:#60a5fa!important}
+</style>
+<style>
 #proclamationComposer{display:none;position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.92);padding:18px;align-items:center;justify-content:center}
 #proclamationComposer.open{display:flex}
 #proclamationComposer .pc-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;border:1px solid #fff;border-radius:14px;background:#0b0b0b;color:#fff;padding:20px}
@@ -7185,20 +7192,21 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   m.innerHTML='<div class="pc-card"><h2>PROCLAMA</h2><label class="pc-label" for="pcText">ESCRIBE TU PROCLAMA · MÁXIMO 180 CARACTERES</label><textarea id="pcText" maxlength="180"></textarea><div class="pc-heading"><span class="pc-label">DESTINATARIOS</span><button id="pcAll" type="button">SELECCIONAR TODOS</button></div><div id="pcRecipients" class="pc-list"></div><p id="pcCount" class="pc-count"></p><div class="pc-actions"><button id="pcCancel" type="button">CANCELAR</button><button id="pcPublish" type="button">PUBLICAR</button></div><div id="pcError" class="pc-error" role="alert"></div></div>';
   document.body.appendChild(m);
   E("pcCancel").addEventListener("click",()=>{if(!sending)m.classList.remove("open")});
-  E("pcAll").addEventListener("click",()=>{selected=new Set(players.map(p=>p.player_id));render()});
+  E("pcAll").addEventListener("click",()=>{selected=new Set(players.filter(p=>p.player_id!==localPlayerId).map(p=>p.player_id));render()});
   E("pcText").addEventListener("input",render);
   E("pcPublish").addEventListener("click",publish);
  }
  function render(){
   const list=E("pcRecipients");list.replaceChildren();
   players.forEach(p=>{
-   const b=document.createElement("button");b.type="button";const active=selected.has(p.player_id);
-   b.classList.toggle("selected",active);b.setAttribute("aria-pressed",String(active));
-   b.textContent=(active?"✓  ":"○  ")+(p.name||"JUGADOR");
-   b.addEventListener("click",()=>{if(selected.has(p.player_id))selected.delete(p.player_id);else selected.add(p.player_id);render()});
+   const b=document.createElement("button");b.type="button";const mine=p.player_id===localPlayerId;const active=selected.has(p.player_id);
+   b.disabled=mine;b.classList.toggle("selected",active);b.setAttribute("aria-pressed",String(active));
+   b.textContent=mine?"—  "+(p.name||"JUGADOR")+" · TÚ":(active?"✓  ":"○  ")+(p.name||"JUGADOR");
+   if(!mine)b.addEventListener("click",()=>{if(selected.has(p.player_id))selected.delete(p.player_id);else selected.add(p.player_id);render()});
    list.appendChild(b);
   });
-  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+players.length+" SELECCIONADOS · SOLO ELLOS LEERÁN LA PROCLAMA";
+  const eligible=players.filter(p=>p.player_id!==localPlayerId).length;
+  E("pcCount").textContent=loading?"CARGANDO LA MESA…":selected.size+" DE "+eligible+" DESTINATARIOS · "+(eligible&&selected.size===eligible?"ANÓNIMA PARA TODOS":"TU NOMBRE APARECERÁ");
   E("pcPublish").disabled=sending||loading||!selected.size||!E("pcText").value.trim();
  }
  async function open(){
@@ -7208,7 +7216,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   if(!E("proclamationComposer").classList.contains("open"))return;
   loading=false;
   if(error||!data?.length){E("pcError").textContent="NO SE HA PODIDO CARGAR LA MESA.";render();return}
-  players=data;selected=new Set(data.map(p=>p.player_id));render();
+  players=data;selected=new Set(data.filter(p=>p.player_id!==localPlayerId).map(p=>p.player_id));render();
  }
  async function publish(){
   const t=E("pcText").value.trim();
