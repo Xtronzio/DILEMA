@@ -1172,6 +1172,64 @@
 .pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
 .pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
 .pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+</style><style>
+/* R18 · Código de avisos DILEMA: decisiones y eventos que interrumpen el debate */
+#debatePilotPanel #pilotUnanimity,
+#debatePilotPanel #pilotGiroVoteBox,
+#debatePilotPanel #pilotCloseBox,
+#debatePilotPanel #pilotPresenceRequestBox,
+#debatePilotPanel #pilotEvent{
+  width:100%!important;
+  margin:28px 0 30px!important;
+  padding:18px 14px 16px!important;
+  border:1px solid #facc15!important;
+  border-radius:14px!important;
+  background:#10100a!important;
+  box-shadow:inset 0 3px 0 #facc15!important;
+  color:#fff!important;
+  text-align:center!important
+}
+#debatePilotPanel #pilotUnanimity::before,
+#debatePilotPanel #pilotGiroVoteBox::before,
+#debatePilotPanel #pilotCloseBox::before,
+#debatePilotPanel #pilotPresenceRequestBox::before,
+#debatePilotPanel #pilotEvent::before{
+  content:"⚠  AVISO DE LA MESA";
+  display:block;
+  color:#facc15;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  line-height:1.3;
+  margin:0 0 14px
+}
+#debatePilotPanel #pilotEvent::before{content:"⚠  AVISO"}
+#debatePilotPanel #pilotUnanimity p,
+#debatePilotPanel #pilotGiroVoteBox p,
+#debatePilotPanel #pilotCloseBox p{
+  color:#fff!important;
+  margin:0 0 16px!important;
+  line-height:1.35!important
+}
+#debatePilotPanel #pilotUnanimity .giro-progress,
+#debatePilotPanel #pilotGiroVoteBox .giro-progress,
+#debatePilotPanel #pilotPresenceRequestBox small{color:#e8d178!important}
+#debatePilotPanel #pilotUnanimity .pilot-unanimity-actions button,
+#debatePilotPanel #pilotGiroVoteBox .pilot-actions button,
+#debatePilotPanel #pilotCloseBox .pilot-actions button,
+#debatePilotPanel #pilotPresenceRequestBox .pilot-actions button{
+  background:#0b0b0b!important;
+  border:1px solid #756932!important;
+  color:#fff!important
+}
+#debatePilotPanel #pilotUnanimity button.pilot-selected,
+#debatePilotPanel #pilotGiroVoteBox button.pilot-selected,
+#debatePilotPanel #pilotCloseBox button.pilot-selected,
+#debatePilotPanel #pilotPresenceRequestBox button.pilot-selected{
+  background:#facc15!important;
+  border-color:#facc15!important;
+  color:#0b0b0b!important
+}
 </style></head>
 
 <body>
@@ -1187,7 +1245,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R17</div>
+    <div class="version">DILEMA · V0.1.16-010C-R18</div>
   </main>
 
 
