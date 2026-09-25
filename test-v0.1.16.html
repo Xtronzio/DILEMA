@@ -1429,7 +1429,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R36</div>
+    <div class="version">DILEMA · V0.1.16-010C-R37</div>
   </main>
 
 
@@ -2111,6 +2111,8 @@ let refreshingGame = false;
 let lobbyRefreshPending = false;
 let gameRefreshPending = false;
 let proposalRefreshRun = 0;
+let selectionRefreshRun = 0;
+let selectionRefreshPending = false;
 
 let currentRoundId = null;
 let currentRoundStatus = null;
@@ -4125,12 +4127,13 @@ async function openSuggestedDebate(){
 }
 async function refreshDebateSelection(){
  if(!currentRoomId || currentRoomMode!=="debate" || currentRoomStatus!=="waiting")return false;
- if(selectionRefreshPromise)return selectionRefreshPromise;
+ if(selectionRefreshPromise){selectionRefreshPending=true;return selectionRefreshPromise;}
  const roomId=currentRoomId;
+ const run=++selectionRefreshRun;
  selectionRefreshPromise=(async()=>{
   const {data,error}=await sb.rpc("debate_selection_state",{p_room:roomId});
   if(error){console.error("SELECTION STATE ERROR:",error);return false}
-  if(roomId!==currentRoomId || currentRoomStatus!=="waiting")return false;
+  if(roomId!==currentRoomId || currentRoomStatus!=="waiting" || run!==selectionRefreshRun)return false;
   if(!data?.phase || data.phase==="finished"){currentDebateSelection=null;return false}
   const changed=selectionVisibleStage!==roomId+":"+data.stage;
   currentDebateSelection=data;
@@ -4148,7 +4151,7 @@ async function refreshDebateSelection(){
   showScreen("debateSuggested");
   if(!selectionCatalogMeta&&data.phase==="filters"){
    const {data:meta,error:metaError}=await sb.from("dilemmas").select("debate_theme,intensity").eq("audience","teen").eq("active",true).limit(1000);
-   if(!metaError&&roomId===currentRoomId){selectionCatalogMeta=meta||[];renderDebateSelection()}
+   if(!metaError&&roomId===currentRoomId&&run===selectionRefreshRun){selectionCatalogMeta=meta||[];renderDebateSelection()}
   }
   if((data.phase==="questions"||(data.phase==="runoff"&&data.theme))){
    const stamp=JSON.stringify([roomId,data.stage,data.counts,data.my_vote]);
@@ -4156,7 +4159,13 @@ async function refreshDebateSelection(){
   }
   return true;
  })();
- try{return await selectionRefreshPromise}finally{selectionRefreshPromise=null}
+ try{return await selectionRefreshPromise}finally{
+  selectionRefreshPromise=null;
+  if(selectionRefreshPending&&currentRoomId===roomId&&currentRoomStatus==="waiting"){
+   selectionRefreshPending=false;
+   queueMicrotask(()=>refreshDilemmaProposal().catch(error=>console.error("PENDING SELECTION SYNC ERROR:",error)));
+  }else selectionRefreshPending=false;
+ }
 }
 function selectionThemeAvailable(theme,intensity){
  if(!selectionCatalogMeta)return true;
@@ -4326,7 +4335,7 @@ async function resetDebateChoice(){
   const {error}=await sb.rpc("debate_reset_selection",{p_room:roomId});
   if(error)throw error;
   if(currentRoomId!==roomId)return;
-  proposalRefreshRun++;
+  proposalRefreshRun++;selectionRefreshRun++;
   currentDilemmaProposal=null;currentDebateSelection=null;selectionVisibleStage=null;selectionQuestionsStamp=null;
   announceHallChange("selection-reset");
   showScreen("room");
@@ -6327,6 +6336,13 @@ function subscribeRealtime() {
       )
       .on("broadcast",{event:"hall-change"}, payload => {
         if(payload?.payload?.roomId!==currentRoomId)return;
+        if(payload.payload.kind==="selection-reset" && currentRoomStatus==="waiting"){
+          proposalRefreshRun++;selectionRefreshRun++;
+          currentDilemmaProposal=null;currentDebateSelection=null;selectionVisibleStage=null;selectionQuestionsStamp=null;
+          showScreen("room");
+          refreshLobby().catch(error=>console.error("RESET HALL SYNC ERROR:",error));
+          return;
+        }
         if(currentRoomStatus==="waiting")queueHallSync();
         else refreshGame().catch(error=>console.error("GAME SYNC ERROR:",error));
       })
@@ -6624,7 +6640,7 @@ function cleanupRoom() {
     gameTimer
   );
   clearInterval(abandonedRejoinTimer);
-  hallSyncQueued=false;lobbyRefreshPending=false;gameRefreshPending=false;proposalRefreshRun++;
+  hallSyncQueued=false;lobbyRefreshPending=false;gameRefreshPending=false;selectionRefreshPending=false;proposalRefreshRun++;selectionRefreshRun++;
   abandonedRejoinTimer=null;pendingRejoinRoomId=null;hallRejoinRequestId=null;
 
   clearTimeout(
