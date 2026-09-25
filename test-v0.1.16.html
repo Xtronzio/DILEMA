@@ -1413,7 +1413,8 @@
 #rejoinPending .title{line-height:1.1}
 #rejoinPendingStatus{margin:22px 0 12px;text-align:center;line-height:1.5}
 #rejoinPendingCount{margin:8px 0 35px}
-</style></head>
+</style><style>.selection-host-controls{gap:10px;margin:24px 0 12px}.selection-host-controls .btn{width:100%}</style>
+</head>
 
 <body>
 
@@ -1428,7 +1429,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R35</div>
+    <div class="version">DILEMA · V0.1.16-010C-R36</div>
   </main>
 
 
@@ -1667,6 +1668,7 @@
     <div id="selectionStatus" class="small-note"></div>
     <div id="suggestedError" class="error"></div>
     <div id="selectionHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
 
 
@@ -1685,6 +1687,7 @@
     <button id="customDebateBtn" class="btn btn-secondary" onclick="startCustomDebate()" disabled>
       PROPONER A LA MESA
     </button>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
 
 
@@ -1698,6 +1701,7 @@
     <div id="proposalPending" class="small-note"></div>
     <button id="proposalLaunch" type="button" class="btn btn-secondary" onclick="startApprovedDilemma()" style="display:none">ABRIR VOTACIÓN A/B</button>
     <div id="proposalHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
   <section id="waitingDilemma" class="screen center">
     <div class="game-category">SALA COMPLETA</div>
@@ -2104,6 +2108,9 @@ let rejoinRefreshBusy = false;
 let hallRejoinRequestId = null;
 let lobbyRefreshPromise = null;
 let refreshingGame = false;
+let lobbyRefreshPending = false;
+let gameRefreshPending = false;
+let proposalRefreshRun = 0;
 
 let currentRoundId = null;
 let currentRoundStatus = null;
@@ -3317,7 +3324,7 @@ async function getRoom() {
 async function refreshLobby() {
 
   if (!currentRoomId) return false;
-  if (lobbyRefreshPromise) return lobbyRefreshPromise;
+  if (lobbyRefreshPromise) { lobbyRefreshPending = true; return lobbyRefreshPromise; }
   const roomId = currentRoomId;
   lobbyRefreshPromise = (async () => {
 
@@ -3447,6 +3454,10 @@ async function refreshLobby() {
     return await lobbyRefreshPromise;
   } finally {
     lobbyRefreshPromise = null;
+    if(lobbyRefreshPending && currentRoomId===roomId){
+      lobbyRefreshPending=false;
+      queueMicrotask(()=>refreshLobby().catch(error=>console.error("PENDING LOBBY SYNC ERROR:",error)));
+    }else lobbyRefreshPending=false;
   }
 }
 
@@ -4166,6 +4177,7 @@ function renderDebateSelection(){
  document.getElementById("selectionTitle").textContent=random?"EL JUEGO PROPONE":questions?"¿QUÉ DILEMA ELEGIMOS?":"¿QUÉ DEBATIMOS?";
  document.getElementById("selectionSubtitle").textContent=random?"Cada dilema aleatorio se puede aceptar o descartar.":questions?"Votad por una pregunta. Las opciones A/B se verán al empezar.":"Elegid intensidad y conflicto; cada persona tiene un voto.";
  document.getElementById("selectionHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
+ updateSelectionHostControls();
  document.getElementById("selectionStatus").textContent=random?"":s.my_vote?"TU VOTO ESTÁ REGISTRADO · "+s.voted+" / "+s.total+" HAN VOTADO":s.voted+" / "+s.total+" HAN VOTADO";
  document.getElementById("selectionRandomWaiting").style.display=currentRoomHostId===localPlayerId?"none":"block";
  document.getElementById("selectionDraw").style.display=currentRoomHostId===localPlayerId?"block":"none";
@@ -4246,6 +4258,7 @@ function openCustomDebate() {
   document.getElementById("customError").textContent = "";
   document.getElementById("customDebateBtn").classList.remove("is-selected");
   updateCustomDebateButton();
+  updateSelectionHostControls();
   showScreen("customDebate");
 }
 
@@ -4267,16 +4280,18 @@ let rejectedDilemmaIds=[];
 async function refreshDilemmaProposal(){
  if(!currentRoomId || currentRoomMode!=="debate" || currentRoomStatus!=="waiting") return;
  const roomId=currentRoomId;
+ const run=++proposalRefreshRun;
  const {data,error}=await sb.rpc("debate_proposal_state",{p_room:roomId});
  if(error){console.error("PROPOSAL STATE ERROR:",error);return}
- if(roomId!==currentRoomId || currentRoomStatus!=="waiting")return;
+ if(roomId!==currentRoomId || currentRoomStatus!=="waiting" || run!==proposalRefreshRun)return;
  rejectedDilemmaIds=data?.rejected_ids||[];
  const proposal=data?.id?data:null;
  const wasProposal=document.getElementById("dilemmaProposal").classList.contains("active");
  currentDilemmaProposal=proposal;
  if(!proposal){
   if(await refreshDebateSelection())return;
-  if(wasProposal) showScreen(currentRoomHostId===localPlayerId?"debateChoice":"room");
+  if(run!==proposalRefreshRun)return;
+  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
   return;
  }
  document.getElementById("proposalQuestion").textContent=proposal.question;
@@ -4293,9 +4308,32 @@ async function refreshDilemmaProposal(){
  document.getElementById("proposalPending").textContent=open&&proposal.has_voted?"ESPERANDO LA DECISIÓN DE LA MESA":!open&&currentRoomHostId!==localPlayerId?"APROBADO · ESPERANDO AL ANFITRIÓN":"";
  document.getElementById("proposalLaunch").style.display=!open&&currentRoomHostId===localPlayerId?"block":"none";
  document.getElementById("proposalHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
+ updateSelectionHostControls();
  showScreen("dilemmaProposal");
 }
 
+function updateSelectionHostControls(){
+ const host=currentRoomMode==="debate"&&currentRoomStatus==="waiting"&&currentRoomHostId===localPlayerId;
+ document.querySelectorAll("[data-selection-host-controls]").forEach(node=>node.style.display=host?"grid":"none");
+}
+let resettingDebateChoice=false;
+async function resetDebateChoice(){
+ if(resettingDebateChoice||currentRoomHostId!==localPlayerId||currentRoomStatus!=="waiting")return;
+ if(!confirm("¿REINICIAR LA ELECCIÓN DEL DILEMA PARA TODA LA MESA?\n\nLos participantes permanecerán en esta sala."))return;
+ resettingDebateChoice=true;
+ try{
+  const roomId=currentRoomId;
+  const {error}=await sb.rpc("debate_reset_selection",{p_room:roomId});
+  if(error)throw error;
+  if(currentRoomId!==roomId)return;
+  proposalRefreshRun++;
+  currentDilemmaProposal=null;currentDebateSelection=null;selectionVisibleStage=null;selectionQuestionsStamp=null;
+  announceHallChange("selection-reset");
+  showScreen("room");
+  await refreshLobby();
+ }catch(error){console.error("SELECTION RESET ERROR:",error);alert("NO SE HA PODIDO REINICIAR LA ELECCIÓN.");}
+ finally{resettingDebateChoice=false;}
+}
 async function startCustomDebate(){
  if(currentRoomHostId!==localPlayerId || currentRoomMode!=="debate")return;
  const question=document.getElementById("customQuestion").value.trim();
@@ -4778,9 +4816,11 @@ async function refreshGame() {
     refreshingGame ||
     !currentRoomId
   ) {
+    if(refreshingGame && currentRoomId)gameRefreshPending=true;
     return;
   }
 
+  const refreshingRoomId=currentRoomId;
   refreshingGame =
     true;
 
@@ -4889,23 +4929,11 @@ async function refreshGame() {
     }
 
 
-    if (
-      round.status ===
-        "voting" ||
-      round.status ===
-        "role" ||
-      round.status ===
-        "debate" ||
-      round.status ===
-        "reveal"
-    ) {
-
-      await loadOwnVote();
-    }
-
-
-    const voteCount =
-      await getVoteCount();
+    const debateAlreadyOpen=currentRoomMode==="debate" && round.status==="debate";
+    const [voteCount]=await Promise.all([
+      debateAlreadyOpen?Promise.resolve(null):getVoteCount(),
+      !debateAlreadyOpen && ["voting","role","debate","reveal"].includes(round.status)?loadOwnVote():Promise.resolve(null)
+    ]);
 
 
     if (
@@ -4948,9 +4976,11 @@ async function refreshGame() {
 
 
   } finally {
-
-    refreshingGame =
-      false;
+    refreshingGame=false;
+    if(gameRefreshPending && currentRoomId===refreshingRoomId){
+      gameRefreshPending=false;
+      queueMicrotask(()=>refreshGame().catch(error=>console.error("PENDING GAME SYNC ERROR:",error)));
+    }else gameRefreshPending=false;
   }
 }
 
@@ -6594,7 +6624,7 @@ function cleanupRoom() {
     gameTimer
   );
   clearInterval(abandonedRejoinTimer);
-  hallSyncQueued=false;
+  hallSyncQueued=false;lobbyRefreshPending=false;gameRefreshPending=false;proposalRefreshRun++;
   abandonedRejoinTimer=null;pendingRejoinRoomId=null;hallRejoinRequestId=null;
 
   clearTimeout(
@@ -7089,16 +7119,8 @@ window.addEventListener(
    const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.close===choice));}
    const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done){await pilotCollectiveEnd();}
  }catch(e){alert("No se ha podido votar el cierre.");}};
- document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(async()=>{
+ document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(()=>{
    if(currentRoomMode==="debate"&&currentRoomId&&currentRoundId&&document.getElementById("debate")?.classList.contains("active")&&document.visibilityState==="visible"){
-     try{
-       const rr=await sb.from("rooms").select("status,mode").eq("id",currentRoomId).maybeSingle();
-       if(rr.data&&rr.data.mode==="debate"&&rr.data.status==="waiting"&&sessionStorage.getItem("dilema_room_session")){
-         /* waiting is also the normal lobby state. Do not force the host back to
-            the lobby here: it breaks ELEGIR DILEMA. A real restart is handled
-            by the room/restart flow itself. */
-       }
-     }catch(e){}
      pilotRefresh();
    }
  },4000)});
