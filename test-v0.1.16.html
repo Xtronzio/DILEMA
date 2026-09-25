@@ -1429,7 +1429,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R37</div>
+    <div class="version">DILEMA · V0.1.16-010C-R38</div>
   </main>
 
 
@@ -1668,7 +1668,7 @@
     <div id="selectionStatus" class="small-note"></div>
     <div id="suggestedError" class="error"></div>
     <div id="selectionHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
-    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">VOLVER AL HALL</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
 
 
@@ -1687,7 +1687,7 @@
     <button id="customDebateBtn" class="btn btn-secondary" onclick="startCustomDebate()" disabled>
       PROPONER A LA MESA
     </button>
-    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">VOLVER AL HALL</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
 
 
@@ -1701,7 +1701,7 @@
     <div id="proposalPending" class="small-note"></div>
     <button id="proposalLaunch" type="button" class="btn btn-secondary" onclick="startApprovedDilemma()" style="display:none">ABRIR VOTACIÓN A/B</button>
     <div id="proposalHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
-    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">REINICIAR ELECCIÓN</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
+    <div class="selection-host-controls" data-selection-host-controls style="display:none"><button type="button" class="btn btn-secondary" onclick="resetDebateChoice()">VOLVER AL HALL</button><button type="button" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button></div>
   </section>
   <section id="waitingDilemma" class="screen center">
     <div class="game-category">SALA COMPLETA</div>
@@ -4194,7 +4194,8 @@ function renderDebateSelection(){
 }
 function chooseSelectionAudience(){
  if(!currentDebateSelection||currentDebateSelection.my_vote)return;
- selectionAudienceChosen=true;
+ selectionAudienceChosen=!selectionAudienceChosen;
+ if(!selectionAudienceChosen){selectionDraftIntensity=null;selectionDraftTheme=null;}
  renderDebateSelection();
 }
 function renderSelectionFilters(s){
@@ -4207,7 +4208,7 @@ function renderSelectionFilters(s){
   btn.className="selection-chip"+(selectionDraftIntensity===value?" selected":"");
   btn.textContent=["","CHILL","CRINGE","WTF"][value];
   btn.disabled=!!s.my_vote||!selectionAudienceChosen||(runoff&&!allowed.some(x=>x.startsWith(value+"|")));
-  btn.onclick=()=>{selectionDraftIntensity=value;if(!selectionThemeAvailable(selectionDraftTheme,value))selectionDraftTheme=null;renderSelectionFilters(s)};
+  btn.onclick=()=>{const deselect=selectionDraftIntensity===value;selectionDraftIntensity=deselect?null:value;if(deselect||!selectionThemeAvailable(selectionDraftTheme,value))selectionDraftTheme=null;renderSelectionFilters(s)};
   intensities.appendChild(btn);
  }
  for(const theme of debateThemes){
@@ -4215,7 +4216,7 @@ function renderSelectionFilters(s){
   btn.className="selection-chip"+(selectionDraftTheme===theme?" selected":"");
   btn.textContent=theme;
   btn.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity||(runoff&&!allowed.includes(selectionDraftIntensity+"|"+theme))||!selectionThemeAvailable(theme,selectionDraftIntensity);
-  btn.onclick=()=>{selectionDraftTheme=theme;renderSelectionFilters(s)};
+  btn.onclick=()=>{selectionDraftTheme=selectionDraftTheme===theme?null:theme;renderSelectionFilters(s)};
   choices.appendChild(btn);
  }
  confirm.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity||!selectionDraftTheme;
@@ -4328,7 +4329,7 @@ function updateSelectionHostControls(){
 let resettingDebateChoice=false;
 async function resetDebateChoice(){
  if(resettingDebateChoice||currentRoomHostId!==localPlayerId||currentRoomStatus!=="waiting")return;
- if(!confirm("¿REINICIAR LA ELECCIÓN DEL DILEMA PARA TODA LA MESA?\n\nLos participantes permanecerán en esta sala."))return;
+ if(!confirm("¿VOLVER AL HALL Y CANCELAR LA ELECCIÓN ACTUAL PARA TODA LA MESA?\n\nLos participantes permanecerán en esta sala."))return;
  resettingDebateChoice=true;
  try{
   const roomId=currentRoomId;
