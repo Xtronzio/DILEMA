@@ -1359,6 +1359,25 @@
 .catalog-card strong{display:block;line-height:1.4;font-size:14px}
 .catalog-card span{display:block;color:#aaa;font-size:11px;line-height:1.35;margin-top:8px}
 .catalog-card:hover,.catalog-card:focus{border-color:#fff}
+</style><style>
+#debateSuggested{padding-top:48px}
+#debateSuggested .title{margin:8px 0 10px;font-size:28px}
+#debateSuggested .subtitle{font-size:13px;line-height:1.4;margin-bottom:18px}
+.selection-audience{border:1px solid #aaa;border-radius:8px;display:inline-block;padding:7px 16px;margin:4px 0 14px;font-size:11px;letter-spacing:2px;font-weight:900}
+.selection-intensities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 20px}
+.selection-themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 22px}
+.selection-chip{border:1px solid #444;border-radius:10px;padding:12px 6px;background:#151515;color:#fff;font-size:10px;font-weight:900;min-height:48px;line-height:1.25;cursor:pointer}
+.selection-chip.selected{border-color:#fff;background:#fff;color:#111}
+.selection-chip:disabled{color:#606060;border-color:#303030;cursor:default}
+.selection-chip.selected:disabled{color:#111;background:#fff;border-color:#fff}
+.selection-questions{max-height:55vh;overflow:auto;margin:20px 0}
+.selection-question{display:block;width:100%;margin:10px 0;padding:16px;text-align:left;border:1px solid #555;border-radius:12px;background:#1a1a1a;color:white;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer}
+.selection-question.selected{border-color:white}
+.selection-question:disabled{opacity:.65;cursor:default}
+.selection-question.selected:disabled{opacity:1}
+.selection-count{display:block;margin-top:10px;color:#aaa;font-size:10px;letter-spacing:1px}
+#selectionStatus{text-align:center;margin:15px 0}
+#selectionHostBadge{border:1px solid #b78aff;color:#b78aff;border-radius:9px;text-align:center;padding:10px;margin:22px 0}
 </style></head>
 
 <body>
@@ -1374,7 +1393,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R29</div>
+    <div class="version">DILEMA · V0.1.16-010C-R30</div>
   </main>
 
 
@@ -1576,31 +1595,25 @@
 
 
   <section id="debateSuggested" class="screen">
-    <button class="back" onclick="showScreen('debateChoice')">←</button>
-
-    <div class="title">PROPÓNNOS UN DILEMA</div>
-    <div class="subtitle">Elige un dilema concreto o deja que DILEMA escoja uno al azar. La mesa decidirá si lo debatís.</div>
-
-    <div class="small-label">¿PARA QUIÉN?</div>
-    <div class="choice-row audience-choice">
-      <button type="button" class="choice-btn construction-audience" disabled>KIDS<span class="construction-label">EN CONSTRUCCIÓN</span></button>
-      <button type="button" class="choice-btn" data-audience="teen" onclick="selectDebateAudience('teen', this)">TEENS</button>
-      <button type="button" class="choice-btn construction-audience" disabled>ADULTOS<span class="construction-label">EN CONSTRUCCIÓN</span></button>
+    <div class="game-category" id="selectionStep">PRIMER ACUERDO DE LA MESA</div>
+    <div class="title" id="selectionTitle">¿QUÉ DEBATIMOS?</div>
+    <div class="subtitle" id="selectionSubtitle">Elegid juntos la intensidad y el conflicto.</div>
+    <div id="selectionTeens" class="selection-audience">TEENS</div>
+    <div id="selectionFilters">
+      <div class="small-label">INTENSIDAD</div>
+      <div id="intensityChoices" class="selection-intensities"></div>
+      <div class="small-label">¿QUÉ CONFLICTO QUERÉIS DEBATIR?</div>
+      <div id="categoryChoices" class="selection-themes"></div>
+      <button id="selectionConfirm" type="button" class="btn btn-primary" onclick="voteSelectionFilters()" disabled>VOTAR ESTA ELECCIÓN</button>
     </div>
-    
-
-    <div class="small-label">TEMÁTICA</div>
-    <div id="categoryChoices" class="choice-grid"></div>
-
-    <div class="small-label">INTENSIDAD</div>
-    <div id="intensityChoices" class="choice-grid"></div>
-
+    <div id="selectionQuestions" style="display:none"><div id="catalogDilemmas" class="selection-questions"></div></div>
+    <div id="selectionRandom" style="display:none">
+      <button id="selectionDraw" type="button" class="btn btn-primary" onclick="drawRandomDilemma()">SACAR DILEMA ALEATORIO</button>
+      <div id="selectionRandomWaiting" class="small-note">ESPERANDO AL ANFITRIÓN</div>
+    </div>
+    <div id="selectionStatus" class="small-note"></div>
     <div id="suggestedError" class="error"></div>
-    <div id="catalogDilemmas" class="dilemma-catalog"></div>
-
-    <button id="proposeDilemmaBtn" class="btn btn-primary" onclick="proposeDilemma()" disabled>
-      ELEGIR UNO AL AZAR
-    </button>
+    <div id="selectionHostBadge" class="lobby-host-badge" style="display:none">ERES ANFITRIÓN</div>
   </section>
 
 
@@ -3105,7 +3118,7 @@ async function enterRoom() {
 
   if (!currentRoomId) return;
 
-  if(!document.getElementById("dilemmaProposal").classList.contains("active")) showScreen("room");
+  if(!document.getElementById("dilemmaProposal").classList.contains("active")&&!document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
 
   subscribeRealtime();
 
@@ -3909,76 +3922,129 @@ function refreshMicrophrases() {
   phraseTarget.textContent = phrase.toUpperCase();
 }
 
-async function openSuggestedDebate() {
-  selectedDebateAudience = "teen";
-  selectedDebateCategory = null;
-  selectedDebateIntensity = null;
-  availableDebateDilemmas = null;
-  document.getElementById("catalogDilemmas").replaceChildren();
-  renderDebateFilters();
-  document.getElementById("suggestedError").textContent = "CONSULTANDO EL CATÁLOGO…";
-  showScreen("debateSuggested");
-  const {data,error} = await sb.from("dilemmas")
-    .select("category, intensity").eq("active",true).eq("audience","teen");
-  if(document.getElementById("debateSuggested").classList.contains("active")) {
-    availableDebateDilemmas = error ? null : (data || []);
-    document.getElementById("suggestedError").textContent = error
-      ? "NO SE HA PODIDO CONSULTAR EL CATÁLOGO. VUELVE A ENTRAR PARA REINTENTAR." : "";
-    renderDebateFilters();
-    renderCatalogDilemmas();
-  }
+const debateThemes=["¿A QUIÉN SALVAS?","¿LO CUENTAS?","¿TRAICIONAS?","¿TE METES?","¿QUÉ SACRIFICAS?","¿ACEPTAS EL TRATO?","ALEATORIO"];
+let currentDebateSelection=null;
+let selectionDraftIntensity=null;
+let selectionDraftTheme=null;
+let selectionVisibleStage=null;
+let selectionCatalogMeta=null;
+let selectionBusy=false;
+let selectionRefreshPromise=null;
+let selectionQuestionsStamp=null;
+
+async function openSuggestedDebate(){
+ if(currentRoomHostId!==localPlayerId)return;
+ const {error}=await sb.rpc("debate_begin_selection",{p_room:currentRoomId});
+ if(error){console.error("SELECTION START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA ELECCIÓN.");return}
+ await refreshDebateSelection();
 }
-
-function renderDebateFilters() {
-  const categories = document.getElementById("categoryChoices");
-  const intensities = document.getElementById("intensityChoices");
-  const proposeBtn = document.getElementById("proposeDilemmaBtn");
-
-  categories.innerHTML = "";
-  intensities.innerHTML = "";
-
-  debateCategories.forEach(category => {
-    const button = document.createElement("button");
-    const available = !!availableDebateDilemmas?.some(d =>
-      (category === "ALEATORIO" || d.category === category) &&
-      (!selectedDebateIntensity || d.intensity <= selectedDebateIntensity));
-    button.type = "button";
-    button.className = "choice-chip" +
-      (selectedDebateCategory === category ? " selected" : "");
-    button.textContent = category;
-    button.disabled = !available;
-    button.onclick = () => {
-      selectedDebateCategory = category;
-      renderDebateFilters();
-      renderCatalogDilemmas();
-    };
-    categories.appendChild(button);
-  });
-
-  debateIntensities.forEach(item => {
-    const button = document.createElement("button");
-    const available = !!availableDebateDilemmas?.some(d =>
-      d.intensity <= item.value &&
-      (!selectedDebateCategory || selectedDebateCategory === "ALEATORIO" || d.category === selectedDebateCategory));
-    button.type = "button";
-    button.className = "choice-chip" +
-      (selectedDebateIntensity === item.value ? " selected" : "");
-    button.textContent = item.label;
-    button.disabled = !available;
-    button.onclick = () => {
-      selectedDebateIntensity = item.value;
-      renderDebateFilters();
-      renderCatalogDilemmas();
-    };
-    intensities.appendChild(button);
-  });
-  if(proposeBtn){
-    const ready=!!selectedDebateCategory && !!selectedDebateIntensity &&
-      !!availableDebateDilemmas?.some(d => d.intensity <= selectedDebateIntensity &&
-        (selectedDebateCategory === "ALEATORIO" || d.category === selectedDebateCategory));
-    proposeBtn.disabled=!ready;
-    proposeBtn.classList.toggle("ready",ready);
+async function refreshDebateSelection(){
+ if(!currentRoomId || currentRoomMode!=="debate" || currentRoomStatus!=="waiting")return false;
+ if(selectionRefreshPromise)return selectionRefreshPromise;
+ const roomId=currentRoomId;
+ selectionRefreshPromise=(async()=>{
+  const {data,error}=await sb.rpc("debate_selection_state",{p_room:roomId});
+  if(error){console.error("SELECTION STATE ERROR:",error);return false}
+  if(roomId!==currentRoomId || currentRoomStatus!=="waiting")return false;
+  if(!data?.phase || data.phase==="finished"){currentDebateSelection=null;return false}
+  const changed=selectionVisibleStage!==roomId+":"+data.stage;
+  currentDebateSelection=data;
+  if(changed){selectionVisibleStage=roomId+":"+data.stage;selectionDraftIntensity=null;selectionDraftTheme=null;selectionQuestionsStamp=null}
+  renderDebateSelection();
+  showScreen("debateSuggested");
+  if(!selectionCatalogMeta&&data.phase==="filters"){
+   const {data:meta,error:metaError}=await sb.from("dilemmas").select("debate_theme,intensity").eq("audience","teen").eq("active",true).limit(1000);
+   if(!metaError&&roomId===currentRoomId){selectionCatalogMeta=meta||[];renderDebateSelection()}
   }
+  if((data.phase==="questions"||(data.phase==="runoff"&&data.theme))){
+   const stamp=JSON.stringify([roomId,data.stage,data.counts,data.my_vote]);
+   if(selectionQuestionsStamp!==stamp){selectionQuestionsStamp=stamp;await renderDebateQuestions(roomId,data.stage,data.options||[])}
+  }
+  return true;
+ })();
+ try{return await selectionRefreshPromise}finally{selectionRefreshPromise=null}
+}
+function selectionThemeAvailable(theme,intensity){
+ if(!selectionCatalogMeta)return true;
+ return selectionCatalogMeta.some(d=>d.intensity<=intensity&&(theme==="ALEATORIO"||d.debate_theme===theme));
+}
+function renderDebateSelection(){
+ const s=currentDebateSelection;if(!s)return;
+ const filters=s.phase==="filters"||(s.phase==="runoff"&&!s.theme);
+ const questions=s.phase==="questions"||(s.phase==="runoff"&&!!s.theme);
+ const random=s.phase==="random";
+ document.getElementById("selectionFilters").style.display=filters?"block":"none";
+ document.getElementById("selectionQuestions").style.display=questions?"block":"none";
+ document.getElementById("selectionRandom").style.display=random?"block":"none";
+ document.getElementById("selectionTeens").style.display=filters?"block":"none";
+ document.getElementById("selectionStep").textContent=random?"MODO ALEATORIO":s.phase==="runoff"?"DESEMPATE":questions?"SEGUNDO ACUERDO DE LA MESA":"PRIMER ACUERDO DE LA MESA";
+ document.getElementById("selectionTitle").textContent=random?"EL JUEGO PROPONE":questions?"¿QUÉ DILEMA ELEGIMOS?":"¿QUÉ DEBATIMOS?";
+ document.getElementById("selectionSubtitle").textContent=random?"Cada dilema aleatorio se puede aceptar o descartar.":questions?"Votad por una pregunta. Las opciones A/B se verán al empezar.":"Elegid intensidad y conflicto; cada persona tiene un voto.";
+ document.getElementById("selectionHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
+ document.getElementById("selectionStatus").textContent=random?"":s.my_vote?"TU VOTO ESTÁ REGISTRADO · "+s.voted+" / "+s.total+" HAN VOTADO":s.voted+" / "+s.total+" HAN VOTADO";
+ document.getElementById("selectionRandomWaiting").style.display=currentRoomHostId===localPlayerId?"none":"block";
+ document.getElementById("selectionDraw").style.display=currentRoomHostId===localPlayerId?"block":"none";
+ if(filters)renderSelectionFilters(s);
+}
+function renderSelectionFilters(s){
+ const choices=document.getElementById("categoryChoices"),intensities=document.getElementById("intensityChoices"),confirm=document.getElementById("selectionConfirm");
+ choices.replaceChildren();intensities.replaceChildren();
+ const runoff=s.phase==="runoff",allowed=runoff?s.options:[];
+ document.querySelector("#selectionFilters .small-label").textContent=runoff?"ELEGID ENTRE LAS EMPATADAS":"INTENSIDAD";
+ for(const value of [1,2,3]){
+  const btn=document.createElement("button");btn.type="button";
+  btn.className="selection-chip"+(selectionDraftIntensity===value?" selected":"");
+  btn.textContent=["","CHILL","CRINGE","WTF"][value];
+  btn.disabled=!!s.my_vote||(runoff&&!allowed.some(x=>x.startsWith(value+"|")));
+  btn.onclick=()=>{selectionDraftIntensity=value;if(!selectionThemeAvailable(selectionDraftTheme,value))selectionDraftTheme=null;renderSelectionFilters(s)};
+  intensities.appendChild(btn);
+ }
+ for(const theme of debateThemes){
+  const btn=document.createElement("button");btn.type="button";
+  btn.className="selection-chip"+(selectionDraftTheme===theme?" selected":"");
+  btn.textContent=theme;
+  btn.disabled=!!s.my_vote||!selectionDraftIntensity||(runoff&&!allowed.includes(selectionDraftIntensity+"|"+theme))||!selectionThemeAvailable(theme,selectionDraftIntensity);
+  btn.onclick=()=>{selectionDraftTheme=theme;renderSelectionFilters(s)};
+  choices.appendChild(btn);
+ }
+ confirm.disabled=!!s.my_vote||!selectionDraftIntensity||!selectionDraftTheme;
+ confirm.textContent=s.my_vote?"VOTO REGISTRADO":"VOTAR ESTA ELECCIÓN";
+}
+async function renderDebateQuestions(roomId,stage,ids){
+ const node=document.getElementById("catalogDilemmas");node.textContent="CARGANDO PREGUNTAS…";
+ const {data,error}=await sb.from("dilemmas").select("id,question").in("id",ids.map(Number)).eq("active",true);
+ if(roomId!==currentRoomId||stage!==currentDebateSelection?.stage)return;
+ node.replaceChildren();
+ if(error){document.getElementById("suggestedError").textContent="NO SE HAN PODIDO CARGAR LAS PREGUNTAS.";return}
+ for(const id of ids){
+  const d=(data||[]).find(x=>String(x.id)===String(id));if(!d)continue;
+  const btn=document.createElement("button");btn.type="button";btn.className="selection-question";
+  btn.textContent=d.question;btn.disabled=!!currentDebateSelection.my_vote;
+  if(currentDebateSelection.my_vote===String(id))btn.classList.add("selected");
+  const count=document.createElement("span");count.className="selection-count";count.textContent=(currentDebateSelection.counts?.[String(id)]||0)+" VOTOS";
+  btn.appendChild(count);btn.onclick=()=>voteDebateSelection(String(id));node.appendChild(btn);
+ }
+}
+async function voteSelectionFilters(){
+ if(!currentDebateSelection||!selectionDraftIntensity||!selectionDraftTheme)return;
+ await voteDebateSelection(selectionDraftIntensity+"|"+selectionDraftTheme);
+}
+async function voteDebateSelection(choice){
+ if(selectionBusy||!currentDebateSelection||currentDebateSelection.my_vote)return;
+ selectionBusy=true;
+ const {error}=await sb.rpc("debate_choose",{p_room:currentRoomId,p_choice:choice});
+ selectionBusy=false;
+ if(error){console.error("SELECTION VOTE ERROR:",error);document.getElementById("suggestedError").textContent="NO SE HA PODIDO REGISTRAR EL VOTO.";return}
+ document.getElementById("suggestedError").textContent="";
+ await refreshLobby();
+}
+async function drawRandomDilemma(){
+ if(selectionBusy||currentRoomHostId!==localPlayerId)return;
+ selectionBusy=true;
+ const {error}=await sb.rpc("debate_random_next",{p_room:currentRoomId});
+ selectionBusy=false;
+ if(error){console.error("RANDOM DILEMMA ERROR:",error);document.getElementById("suggestedError").textContent=error.message;return}
+ await refreshDilemmaProposal();
 }
 
 function openCustomDebate() {
@@ -4016,8 +4082,8 @@ async function refreshDilemmaProposal(){
  const wasProposal=document.getElementById("dilemmaProposal").classList.contains("active");
  currentDilemmaProposal=proposal;
  if(!proposal){
+  if(await refreshDebateSelection())return;
   if(wasProposal) showScreen(currentRoomHostId===localPlayerId?"debateChoice":"room");
-  if(document.getElementById("debateSuggested").classList.contains("active")) renderCatalogDilemmas();
   return;
  }
  document.getElementById("proposalQuestion").textContent=proposal.question;
@@ -4032,48 +4098,6 @@ async function refreshDilemmaProposal(){
  showScreen("dilemmaProposal");
 }
 
-async function proposeChosenDilemma(dilemma){
- if(currentRoomHostId!==localPlayerId || currentRoomMode!=="debate")return;
- const {error}=await sb.rpc("debate_propose_dilemma",{p_room:currentRoomId,p_dilemma:dilemma.id});
- if(error){console.error("DILEMMA PROPOSE ERROR:",error);document.getElementById("suggestedError").textContent=error.message;return}
- await refreshDilemmaProposal();
-}
-
-async function loadCatalogDilemmas(){
- let query=sb.from("dilemmas").select("id,category,intensity,question,option_a,option_b")
- .eq("active",true).eq("audience","teen").lte("intensity",selectedDebateIntensity).order("id",{ascending:true}).limit(1000);
- if(selectedDebateCategory&&selectedDebateCategory!=="ALEATORIO")query=query.eq("category",selectedDebateCategory);
- const {data,error}=await query;
- if(error){document.getElementById("suggestedError").textContent="NO SE HA PODIDO CARGAR EL CATÁLOGO.";return []}
- return (data||[]).filter(d=>!rejectedDilemmaIds.includes(d.id));
-}
-let catalogRequestNumber=0;
-async function renderCatalogDilemmas(){
- const container=document.getElementById("catalogDilemmas");
- container.replaceChildren();
- const request=++catalogRequestNumber;
- if(!selectedDebateIntensity || !selectedDebateCategory)return;
- const data=await loadCatalogDilemmas();
- if(request!==catalogRequestNumber || !document.getElementById("debateSuggested").classList.contains("active"))return;
- const randomBtn=document.getElementById("proposeDilemmaBtn");
- randomBtn.disabled=!data.length;
- if(!data.length){container.textContent="NO QUEDAN DILEMAS DISPONIBLES CON ESTOS FILTROS.";return}
- const label=document.createElement("div");label.className="small-label";label.textContent="O ELIGE UN DILEMA";container.appendChild(label);
- for(const d of data){
-  const button=document.createElement("button");button.type="button";button.className="catalog-card";
-  const question=document.createElement("strong");question.textContent=d.question;
-  const opts=document.createElement("span");opts.textContent=`A · ${d.option_a}     B · ${d.option_b}`;
-  button.append(question,opts);
-  button.onclick=()=>proposeChosenDilemma(d);
-  container.appendChild(button);
- }
-}
-async function proposeDilemma(){
- if(currentRoomHostId!==localPlayerId || !selectedDebateIntensity || !selectedDebateCategory)return;
- const data=await loadCatalogDilemmas();
- if(!data.length){document.getElementById("suggestedError").textContent="NO QUEDAN DILEMAS DISPONIBLES.";return}
- await proposeChosenDilemma(data[Math.floor(Math.random()*data.length)]);
-}
 async function startCustomDebate(){
  if(currentRoomHostId!==localPlayerId || currentRoomMode!=="debate")return;
  const question=document.getElementById("customQuestion").value.trim();
@@ -4166,7 +4190,7 @@ async function startGame() {
     }
 
     await refreshDilemmaProposal();
-    if(!currentDilemmaProposal) showScreen("debateChoice");
+    if(!currentDilemmaProposal&&!currentDebateSelection) showScreen("debateChoice");
     return;
   }
 
