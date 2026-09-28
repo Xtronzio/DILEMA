@@ -7005,7 +7005,7 @@ window.addEventListener(
     let giroProposal=null;
     try{giroProposal=await rpc("get_debate_twist_proposal",{p_round_id:currentRoundId});}catch(e){}
     const giroOpen=!!giroProposal&&giroProposal.status==="open"&&s.phase==="debate";
-    if(revoteButton&&giroOpen)revoteButton.disabled=true;
+    if(revoteButton&&(giroOpen||s.phase==="closing"))revoteButton.disabled=true;
     const unanimityBox=el("pilotUnanimity");
     if(unanimityBox){
       const decision=unanimous?await rpc("get_debate_unanimity_state",{p_round_id:currentRoundId}):null;
@@ -7030,10 +7030,10 @@ window.addEventListener(
     }
     if(gb){
       gb.classList.remove("pilot-selected");
-      gb.disabled=s.phase!=="debate"||!!s.paused||!s.request_open||giroOpen||isAbsent;
+      gb.disabled=s.phase!=="debate"||!!s.paused||!s.request_open||giroOpen||isAbsent||groupRevoteProposal?.status==="open"||optionalOpen;
     }
     const endButton=el("pilotEndBtn");
-    if(endButton)endButton.disabled=s.phase!=="debate"||isAbsent;
+    if(endButton)endButton.disabled=s.phase!=="debate"||isAbsent||giroOpen||groupRevoteProposal?.status==="open"||optionalOpen;
     const cb=el("pilotCloseBox");
     if(cb){
       cb.style.display=s.phase==="closing"?"block":"none";
