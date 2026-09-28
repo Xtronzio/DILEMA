@@ -41,6 +41,7 @@ begin
  if v_player is null then raise exception 'Not active'; end if;
  select id into v_id from public.debate_revote_proposals where round_id=p_round_id and vote_cycle=v_cycle and status='open' order by proposal_number desc limit 1;
  if v_id is null then raise exception 'No open revote proposal'; end if;
+ if exists(select 1 from public.debate_revote_votes where proposal_id=v_id and player_id=v_player) then raise exception 'Vote already registered'; end if;
  insert into public.debate_revote_votes(proposal_id,player_id,user_id,choice) values(v_id,v_player,(select auth.uid()),p_choice)
  on conflict(proposal_id,player_id) do update set choice=excluded.choice,user_id=excluded.user_id;
  select count(*) into v_players from public.players where room_id=v_room and abandoned_at is null and presence='present';
