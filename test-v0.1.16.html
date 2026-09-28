@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R44</div>
+    <div class="version">DILEMA · V0.1.16-010C-R45</div>
   </main>
 
 
@@ -6953,7 +6953,7 @@ window.addEventListener(
       hint.style.display=s.phase==="twist"?"block":"none";
     }else{tbox.style.display="none";hint.style.display=s.phase==="twist"?"block":"none"}
     const revoteHint=el("pilotOptionalRevoteHint"),revoteButton=el("pilotRevoteRequestBtn");
-    const [optionalRevote,groupRevoteProposal]=await Promise.all([rpc("get_optional_debate_revote",{p_round_id:currentRoundId}),rpc("get_debate_revote_proposal",{p_round_id:currentRoundId})]);
+    const [optionalRevote,groupRevoteProposal]=await Promise.all([rpc("get_optional_debate_revote",{p_round_id:currentRoundId}),rpc("get_debate_revote_proposal",{p_round_id:currentRoundId}).catch(error=>{console.error("GROUP REVOTE STATUS",error);return null})]);
     const optionalOpen=!!optionalRevote?.open&&s.phase==="debate";
     const twistRevote=s.phase==="twist";
     if(revoteHint)revoteHint.style.display=optionalOpen&&!optionalRevote.mine_done&&!s.paused?"block":"none";
