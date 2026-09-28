@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R39</div>
+    <div class="version">DILEMA · V0.1.16-010C-R40</div>
   </main>
 
 
@@ -6994,7 +6994,7 @@ window.addEventListener(
       const choose=!!decision&&!decision.outcome&&!s.paused&&!giroOpen&&!isAbsent;
       unanimityBox.style.display=choose?"block":"none";
       if(choose){
-        el("pilotUnanimityProgress").textContent=(decision.voted||0)+" / "+decision.players+" HAN VOTADO · MAYORÍA DECIDE";
+        el("pilotUnanimityProgress").textContent=(decision.voted||0)+" / "+decision.players+" HAN VOTADO · SEGUIR/GIRO: MAYORÍA · FIN: TODOS SÍ";
         unanimityBox.querySelectorAll("[data-unanimity-choice]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.unanimityChoice===decision.mine));
       }
     }
