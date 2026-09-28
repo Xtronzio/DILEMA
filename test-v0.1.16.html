@@ -1414,6 +1414,7 @@
 #rejoinPendingStatus{margin:22px 0 12px;text-align:center;line-height:1.5}
 #rejoinPendingCount{margin:8px 0 35px}
 </style><style>.selection-host-controls{gap:10px;margin:24px 0 12px}.selection-host-controls .btn{width:100%}</style>
+<style>#connectionNotice{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 30px);padding:10px 14px;border:1px solid #aaa;border-radius:12px;color:#fff;background:#111;font-size:11px;font-weight:800;letter-spacing:1px;text-align:center;z-index:9999}</style>
 </head>
 
 <body>
@@ -1429,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R38</div>
+    <div class="version">DILEMA · V0.1.16-010C-R39</div>
   </main>
 
 
@@ -1991,6 +1992,10 @@ async function ensureAnonymousAuth() {
     data: userData,
     error: userError
   } = await sb.auth.getUser();
+
+  // A temporary Auth error must not replace an existing player identity.
+  const missingSession=userError?.name==="AuthSessionMissingError"||/Auth session missing/i.test(userError?.message||"");
+  if(userError && !missingSession && ![401,403].includes(Number(userError.status)))throw userError;
 
   if (
     !userError &&
@@ -3261,16 +3266,13 @@ async function voteHallRejoin(choice){
 }
 
 async function enterRoom() {
-  await refreshLobby();
-
-  if (!currentRoomId) return;
-
-  if(currentRoomStatus!=="playing"&&!document.getElementById("dilemmaProposal").classList.contains("active")&&!document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
-
+  if(!currentRoomId)return;
+  // Attach the fallback before the first network read. A slow read cannot strand a player.
   subscribeRealtime();
-
-  if(currentRoomStatus!=="playing")startSafetyRefresh();
-
+  startSafetyRefresh();
+  if(currentRoomStatus!=="playing"&&!document.getElementById("dilemmaProposal").classList.contains("active")&&!document.getElementById("debateSuggested").classList.contains("active"))showScreen("room");
+  try{await refreshLobby();hideConnectionNotice();return true;}
+  catch(error){console.error("INITIAL ROOM SYNC ERROR:",error);showConnectionNotice();return false;}
 }
 
 
@@ -3315,6 +3317,7 @@ async function getRoom() {
       "id",
       currentRoomId
     )
+    .abortSignal(AbortSignal.timeout(12000))
     .maybeSingle();
 
   if (error) throw error;
@@ -3453,7 +3456,9 @@ async function refreshLobby() {
   return true;
   })();
   try {
-    return await lobbyRefreshPromise;
+    const updated=await lobbyRefreshPromise;
+    if(updated)hideConnectionNotice();
+    return updated;
   } finally {
     lobbyRefreshPromise = null;
     if(lobbyRefreshPending && currentRoomId===roomId){
@@ -5977,10 +5982,12 @@ function subscribeToRounds() {
             `room_id=eq.${currentRoomId}`
         },
         () => {
-          refreshGame();
+          refreshGame().catch(error=>console.error("ROUND SYNC ERROR:",error));
         }
       )
-      .subscribe();
+      .subscribe(status=>{
+        if(status==="SUBSCRIBED"&&currentRoomStatus==="playing")refreshGame().catch(error=>console.error("ROUND RECONNECT ERROR:",error));
+      });
 }
 
 
@@ -6005,7 +6012,7 @@ function startGameRefresh() {
             "visible"
         ) {
 
-          refreshGame();
+          refreshGame().catch(error=>console.error("GAME POLL ERROR:",error));
         }
 
       },
@@ -6377,7 +6384,9 @@ function subscribeRealtime() {
           refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
         }
       )
-      .subscribe();
+      .subscribe(status=>{
+        if(status==="SUBSCRIBED"&&currentRoomId)refreshLobby().catch(error=>console.error("ROOM RECONNECT ERROR:",error));
+      });
 
 }
 
@@ -6431,6 +6440,18 @@ function saveRoomSession() {
 }
 
 
+let restoreRetryTimer=null;
+function showConnectionNotice(){
+ let notice=document.getElementById("connectionNotice");
+ if(!notice){notice=document.createElement("div");notice.id="connectionNotice";notice.textContent="RECONECTANDO CON LA MESA…";document.body.appendChild(notice)}
+ notice.style.display="block";
+}
+function hideConnectionNotice(){const notice=document.getElementById("connectionNotice");if(notice)notice.style.display="none"}
+function scheduleRoomRestore(){
+ if(restoreRetryTimer||!sessionStorage.getItem("dilema_room_session"))return;
+ showConnectionNotice();
+ restoreRetryTimer=setTimeout(()=>{restoreRetryTimer=null;restoreRoomSession().catch(error=>console.error("ROOM RESTORE RETRY ERROR:",error))},4000);
+}
 async function restoreRoomSession() {
 
   const params=new URLSearchParams(location.search);
@@ -6450,11 +6471,8 @@ async function restoreRoomSession() {
   } catch (
     error
   ) {
-
-    console.error(
-      error
-    );
-
+    console.error("ROOM AUTH RESTORE ERROR:",error);
+    scheduleRoomRestore();
     return;
   }
 
@@ -6492,7 +6510,8 @@ async function restoreRoomSession() {
 
 
     const {
-      data: player
+      data: player,
+      error: playerError
     } = await sb
       .from(
         "players"
@@ -6508,9 +6527,10 @@ async function restoreRoomSession() {
         "player_id",
         localPlayerId
       )
+      .abortSignal(AbortSignal.timeout(12000))
       .maybeSingle();
 
-
+    if(playerError)throw playerError;
     if (!player) {
 
       cleanupRoom();
@@ -6571,13 +6591,11 @@ async function restoreRoomSession() {
       room.mode || session.roomMode || "game";
 
 
-    await enterRoom();
+    if(await enterRoom())hideConnectionNotice();
 
-
-  } catch {
-
-    cleanupRoom();
-
+  } catch(error) {
+    console.error("ROOM RESTORE ERROR:",error);
+    scheduleRoomRestore();
   }
 
 }
@@ -6641,6 +6659,8 @@ function cleanupRoom() {
     gameTimer
   );
   clearInterval(abandonedRejoinTimer);
+  if(restoreRetryTimer){clearTimeout(restoreRetryTimer);restoreRetryTimer=null;}
+  hideConnectionNotice();
   hallSyncQueued=false;lobbyRefreshPending=false;gameRefreshPending=false;selectionRefreshPending=false;proposalRefreshRun++;selectionRefreshRun++;
   abandonedRejoinTimer=null;pendingRejoinRoomId=null;hallRejoinRequestId=null;
 
@@ -6730,37 +6750,19 @@ window.addEventListener(
       history.replaceState(null,"",location.pathname+(qs?"?"+qs:""));
     }
 
-    try {
-
-      await ensureAnonymousAuth();
-
-      console.log(
-        "DILEMA AUTH READY:",
-        currentUserId
-      );
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        error
-      );
-
-      alert(
-        "No se pudo iniciar DILEMA. Recarga la página."
-      );
-
-      return;
-    }
-
-    renderAvatarTabs();
-
-    renderAvatars();
-
-    refreshMicrophrases();
-
-    await restoreRoomSession();
+    const start=async()=>{
+      try{
+        await ensureAnonymousAuth();
+        hideConnectionNotice();
+        renderAvatarTabs();renderAvatars();refreshMicrophrases();
+        await restoreRoomSession();
+      }catch(error){
+        console.error("APP START ERROR:",error);
+        showConnectionNotice();
+        setTimeout(start,4000);
+      }
+    };
+    await start();
 
   }
 );
