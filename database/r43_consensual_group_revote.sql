@@ -13,6 +13,7 @@ begin
  if v_player is null then raise exception 'Not active'; end if;
  select proposal_number,status into v_num,v_status from public.debate_revote_proposals where round_id=p_round_id and vote_cycle=v_cycle order by proposal_number desc limit 1;
  if v_status='accepted' then raise exception 'Revote already accepted'; end if;
+ if exists(select 1 from public.debate_optional_revote_windows where round_id=p_round_id and vote_cycle=v_cycle and closed_at is null) then raise exception 'Revote already open'; end if;
  if v_status='open' then return v_num; end if;
  v_num:=coalesce(v_num,0)+1;
  insert into public.debate_revote_proposals(round_id,vote_cycle,proposal_number) values(p_round_id,v_cycle,v_num) returning id into v_id;
