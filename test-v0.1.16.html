@@ -7728,5 +7728,95 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #debatePilotPanel #pilotPresence{margin-top:0!important}
 @media(max-width:360px){#debatePilotPanel #pilotActionGrid{gap:6px!important}#debatePilotPanel #pilotActionGrid>button{font-size:9px!important;padding:8px 4px!important}}
 </style>
+<style>
+#pilotReplyPending{display:none;margin:18px 0;padding:16px;border:1px solid #facc15;border-radius:12px;background:#10100a;color:#fff}
+#pilotReplyPending b,#pilotReplyInbox summary{color:#facc15;font-size:11px;letter-spacing:1px;font-weight:900}
+#pilotReplyPending p,#pilotReplyInbox p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4;font-size:14px;font-weight:700}
+#pilotReplyPending button{width:100%;min-height:46px;border:1px solid #facc15;border-radius:9px;background:#0b0b0b;color:#facc15;font-weight:900}
+#pilotReplyInbox{display:none;margin:12px 0 18px;padding:12px;border:1px solid #49432a;border-radius:10px;color:#fff}
+#pilotReplyInbox summary{cursor:pointer}
+#proclamationReplyComposer{display:none;position:fixed;inset:0;z-index:100004;background:rgba(0,0,0,.94);padding:18px;align-items:center;justify-content:center}
+#proclamationReplyComposer.open{display:flex}
+#proclamationReplyComposer .pr-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;box-sizing:border-box;padding:20px;background:#0b0b0b;border:1px solid #facc15;border-radius:14px;color:#fff}
+#proclamationReplyComposer h2{text-align:center;color:#facc15;font-size:19px;margin:0 0 14px}
+#proclamationReplyComposer .pr-original{padding:12px;border:1px solid #555;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+#proclamationReplyComposer label{display:block;margin:16px 0 8px;color:#aaa;font-size:11px;letter-spacing:1px}
+#proclamationReplyComposer textarea{width:100%;min-height:110px;box-sizing:border-box;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:12px;font:700 16px/1.35 Arial,sans-serif}
+#proclamationReplyComposer .pr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+#proclamationReplyComposer button{min-height:48px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
+#proclamationReplyComposer button:disabled{opacity:.45}
+#prError{min-height:18px;margin:12px 0 0;color:#ff4d5a;font-size:12px}
+</style>
+<script>
+(function(){
+ let pending=null,sending=false,refreshing=false;
+ const E=id=>document.getElementById(id);
+ function ensure(){
+  const event=E("pilotEvent");
+  if(event&&!E("pilotReplyPending")){
+   const box=document.createElement("section");box.id="pilotReplyPending";
+   box.innerHTML='<b>⚠ PROCLAMA DIRIGIDA · PUEDES RESPONDER UNA VEZ</b><p id="pilotReplyOriginal"></p><button type="button" id="pilotReplyOpen">RESPONDER EN PRIVADO</button>';
+   event.insertAdjacentElement("afterend",box);E("pilotReplyOpen").onclick=open;
+  }
+  const anchor=E("pilotReplyPending");
+  if(anchor&&!E("pilotReplyInbox")){
+   const inbox=document.createElement("details");inbox.id="pilotReplyInbox";
+   inbox.innerHTML='<summary id="pilotReplyInboxTitle">RESPUESTAS RECIBIDAS</summary><div id="pilotReplyInboxList"></div>';
+   anchor.insertAdjacentElement("afterend",inbox);
+  }
+  if(!E("proclamationReplyComposer")){
+   const modal=document.createElement("div");modal.id="proclamationReplyComposer";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Responder a la proclama");
+   modal.innerHTML='<div class="pr-card"><h2>RESPONDER PROCLAMA</h2><div id="prOriginal" class="pr-original"></div><label for="prText">TU RESPUESTA · SOLO LA RECIBE QUIEN TE ESCRIBIÓ</label><textarea id="prText" maxlength="180"></textarea><div class="pr-actions"><button id="prCancel" type="button">CANCELAR</button><button id="prSend" type="button">ENVIAR RESPUESTA</button></div><p id="prError" role="alert"></p></div>';
+   document.body.appendChild(modal);
+   E("prCancel").onclick=()=>{if(!sending)modal.classList.remove("open")};
+   E("prSend").onclick=send;
+   E("prText").oninput=()=>{E("prSend").disabled=!E("prText").value.trim()};
+  }
+ }
+ function open(){
+  if(!pending)return;ensure();E("prOriginal").textContent=pending.text;
+  E("prText").value="";E("prError").textContent="";E("prSend").disabled=true;
+  E("proclamationReplyComposer").classList.add("open");E("prText").focus();
+ }
+ async function send(){
+  if(sending||!pending)return;
+  const id=pending.id,reply=E("prText").value.trim();
+  if(!reply||reply.length>180){E("prError").textContent="ESCRIBE UNA RESPUESTA DE HASTA 180 CARACTERES.";return}
+  sending=true;E("prSend").disabled=true;
+  try{
+   const {error}=await sb.rpc("reply_to_debate_proclamation",{p_proclamation_id:id,p_text:reply});
+   if(error)throw error;
+   pending=null;E("proclamationReplyComposer").classList.remove("open");
+   E("pilotReplyPending").style.display="none";await window.pilotRefresh();
+  }catch(error){console.error("RESPUESTA A PROCLAMA",error);E("prError").textContent="NO SE HA PODIDO ENVIAR. COMPRUEBA QUE EL DEBATE SIGUE ACTIVO Y QUE NO HAYAS RESPONDIDO YA."}
+  finally{sending=false;E("prSend").disabled=!E("prText").value.trim()}
+ }
+ async function refresh(){
+  if(refreshing||!currentRoundId||!E("debate")?.classList.contains("active"))return;
+  refreshing=true;ensure();
+  try{
+   const [{data,error},{data:responses,error:inboxError}]=await Promise.all([
+    sb.rpc("get_my_proclamation_to_reply",{p_round_id:currentRoundId}),
+    sb.from("debate_private_proclamations").select("id,text").eq("round_id",currentRoundId).not("reply_to_id","is",null).neq("sender_user_id",currentUserId).order("id",{ascending:false}).limit(12)
+   ]);
+   if(error)throw error;
+   pending=data||null;const box=E("pilotReplyPending");
+   if(box){box.style.display=pending?"block":"none";if(pending)E("pilotReplyOriginal").textContent=pending.text}
+   if(inboxError)throw inboxError;const inbox=E("pilotReplyInbox");
+   if(inbox){
+    inbox.style.display=responses?.length?"block":"none";
+    if(responses?.length){
+     E("pilotReplyInboxTitle").textContent="RESPUESTAS RECIBIDAS · "+responses.length;
+     const list=E("pilotReplyInboxList");list.replaceChildren();
+     responses.forEach(item=>{const p=document.createElement("p");p.textContent=item.text;list.appendChild(p)});
+    }
+   }
+  }catch(error){console.error("RESPUESTAS A PROCLAMAS",error)}
+  finally{refreshing=false}
+ }
+ const original=window.pilotRefresh;
+ window.pilotRefresh=async function(){await original.apply(this,arguments);await refresh()};
+})();
+</script>
 </body>
 </html>
