@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R40</div>
+    <div class="version">DILEMA · V0.1.16-010C-R41</div>
   </main>
 
 
@@ -6869,6 +6869,8 @@ window.addEventListener(
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPauseProposal" class="pilot-proposal-box" style="display:none"><p id="pilotPauseProposalText"></p><div class="pilot-actions"><button type="button" data-pause-vote="YES" onclick="pilotVotePause(\'YES\')">SÍ</button><button type="button" data-pause-vote="NO" onclick="pilotVotePause(\'NO\')">NO</button></div><small id="pilotPauseProgress" class="giro-progress"></small></div>'+
+    '<button id="pilotSecretRevoteAction" class="btn btn-secondary" type="button" onclick="pilotToggleSecretRevote()" style="display:none">USAR RE-VOTO · 1/1</button>'+
+    '<div id="pilotSecretRevotePicker" class="pilot-proposal-box" style="display:none"><p>TU RE-VOTO</p><small>ELIGE TU NUEVA POSTURA. LA MESA VERÁ EL RECUENTO, NO TU NOMBRE.</small><div class="pilot-actions"><button type="button" data-secret-choice="A" onclick="pilotCastSecretRevote(\'A\')">CAMBIAR A A</button><button type="button" data-secret-choice="B" onclick="pilotCastSecretRevote(\'B\')">CAMBIAR A B</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div><small id="pilotCloseProgress" class="giro-progress"></small></div>';
@@ -6939,6 +6941,7 @@ window.addEventListener(
       const parts=[
         
         ["PROCLAMA",s.proclamations_used,s.proclamations_assigned],
+        ...(Number(s.secret_revotes_assigned)>0?[["RE-VOTO",s.secret_revotes_used,s.secret_revotes_assigned]]:[]),
         ["AUSENTE",s.absent,s.total_active],["PAUSA",s.paused?1:0,1],["ABANDONO",s.abandoned,(s.total_active||0)+(s.abandoned||0)]
       ];
       state.innerHTML=parts.map(([k,n,d])=>'<span class="'+(Number(n)>0?'pilot-hot':'')+'">'+k+' '+n+'/'+d+'</span>').join(' · ')+' · CICLO '+s.cycle;
@@ -6962,9 +6965,11 @@ window.addEventListener(
     const unanimous=!optionalOpen&&s.phase==="debate"&&Number(s.players)>1&&
       ((Number(s.votes_a)===Number(s.players)&&Number(s.votes_b)===0)||
        (Number(s.votes_b)===Number(s.players)&&Number(s.votes_a)===0));
+    let currentChoice=null;
     if(va&&vb){
       const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
+      currentChoice=my.data?.choice??null;
       va.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="B");
       const complete=!optionalOpen&&!twistRevote&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
@@ -7033,11 +7038,35 @@ window.addEventListener(
       }
     }
     if(cb)cb.querySelectorAll("[data-close]").forEach(b=>b.disabled=isAbsent);
+    const secretButton=el("pilotSecretRevoteAction"),secretPicker=el("pilotSecretRevotePicker");
+    const secretReady=!!s.secret_revote_mine&&s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen;
+    if(secretButton){secretButton.style.display=s.secret_revote_mine?"block":"none";secretButton.disabled=!secretReady;secretButton.textContent="USAR RE-VOTO · 1/1";}
+    if(secretPicker){
+      if(!secretReady)secretPicker.style.display="none";
+      secretPicker.querySelectorAll("[data-secret-choice]").forEach(button=>{
+        button.disabled=!secretReady||button.dataset.secretChoice===currentChoice;
+      });
+    }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
     if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate"||isAbsent;pb.textContent=(!pr||pr.used_at)?"📣 PROCLAMAR · 0/1":"📣 PROCLAMAR · 1/1";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
     await latestEvent();
    }catch(e){console.error("PILOT",e)}
    finally{busy=false}
+ };
+ window.pilotToggleSecretRevote=function(){
+   const picker=el("pilotSecretRevotePicker"),button=el("pilotSecretRevoteAction");
+   if(!picker||!button||button.disabled)return;
+   picker.style.display=picker.style.display==="block"?"none":"block";
+ };
+ window.pilotCastSecretRevote=async function(choice){
+   const picker=el("pilotSecretRevotePicker");
+   if(!picker||picker.style.display!=="block")return;
+   picker.querySelectorAll("[data-secret-choice]").forEach(button=>button.disabled=true);
+   try{
+     await rpc("cast_debate_secret_revote",{p_round_id:currentRoundId,p_choice:choice});
+     picker.style.display="none";
+     await pilotRefresh();
+   }catch(e){console.error("SECRET REVOTE ERROR",e);alert("No se ha podido cambiar el voto. Comprueba que sigues en el debate.");await pilotRefresh();}
  };
  window.pilotRequestTwist=async function(){
    try{
@@ -7632,5 +7661,11 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  }
  window.pilotUseProclamation=open;
 })();
-</script></body>
+</script><style>
+#debatePilotPanel #pilotSecretRevoteAction{display:block;width:100%;margin:10px 0 0;min-height:48px;font-weight:900;letter-spacing:.8px}
+#debatePilotPanel #pilotSecretRevotePicker{margin-top:10px}
+#debatePilotPanel #pilotSecretRevotePicker small{display:block;color:#aaa;font-size:10px;letter-spacing:1px;line-height:1.5;margin-bottom:12px}
+#debatePilotPanel #pilotSecretRevotePicker button:disabled{opacity:.35;cursor:default}
+</style>
+</body>
 </html>
