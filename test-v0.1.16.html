@@ -1426,12 +1426,15 @@
 #pilotInstructionsBtn{width:100%;border:1px solid #555;border-radius:12px;background:#0d0d0d;color:#fff;padding:13px;font-size:11px;font-weight:900;letter-spacing:1px}
 #pilotInstructionsModal{position:fixed;inset:0;z-index:100000;background:#000c;display:none;align-items:center;justify-content:center;padding:20px}
 #pilotInstructionsModal.open{display:flex}
-#pilotInstructionsModal .instructions-card{background:#111;border:1px solid #555;border-radius:16px;max-width:440px;width:100%;max-height:85vh;overflow:auto;padding:18px;color:#fff}
+#pilotInstructionsModal .instructions-card{display:flex;flex-direction:column;background:#111;border:1px solid #555;border-radius:16px;max-width:440px;width:100%;max-height:calc(100dvh - 32px);overflow:hidden;padding:18px;color:#fff}
 #pilotInstructionsModal h2{font-size:18px;margin:0 0 12px}
+#pilotInstructionsModal .instructions-content{min-height:0;overflow-y:auto;padding-right:5px}
+#pilotInstructionsModal .instructions-content section+section{margin-top:18px}
+#pilotInstructionsModal h3{font-size:10px;color:#aaa;letter-spacing:1.2px;margin:0 0 8px}
 #pilotInstructionsModal dl{margin:0}
 #pilotInstructionsModal dt{font-size:11px;color:#facc15;font-weight:900;margin-top:12px}
 #pilotInstructionsModal dd{font-size:12px;line-height:1.4;margin:3px 0 0}
-#pilotInstructionsModal button{width:100%;margin-top:18px;background:#fff;border:0;border-radius:10px;color:#111;padding:13px;font-weight:900}
+#pilotInstructionsModal button{flex:none;width:100%;margin-top:16px;background:#fff;border:0;border-radius:10px;color:#111;padding:13px;font-weight:900}
 </style><style>
 /* R55: un espacio para las decisiones, con amarillo reservado a las votaciones. */
 #debatePilotPanel #pilotVoteStage{width:100%;margin:18px 0 0}
@@ -1473,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R58</div>
+    <div class="version">DILEMA · V0.1.16-010C-R59</div>
   </main>
 
 
@@ -6946,11 +6949,12 @@ window.addEventListener(
    const latest=[publicEvent.data,privateEvent].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
    if(latest&&Number(latest.id)>lastEventId){
      lastEventId=Number(latest.id);
-     const box=el("pilotEvent"),isProclamation=["proclamation","private_proclamation"].includes(latest.event_type);
+     const box=el("pilotEvent"),needsDismiss=["proclamation","private_proclamation"].includes(latest.event_type)||
+        (latest.event_type==="system"&&/^MENSAJE DE AUSENCIA\s*·/.test(latest.text||""));
      box.replaceChildren();box.dataset.eventId=String(latest.id);
      const message=document.createElement("span");message.textContent=latest.text;box.appendChild(message);
      box.style.display="block";
-     if(isProclamation){
+     if(needsDismiss){
        const dismiss=document.createElement("button");dismiss.type="button";dismiss.className="pilot-event-dismiss";
        dismiss.textContent="ENTENDIDO";dismiss.onclick=()=>{if(box.dataset.eventId===String(latest.id))box.style.display="none"};
        box.appendChild(dismiss);
@@ -8032,15 +8036,12 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(document.getElementById("pilotInstructionsModal"))return;
   const modal=document.createElement("div");modal.id="pilotInstructionsModal";
   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
-  modal.innerHTML='<div class="instructions-card"><h2>CÓMO FUNCIONA EL DEBATE</h2><dl>'+
-    '<dt>VOTOS A/B</dt><dd>Las cifras son públicas; nadie ve quién ha votado cada opción.</dd>'+
-    '<dt>PROCLAMAR</dt><dd>Envía tu texto a las personas que elijas. Se sortea una proclama al inicio y tras cada votación colectiva; puedes guardar una.</dd>'+
-    '<dt>CAMBIAR MI VOTO</dt><dd>Usa tu cambio sorteado en secreto. No requiere permiso de la mesa ni desencadena un nuevo sorteo.</dd>'+
-    '<dt>PEDIR GIRO · PEDIR RE-VOTO</dt><dd>La mesa vota la propuesta. Si prospera, cada persona mantiene o cambia su voto. Al terminar se sortean de nuevo las herramientas.</dd>'+
-    '<dt>ASISTENTE · SOLICITAR AYUDA</dt><dd>La guía es privada y se adapta a tu postura. Se sortea una; quien no la tenga puede pedirla. La mayoría desbloquea la ayuda para quienes la solicitaron.</dd>'+
-    '<dt>AUSENTARME · SOLICITAR PAUSA</dt><dd>La ausencia te aparta del debate; la pausa se decide en la mesa.</dd>'+
-    '<dt>FIN DEBATE · ABANDONAR</dt><dd>La mesa decide por unanimidad si termina. Abandonar te saca del debate.</dd>'+
-    '</dl><button type="button" id="pilotInstructionsClose">VOLVER AL TABLERO</button></div>';
+  const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
+  const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
+    group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
+    '</dl></section>').join('');
+  modal.innerHTML='<div class="instructions-card"><h2>CÓMO FUNCIONA EL DEBATE</h2><div class="instructions-content">'+content+
+    '</div><button type="button" id="pilotInstructionsClose">VOLVER AL TABLERO</button></div>';
   document.body.appendChild(modal);
   document.getElementById("pilotInstructionsClose").onclick=()=>modal.classList.remove("open");
   modal.onclick=e=>{if(e.target===modal)modal.classList.remove("open")};
