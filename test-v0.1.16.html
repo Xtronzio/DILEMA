@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R48</div>
+    <div class="version">DILEMA · V0.1.16-010C-R49</div>
   </main>
 
 
@@ -6971,6 +6971,7 @@ window.addEventListener(
       }
     }
     window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen||twistRevote,votesA:s.votes_a,votesB:s.votes_b};
+    window.dilemaAssistantState={roundId:currentRoundId,cycle:s.cycle,active:s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen};
     renderDebateGroupVote();
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
     if(ca)ca.textContent=twistRevote?(s.next_votes_a||0):(optionalOpen?(optionalRevote.votes_a||0):(s.votes_a||0));
@@ -6983,6 +6984,7 @@ window.addEventListener(
       const displayCycle=s.phase==="twist"?Number(s.cycle)+1:Number(s.cycle);
       const my=await sb.from("debate_vote_cycles").select("choice").eq("round_id",currentRoundId).eq("cycle_number",displayCycle).eq("user_id",currentUserId).maybeSingle();
       currentChoice=my.data?.choice??null;
+      if(window.dilemaAssistantState)window.dilemaAssistantState.choice=currentChoice;
       va.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="B");
       const complete=!optionalOpen&&!twistRevote&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
@@ -7816,6 +7818,90 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  }
  const original=window.pilotRefresh;
  window.pilotRefresh=async function(){await original.apply(this,arguments);await refresh()};
+})();
+</script>
+<style>
+#pilotAssistantOpen{display:block;width:100%;min-height:48px;margin:13px 0 16px;padding:10px;border:1px solid #777;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;letter-spacing:1px}
+#pilotAssistantOpen:disabled{opacity:.35}
+#pilotAssistantModal{display:none;position:fixed;inset:0;z-index:100005;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.94)}
+#pilotAssistantModal.open{display:flex}
+#pilotAssistantModal .am-card{width:min(100%,450px);max-height:calc(100dvh - 32px);overflow-y:auto;padding:18px;border:1px solid #ddd;border-radius:14px;background:#0b0b0b;color:#fff}
+#pilotAssistantModal h2{margin:0 0 5px;text-align:center;font-size:20px;font-weight:900}
+#pilotAssistantModal .am-private{text-align:center;color:#aaa;font-size:10px;letter-spacing:1.2px;margin-bottom:16px}
+#pilotAssistantModal h3{font-size:11px;color:#ccc;letter-spacing:1px;margin:16px 0 7px}
+#pilotAssistantModal p,#pilotAssistantModal li{font-size:14px;line-height:1.4;font-weight:700;overflow-wrap:anywhere}
+#pilotAssistantModal ol{padding-left:23px}
+#pilotAssistantModal li+li{margin-top:8px}
+#pilotAssistantModal .am-posture{border:1px solid #555;border-radius:10px;padding:12px}
+#pilotAssistantModal .am-mode{font-size:10px;color:#aaa;letter-spacing:1px;margin-top:12px}
+#pilotAssistantModal .am-close{width:100%;min-height:46px;margin-top:18px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
+#pilotAssistantModal .am-error{color:#ff6b78;text-align:center;font-size:12px;margin-top:12px}
+</style>
+<script>
+(function(){
+ const E=id=>document.getElementById(id);
+ let guide=null,guideKey="",loading=false;
+ function ensure(){
+  const grid=E("pilotActionGrid");
+  if(grid&&!E("pilotAssistantOpen")){
+   const btn=document.createElement("button");btn.id="pilotAssistantOpen";btn.type="button";
+   btn.textContent="?  ASISTENTE DE DEBATE · SOLO PARA TI";
+   btn.onclick=open;grid.insertAdjacentElement("afterend",btn);
+  }
+  if(!E("pilotAssistantModal")){
+   const modal=document.createElement("div");modal.id="pilotAssistantModal";
+   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","Asistente privado de debate");
+   modal.innerHTML='<div class="am-card"><h2>ASISTENTE DE DEBATE</h2><div class="am-private">SOLO TÚ PUEDES VER ESTA GUÍA</div><div id="amContent"></div><p id="amError" class="am-error"></p><button type="button" id="amClose" class="am-close">VOLVER AL DEBATE</button></div>';
+   document.body.appendChild(modal);E("amClose").onclick=()=>modal.classList.remove("open");
+  }
+ }
+ function part(title,value,ordered){
+  const root=E("amContent"),head=document.createElement("h3");head.textContent=title;root.appendChild(head);
+  if(ordered){
+   const list=document.createElement("ol");
+   value.slice(0,2).forEach(line=>{const li=document.createElement("li");li.textContent=String(line);list.appendChild(li)});
+   root.appendChild(list);
+  }else{
+   const p=document.createElement("p");p.textContent=String(value||"");root.appendChild(p);
+  }
+ }
+ function render(mode){
+  const root=E("amContent");root.replaceChildren();
+  const card=document.createElement("div");card.className="am-posture";card.textContent=guide.postura||"";root.appendChild(card);
+  part("DOS LÍNEAS PARA DEFENDER TU POSTURA",guide.argumentos||[],true);
+  part("PREGUNTAS PARA PONERLA A PRUEBA",guide.preguntas||[],true);
+  part("LA MEJOR OBJECIÓN",guide.objecion,false);
+  part("ANTES DE DECIDIR",guide.cierre,false);
+  const label=document.createElement("p");label.className="am-mode";
+  label.textContent=mode==="IA"?"GUÍA PERSONALIZADA CON IA":"GUÍA BÁSICA · IA PENDIENTE DE CONFIGURACIÓN";
+  root.appendChild(label);
+ }
+ async function open(){
+  ensure();const state=window.dilemaAssistantState;
+  if(loading||!state?.active||state.roundId!==currentRoundId)return;
+  E("pilotAssistantModal").classList.add("open");E("amError").textContent="";
+  const key=state.roundId+":"+state.cycle+":"+state.choice;
+  if(guide&&guideKey===key){render(guide.mode);return}
+  loading=true;E("amContent").textContent="PREPARANDO TU GUÍA…";
+  try{
+   const {data,error}=await sb.functions.invoke("debate-coach",{body:{roundId:currentRoundId}});
+   if(error)throw error;
+   if(!data?.guide)throw Error(data?.error||"No hay guía disponible");
+   guide={...data.guide,mode:data.mode};guideKey=key;
+   render(data.mode);
+  }catch(error){
+   console.error("ASISTENTE",error);
+   E("amContent").textContent="";
+   E("amError").textContent=error?.message||"No se ha podido preparar la guía. Inténtalo de nuevo.";
+  }finally{loading=false}
+ }
+ const previous=window.pilotRefresh;
+ window.pilotRefresh=async function(){
+  await previous.apply(this,arguments);ensure();
+  const state=window.dilemaAssistantState,btn=E("pilotAssistantOpen");
+  if(btn)btn.disabled=!state?.active||state.roundId!==currentRoundId;
+  if(guide&&guideKey!==state?.roundId+":"+state?.cycle+":"+state?.choice){guide=null;guideKey=""}
+ };
 })();
 </script>
 </body>
