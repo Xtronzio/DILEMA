@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R50</div>
+    <div class="version">DILEMA · V0.1.16-010C-R51</div>
   </main>
 
 
@@ -3276,29 +3276,16 @@ async function enterRoom() {
 }
 
 
-let hallVersionCheckKey=null;
-async function checkHallVersion(completedRoundId){
- if(!currentRoomId||!completedRoundId)return false;
- const key=currentRoomId+":"+completedRoundId;
- if(hallVersionCheckKey===key)return false;
- hallVersionCheckKey=key;
- try{
-  const checkUrl=new URL(location.pathname,location.origin);
-  checkUrl.searchParams.set("_version_check",String(Date.now()));
-  const response=await fetch(checkUrl.href,{cache:"no-store"});
-  if(!response.ok)return false;
-  const html=await response.text();
-  const published=html.match(/<div class="version">([^<]+)<\/div>/)?.[1]?.trim();
-  const running=document.querySelector(".version")?.textContent?.trim();
-  if(!published||!running||published===running)return false;
-  const next=new URL(location.href);
-  const revision=published.match(/-R(\d+)$/)?.[1];
-  if(revision)next.searchParams.set("r",revision);
-  next.searchParams.delete("fresh");
-  next.searchParams.delete("_refresh");
-  location.replace(next.href);
-  return true;
- }catch(error){console.error("HALL VERSION CHECK ERROR:",error);return false}
+let hallReloading=false;
+function reloadHall(){
+ if(hallReloading||!currentRoomId)return false;
+ hallReloading=true;
+ const next=new URL(location.href);
+ next.searchParams.delete("r");
+ next.searchParams.delete("fresh");
+ next.searchParams.set("_refresh",String(Date.now()));
+ location.replace(next.href);
+ return true;
 }
 
 async function getRoom() {
@@ -3372,8 +3359,8 @@ async function refreshLobby() {
   if(returningRoundId){
     currentRoundId=null;currentRoundStatus=null;currentDilemma=null;localVoteChoice=null;
     if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
-    showScreen("room");
-    void checkHallVersion(returningRoundId);
+    reloadHall();
+    return false;
   }
 
   if (
@@ -4306,7 +4293,7 @@ async function refreshDilemmaProposal(){
  if(!proposal){
   if(await refreshDebateSelection())return;
   if(run!==proposalRefreshRun)return;
-  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")) showScreen("room");
+  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")) reloadHall();
   return;
  }
  document.getElementById("proposalQuestion").textContent=proposal.question;
@@ -4344,8 +4331,7 @@ async function resetDebateChoice(){
   proposalRefreshRun++;selectionRefreshRun++;
   currentDilemmaProposal=null;currentDebateSelection=null;selectionVisibleStage=null;selectionQuestionsStamp=null;
   announceHallChange("selection-reset");
-  showScreen("room");
-  await refreshLobby();
+  reloadHall();
  }catch(error){console.error("SELECTION RESET ERROR:",error);alert("NO SE HA PODIDO REINICIAR LA ELECCIÓN.");}
  finally{resettingDebateChoice=false;}
 }
@@ -4885,9 +4871,8 @@ async function refreshGame() {
         currentDilemma=null;
         localVoteChoice=null;
         if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
-        showScreen("room");
-        if(returningRoundId)void checkHallVersion(returningRoundId);
-        setTimeout(()=>refreshLobby(),0);
+        if(returningRoundId)reloadHall();
+        else {showScreen("room");setTimeout(()=>refreshLobby(),0);}
       }
       return;
     }
@@ -6347,8 +6332,7 @@ function subscribeRealtime() {
         if(payload.payload.kind==="selection-reset" && currentRoomStatus==="waiting"){
           proposalRefreshRun++;selectionRefreshRun++;
           currentDilemmaProposal=null;currentDebateSelection=null;selectionVisibleStage=null;selectionQuestionsStamp=null;
-          showScreen("room");
-          refreshLobby().catch(error=>console.error("RESET HALL SYNC ERROR:",error));
+          reloadHall();
           return;
         }
         if(currentRoomStatus==="waiting")queueHallSync();
@@ -6738,6 +6722,11 @@ window.addEventListener(
   async () => {
 
     const bootParams=new URLSearchParams(location.search);
+    if(bootParams.has("_refresh")&&bootParams.get("fresh")!=="1"){
+      bootParams.delete("_refresh");
+      const qs=bootParams.toString();
+      history.replaceState(null,"",location.pathname+(qs?"?"+qs:""));
+    }
     if(bootParams.get("fresh")==="1"){
       sessionStorage.removeItem("dilema_room_session");
       currentRoomId=null;currentRoomCode=null;currentRoomHostId=null;currentExpectedPlayers=null;
@@ -7185,8 +7174,7 @@ window.addEventListener(
        if(error) console.error(error);
      }catch(e){}
      currentRoundId=null;currentRoundStatus=null;currentDilemma=null;
-     overlay.remove();showScreen("room");await refreshLobby();
-     void checkHallVersion(completedRoundId);
+     overlay.remove();reloadHall();
      collectiveEndRunning=false;
    },2600);
  }
