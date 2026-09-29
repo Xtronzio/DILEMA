@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R59</div>
+    <div class="version">DILEMA · V0.1.16-010C-R60</div>
   </main>
 
 
@@ -4340,7 +4340,12 @@ async function refreshDilemmaProposal(){
  if(!proposal){
   if(await refreshDebateSelection())return;
   if(run!==proposalRefreshRun)return;
-  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")) reloadHall();
+  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")){
+    const live=await getRoom();
+    if(roomId!==currentRoomId||run!==proposalRefreshRun)return;
+    if(live?.status==="playing"){currentRoomStatus="playing";subscribeToRounds();startGameRefresh();await refreshGame()}
+    else if(live?.status==="waiting")reloadHall();
+   }
   return;
  }
  document.getElementById("proposalQuestion").textContent=proposal.question;
@@ -6882,7 +6887,7 @@ window.addEventListener(
 </style>
 <script>
 (function(){
- let lastEventId=0, busy=false, initializedRound=null;
+ let lastEventId=0, busy=false, initializedRound=null, eventQueue=[], eventShowing=false;
 
  function el(id){return document.getElementById(id)}
  function ensurePanel(){
@@ -6926,6 +6931,8 @@ window.addEventListener(
    ensurePanel();
    if(initializedRound!==currentRoundId){
      await rpc("init_debate_engine",{p_round_id:currentRoundId});
+     lastEventId=0;eventQueue=[];eventShowing=false;
+     const oldEvent=el("pilotEvent");if(oldEvent)oldEvent.style.display="none";
      initializedRound=currentRoundId;
    }
  }
@@ -6937,31 +6944,45 @@ window.addEventListener(
    const r=await sb.from("debate_proclamations").select("id,used_at").eq("round_id",currentRoundId).eq("user_id",currentUserId).is("used_at",null).order("id",{ascending:false}).limit(1).maybeSingle();
    return r.data||null;
  }
+ function showNextEvent(){
+   if(eventShowing||!eventQueue.length)return;
+   const next=eventQueue.shift(),box=el("pilotEvent");
+   if(!box)return;
+   eventShowing=true;
+   const needsDismiss=["proclamation","private_proclamation"].includes(next.event_type)||
+     (next.event_type==="system"&&/^MENSAJE DE AUSENCIA\s*·/.test(next.text||""));
+   box.replaceChildren();box.dataset.eventId=String(next.id);
+   const message=document.createElement("span");message.textContent=next.text;box.appendChild(message);
+   box.style.display="block";
+   const finish=()=>{
+     if(box.dataset.eventId!==String(next.id))return;
+     box.style.display="none";eventShowing=false;showNextEvent();
+   };
+   if(needsDismiss){
+     const dismiss=document.createElement("button");dismiss.type="button";dismiss.className="pilot-event-dismiss";
+     dismiss.textContent="ENTENDIDO";dismiss.onclick=finish;box.appendChild(dismiss);
+   }else setTimeout(finish,5000);
+ }
  async function latestEvent(){
-   const [publicEvent,privateProclamation]=await Promise.all([
-     sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle(),
-     sb.from("debate_private_proclamations").select("id,text,reply_enabled,sender_user_id").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle()
+   const [publicEvents,privateProclamations]=await Promise.all([
+     sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).gt("id",lastEventId).order("id").limit(100),
+     sb.from("debate_private_proclamations").select("id,text,reply_enabled,sender_user_id").eq("round_id",currentRoundId).gt("id",lastEventId).order("id").limit(100)
    ]);
-   if(publicEvent.error)console.error("DEBATE EVENTS",publicEvent.error);
-   if(privateProclamation.error)console.error("PRIVATE PROCLAMATIONS",privateProclamation.error);
-   const privateItem=privateProclamation.data;
-   const privateEvent=privateItem&&!(privateItem.reply_enabled&&privateItem.sender_user_id!==currentUserId)&&{...privateItem,event_type:"private_proclamation"};
-   const latest=[publicEvent.data,privateEvent].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
-   if(latest&&Number(latest.id)>lastEventId){
-     lastEventId=Number(latest.id);
-     const box=el("pilotEvent"),needsDismiss=["proclamation","private_proclamation"].includes(latest.event_type)||
-        (latest.event_type==="system"&&/^MENSAJE DE AUSENCIA\s*·/.test(latest.text||""));
-     box.replaceChildren();box.dataset.eventId=String(latest.id);
-     const message=document.createElement("span");message.textContent=latest.text;box.appendChild(message);
-     box.style.display="block";
-     if(needsDismiss){
-       const dismiss=document.createElement("button");dismiss.type="button";dismiss.className="pilot-event-dismiss";
-       dismiss.textContent="ENTENDIDO";dismiss.onclick=()=>{if(box.dataset.eventId===String(latest.id))box.style.display="none"};
-       box.appendChild(dismiss);
-     }else{
-       setTimeout(()=>{if(box&&box.dataset.eventId===String(latest.id))box.style.display="none"},5000);
-     }
+   if(publicEvents.error||privateProclamations.error){
+     if(publicEvents.error)console.error("DEBATE EVENTS",publicEvents.error);
+     if(privateProclamations.error)console.error("PRIVATE PROCLAMATIONS",privateProclamations.error);
+     return;
    }
+   const events=[
+     ...(publicEvents.data||[]),
+     ...(privateProclamations.data||[]).map(item=>({...item,event_type:"private_proclamation"}))
+   ].sort((a,b)=>Number(a.id)-Number(b.id));
+   for(const item of events){
+     lastEventId=Math.max(lastEventId,Number(item.id));
+     if(item.event_type==="private_proclamation"&&item.reply_enabled&&item.sender_user_id!==currentUserId)continue;
+     eventQueue.push(item);
+   }
+   showNextEvent();
  }
  window.pilotRefresh=async function(){
    if(busy) return;
@@ -7695,7 +7716,8 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #proclamationComposer .pc-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;border:1px solid #fff;border-radius:14px;background:#0b0b0b;color:#fff;padding:20px}
 #proclamationComposer h2{text-align:center;font-size:19px;font-weight:900;margin:0 0 16px}
 #proclamationComposer .pc-label{display:block;color:#aaa;font-size:11px;letter-spacing:1.1px;line-height:1.4;margin:0 0 10px}
-#proclamationComposer textarea{width:100%;min-height:120px;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:14px;font:700 16px/1.35 Arial,sans-serif}
+#proclamationComposer textarea{width:100%;box-sizing:border-box;min-height:120px;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:14px;font:700 16px/1.35 Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#proclamationComposer textarea:focus,#proclamationComposer textarea:focus-visible{outline:none!important;box-shadow:none!important;border-color:#fff}
 #proclamationComposer .pc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px}
 #proclamationComposer .pc-heading .pc-label{margin:0}
 #proclamationComposer .pc-heading button{width:auto;min-height:34px;padding:7px 10px;font-size:10px}
@@ -7804,7 +7826,8 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #proclamationReplyComposer h2{text-align:center;color:#facc15;font-size:19px;margin:0 0 14px}
 #proclamationReplyComposer .pr-original{padding:12px;border:1px solid #555;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
 #proclamationReplyComposer label{display:block;margin:16px 0 8px;color:#aaa;font-size:11px;letter-spacing:1px}
-#proclamationReplyComposer textarea{width:100%;min-height:110px;box-sizing:border-box;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:12px;font:700 16px/1.35 Arial,sans-serif}
+#proclamationReplyComposer textarea{width:100%;min-height:110px;box-sizing:border-box;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:12px;font:700 16px/1.35 Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#proclamationReplyComposer textarea:focus,#proclamationReplyComposer textarea:focus-visible{outline:none!important;box-shadow:none!important;border-color:#facc15}
 #proclamationReplyComposer .pr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 #proclamationReplyComposer button{min-height:48px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
 #proclamationReplyComposer button:disabled{opacity:.45}
@@ -7812,7 +7835,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 </style>
 <script>
 (function(){
- let pending=null,sending=false,refreshing=false;
+ let pending=null,sending=false,refreshing=false,lastReplyId=0,inboxRound=null;
  const E=id=>document.getElementById(id);
  function ensure(){
   const event=E("pilotEvent");
@@ -7878,9 +7901,11 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    pending=data||null;const box=E("pilotReplyPending");
    if(box){box.style.display=pending?"block":"none";if(pending){E("pilotReplyOriginal").textContent=pending.text;if(E("pilotEvent")?.dataset.eventId===String(pending.id))E("pilotEvent").style.display="none"}}
    if(inboxError)throw inboxError;const inbox=E("pilotReplyInbox");
+   if(inboxRound!==currentRoundId){inboxRound=currentRoundId;lastReplyId=0;if(inbox)inbox.open=false}
    if(inbox){
     inbox.style.display=responses?.length?"block":"none";
     if(responses?.length){
+     const newest=Number(responses[0].id);if(newest>lastReplyId){lastReplyId=newest;inbox.open=true}
      E("pilotReplyInboxTitle").textContent="RESPUESTAS RECIBIDAS · "+responses.length;
      const list=E("pilotReplyInboxList");list.replaceChildren();
      responses.forEach(item=>{const p=document.createElement("p");p.textContent=item.text;list.appendChild(p)});
