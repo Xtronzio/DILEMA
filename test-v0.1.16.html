@@ -1445,6 +1445,19 @@
 #debatePilotPanel #pilotVoteLate{display:none;border:1px solid #facc15;border-radius:14px;padding:16px;color:#fff;background:#10100a;text-align:center;font-size:13px;font-weight:900;line-height:1.4}
 #debatePilotPanel #pilotVoteLate strong{display:block;color:#facc15;font-size:10px;letter-spacing:1px;margin-bottom:8px}
 #debatePilotPanel #pilotActionGrid > button:disabled,#pilotAssistantActions > button:disabled{background:#0b0b0b!important;color:#555!important;border-color:#303030!important;opacity:1!important;cursor:default!important;filter:grayscale(1)}
+</style><style>
+/* R58: selección por acción y bloqueo estable entre refrescos. */
+#selectionDraw,#selectionConfirm{background:#0b0b0b!important;color:#fff!important;border:1px solid #555!important}
+#selectionDraw:active,#selectionConfirm:active{background:#fff!important;color:#0b0b0b!important;border-color:#fff!important}
+#selectionConfirm:disabled{background:#0b0b0b!important;color:#666!important;border-color:#303030!important}
+#debatePilotPanel.pilot-process-locked #pilotActionGrid > button:not(#pilotAbandonBtn):not(#pilotSecretRevoteAction),
+#debatePilotPanel.pilot-process-locked #pilotAssistantActions > button{
+ background:#0b0b0b!important;color:#555!important;border-color:#303030!important;filter:grayscale(1)!important;transition:none!important
+}
+#pilotReplyPending .pilot-reply-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#pilotReplyPending .pilot-reply-actions button{min-width:0;font-size:11px;padding:8px 4px;overflow-wrap:anywhere}
+#pilotReplyPending #pilotReplySkip{border-color:#666;color:#fff}
+#pilotReplyPending .pilot-reply-actions button:disabled{opacity:.4}
 </style></head>
 
 <body>
@@ -1460,7 +1473,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R57</div>
+    <div class="version">DILEMA · V0.1.16-010C-R58</div>
   </main>
 
 
@@ -1689,12 +1702,12 @@
       <div id="intensityChoices" class="selection-intensities"></div>
       <div class="small-label">¿QUÉ DILEMA TENÉIS HOY?</div>
       <div id="categoryChoices" class="selection-themes"></div>
-      <button id="selectionConfirm" type="button" class="btn btn-primary" onclick="voteSelectionFilters()" disabled>VOTAR ESTA ELECCIÓN</button>
+      <button id="selectionConfirm" type="button" class="btn btn-secondary" onclick="voteSelectionFilters()" disabled>VOTAR ESTA ELECCIÓN</button>
     </div>
     <div id="selectionQuestions" style="display:none"><div id="catalogDilemmas" class="selection-questions"></div></div>
     <div id="selectionRandom" style="display:none">
-      <button id="selectionDraw" type="button" class="btn btn-primary" onclick="drawRandomDilemma()">SACAR DILEMA ALEATORIO</button>
-      <div id="selectionRandomWaiting" class="small-note">ESPERANDO AL ANFITRIÓN</div>
+      <button id="selectionDraw" type="button" class="btn btn-secondary" onclick="drawRandomDilemma()">SACAR DILEMA ALEATORIO</button>
+      <div id="selectionRandomWaiting" class="small-note" style="display:none">ESPERANDO AL ANFITRIÓN</div>
     </div>
     <div id="selectionStatus" class="small-note"></div>
     <div id="suggestedError" class="error"></div>
@@ -6924,11 +6937,12 @@ window.addEventListener(
  async function latestEvent(){
    const [publicEvent,privateProclamation]=await Promise.all([
      sb.from("debate_events").select("id,text,event_type").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle(),
-     sb.from("debate_private_proclamations").select("id,text").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle()
+     sb.from("debate_private_proclamations").select("id,text,reply_enabled,sender_user_id").eq("round_id",currentRoundId).order("id",{ascending:false}).limit(1).maybeSingle()
    ]);
    if(publicEvent.error)console.error("DEBATE EVENTS",publicEvent.error);
    if(privateProclamation.error)console.error("PRIVATE PROCLAMATIONS",privateProclamation.error);
-   const privateEvent=privateProclamation.data&&{...privateProclamation.data,event_type:"private_proclamation"};
+   const privateItem=privateProclamation.data;
+   const privateEvent=privateItem&&!(privateItem.reply_enabled&&privateItem.sender_user_id!==currentUserId)&&{...privateItem,event_type:"private_proclamation"};
    const latest=[publicEvent.data,privateEvent].filter(Boolean).sort((a,b)=>Number(b.id)-Number(a.id))[0];
    if(latest&&Number(latest.id)>lastEventId){
      lastEventId=Number(latest.id);
@@ -7800,8 +7814,8 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   const event=E("pilotEvent");
   if(event&&!E("pilotReplyPending")){
    const box=document.createElement("section");box.id="pilotReplyPending";
-   box.innerHTML='<b>⚠ PROCLAMA DIRIGIDA · PUEDES RESPONDER UNA VEZ</b><p id="pilotReplyOriginal"></p><button type="button" id="pilotReplyOpen">RESPONDER EN PRIVADO</button>';
-   event.insertAdjacentElement("afterend",box);E("pilotReplyOpen").onclick=open;
+   box.innerHTML='<b>⚠ PROCLAMA DIRIGIDA · PUEDES RESPONDER UNA VEZ</b><p id="pilotReplyOriginal"></p><div class="pilot-reply-actions"><button type="button" id="pilotReplyOpen">RESPONDER EN PRIVADO</button><button type="button" id="pilotReplySkip">NO RESPONDER</button></div>';
+   event.insertAdjacentElement("afterend",box);E("pilotReplyOpen").onclick=open;E("pilotReplySkip").onclick=decline;
   }
   const anchor=E("pilotReplyPending");
   if(anchor&&!E("pilotReplyInbox")){
@@ -7836,6 +7850,18 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   }catch(error){console.error("RESPUESTA A PROCLAMA",error);E("prError").textContent="NO SE HA PODIDO ENVIAR. COMPRUEBA QUE EL DEBATE SIGUE ACTIVO Y QUE NO HAYAS RESPONDIDO YA."}
   finally{sending=false;E("prSend").disabled=!E("prText").value.trim()}
  }
+ async function decline(){
+  if(sending||!pending)return;
+  sending=true;const id=pending.id;
+  E("pilotReplySkip").disabled=true;
+  try{
+   const {data,error}=await sb.rpc("decline_debate_proclamation",{p_proclamation_id:id});
+   if(error||!data)throw error||new Error("Already handled");
+   pending=null;E("pilotReplyPending").style.display="none";
+   await window.pilotRefresh();
+  }catch(error){console.error("NO RESPONDER PROCLAMA",error);alert("No se ha podido cerrar la proclama. Inténtalo de nuevo.")}
+  finally{sending=false;E("pilotReplySkip").disabled=false}
+ }
  async function refresh(){
   if(refreshing||!currentRoundId||!E("debate")?.classList.contains("active"))return;
   refreshing=true;ensure();
@@ -7846,7 +7872,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    ]);
    if(error)throw error;
    pending=data||null;const box=E("pilotReplyPending");
-   if(box){box.style.display=pending?"block":"none";if(pending)E("pilotReplyOriginal").textContent=pending.text}
+   if(box){box.style.display=pending?"block":"none";if(pending){E("pilotReplyOriginal").textContent=pending.text;if(E("pilotEvent")?.dataset.eventId===String(pending.id))E("pilotEvent").style.display="none"}}
    if(inboxError)throw inboxError;const inbox=E("pilotReplyInbox");
    if(inbox){
     inbox.style.display=responses?.length?"block":"none";
@@ -8052,6 +8078,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const secret=E("pilotSecretRevotePicker");
   if(active&&visible(secret))secret.style.display="none";
   const locked=active||visible(secret);
+  E("debatePilotPanel")?.classList.toggle("pilot-process-locked",locked);
   if(!locked)return;
   document.querySelectorAll("#pilotActionGrid > button,#pilotAssistantActions > button").forEach(button=>{
    if(button.id==="pilotAbandonBtn"||button.id==="pilotSecretRevoteAction"&&!active)return;
