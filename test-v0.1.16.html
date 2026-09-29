@@ -1430,7 +1430,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R51</div>
+    <div class="version">DILEMA · V0.1.16-010C-R52</div>
   </main>
 
 
@@ -2263,11 +2263,11 @@ function showScreen(
 
 
 function goHome() {
-
-  showScreen(
-    "home"
-  );
-
+  const next=new URL(location.href);
+  next.searchParams.delete("r");
+  next.searchParams.delete("_refresh");
+  next.searchParams.set("fresh","1");
+  location.replace(next.href);
 }
 
 
@@ -4871,8 +4871,7 @@ async function refreshGame() {
         currentDilemma=null;
         localVoteChoice=null;
         if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
-        if(returningRoundId)reloadHall();
-        else {showScreen("room");setTimeout(()=>refreshLobby(),0);}
+        reloadHall();
       }
       return;
     }
@@ -6108,7 +6107,7 @@ async function resetGame() {
             console.error(
               "PLAYER CLEANUP AFTER RESET:",
               deletePlayersError
-            );
+            ).finally(()=>goHome());
           }
         }
       );
