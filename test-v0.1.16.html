@@ -6107,7 +6107,7 @@ async function resetGame() {
             console.error(
               "PLAYER CLEANUP AFTER RESET:",
               deletePlayersError
-            ).finally(()=>goHome());
+            ).finally(()=>{if(!currentRoomId)goHome()});
           }
         }
       );
