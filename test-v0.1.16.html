@@ -1432,6 +1432,19 @@
 #pilotInstructionsModal dt{font-size:11px;color:#facc15;font-weight:900;margin-top:12px}
 #pilotInstructionsModal dd{font-size:12px;line-height:1.4;margin:3px 0 0}
 #pilotInstructionsModal button{width:100%;margin-top:18px;background:#fff;border:0;border-radius:10px;color:#111;padding:13px;font-weight:900}
+</style><style>
+/* R55: un espacio para las decisiones, con amarillo reservado a las votaciones. */
+#debatePilotPanel #pilotVoteStage{width:100%;margin:18px 0 0}
+#debatePilotPanel #pilotVoteStage > div:not(#pilotVoteLate){margin:0 0 14px!important;width:100%!important;box-sizing:border-box}
+#debatePilotPanel #pilotSecretRevotePicker{border:1px solid #facc15!important;border-top:1px solid #facc15!important;border-radius:14px!important;background:#10100a!important;color:#fff!important;box-shadow:none!important;outline:0!important;padding:18px 14px!important;text-align:center!important}
+#debatePilotPanel #pilotSecretRevotePicker p{color:#facc15!important;font-size:11px!important;letter-spacing:1.4px!important;font-weight:900!important;margin:0 0 12px!important}
+#debatePilotPanel #pilotSecretRevotePicker small{color:#fff!important}
+#debatePilotPanel #pilotSecretRevotePicker [data-secret-choice]{border:1px solid #8d7b2b!important;border-radius:12px!important;background:#0b0b0b!important;color:#fff!important}
+#debatePilotPanel #pilotSecretRevotePicker [data-secret-choice]:disabled{color:#666!important;border-color:#303030!important}
+#debatePilotPanel #pilotVoteStage button:disabled{background:#0b0b0b!important;color:#666!important;border-color:#303030!important;opacity:1!important}
+#debatePilotPanel #pilotVoteLate{display:none;border:1px solid #facc15;border-radius:14px;padding:16px;color:#fff;background:#10100a;text-align:center;font-size:13px;font-weight:900;line-height:1.4}
+#debatePilotPanel #pilotVoteLate strong{display:block;color:#facc15;font-size:10px;letter-spacing:1px;margin-bottom:8px}
+#debatePilotPanel #pilotActionGrid > button:disabled,#pilotAssistantActions > button:disabled{background:#0b0b0b!important;color:#555!important;border-color:#303030!important;opacity:1!important;cursor:default!important;filter:grayscale(1)}
 </style></head>
 
 <body>
@@ -1447,7 +1460,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R54</div>
+    <div class="version">DILEMA · V0.1.16-010C-R55</div>
   </main>
 
 
@@ -7130,7 +7143,7 @@ window.addEventListener(
    try{
      await rpc("cast_debate_unanimity_choice",{p_round_id:currentRoundId,p_choice:choice});
      await pilotRefresh();
-   }catch(e){console.error("UNANIMITY VOTE",e);alert("No se ha podido registrar la decisión de la mesa.");await pilotRefresh();}
+   }catch(e){console.error("UNANIMITY VOTE",e);await pilotExplainVoteFailure("unanimity",e,"No se ha podido registrar la decisión de la mesa.");await pilotRefresh();}
  };
  window.pilotRequestRevote=async function(){
    const button=el("pilotRevoteRequestBtn");if(button)button.disabled=true;
@@ -7145,13 +7158,13 @@ window.addEventListener(
    try{
      await rpc("cast_debate_revote_proposal_vote",{p_round_id:currentRoundId,p_choice:choice});
      await pilotRefresh();
-   }catch(e){console.error("GROUP REVOTE VOTE",e);alert("No se ha podido votar la propuesta de re-voto.");await pilotRefresh();}
+   }catch(e){console.error("GROUP REVOTE VOTE",e);await pilotExplainVoteFailure("group",e,"No se ha podido votar la propuesta de re-voto.");await pilotRefresh();}
  };
  window.pilotOptionalRevote=async function(choice){
    try{
      await rpc("cast_optional_debate_revote",{p_round_id:currentRoundId,p_choice:choice});
      await pilotRefresh();
-   }catch(e){console.error("OPTIONAL REVOTE",e);alert("No se ha podido cambiar tu voto.");await pilotRefresh();}
+   }catch(e){console.error("OPTIONAL REVOTE",e);await pilotExplainVoteFailure("optional",e,"No se ha podido registrar tu re-voto.");await pilotRefresh();}
  };
  window.pilotGiroVote=async function(choice){
    try{
@@ -7159,7 +7172,7 @@ window.addEventListener(
     if(box)box.querySelectorAll("[data-giro-vote]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.giroVote===choice));
     await rpc("cast_debate_twist_vote",{p_round_id:currentRoundId,p_choice:choice});
     await pilotRefresh();
-   }catch(e){console.error("GIRO VOTE",e);alert("No se ha podido registrar el voto del GIRO.");await pilotRefresh();}
+   }catch(e){console.error("GIRO VOTE",e);await pilotExplainVoteFailure("giro",e,"No se ha podido registrar el voto del giro.");await pilotRefresh();}
  };
  window.pilotTopVote=async function(choice){
    try{
@@ -7178,7 +7191,7 @@ window.addEventListener(
     await rpc("cast_debate_revote",{p_round_id:currentRoundId,p_choice:choice});
     await rpc("complete_debate_revote",{p_round_id:currentRoundId});
     await pilotRefresh();
-   }catch(e){alert("No se ha podido registrar el revoto.");}
+   }catch(e){console.error("GIRO REVOTE",e);await pilotExplainVoteFailure("twist_revote",e,"No se ha podido registrar el re-voto.");await pilotRefresh();}
  };
  window.pilotUseProclamation=async function(){
    try{
@@ -7222,7 +7235,7 @@ window.addEventListener(
  window.pilotCloseVote=async function(choice){try{
    const cb=el("pilotCloseBox"); if(cb){cb.querySelectorAll("[data-close]").forEach(b=>b.classList.toggle("pilot-selected",b.dataset.close===choice));}
    const done=await rpc("cast_debate_close_vote",{p_round_id:currentRoundId,p_choice:choice});await pilotRefresh();if(done){await pilotCollectiveEnd();}
- }catch(e){alert("No se ha podido votar el cierre.");}};
+ }catch(e){console.error("CLOSE VOTE",e);await pilotExplainVoteFailure("close",e,"No se ha podido votar el cierre.");await pilotRefresh();}};
  document.addEventListener("DOMContentLoaded",()=>{ensurePanel();setInterval(()=>{
    if(currentRoomMode==="debate"&&currentRoomId&&currentRoundId&&document.getElementById("debate")?.classList.contains("active")&&document.visibilityState==="visible"){
      pilotRefresh();
@@ -7279,7 +7292,7 @@ window.addEventListener(
    try{
      const pr=await R("get_presence_request",{p_round_id:currentRoundId});if(!pr||!pr.id)return;
      await R("cast_presence_request_vote",{p_request_id:pr.id,p_choice:choice});await pilotRefresh();
-   }catch(e){console.error("PRESENCE VOTE ERROR",e);alert("No se ha podido registrar el voto.")}
+   }catch(e){console.error("PRESENCE VOTE ERROR",e);await pilotExplainVoteFailure("presence",e,"No se ha podido registrar el voto.");await pilotRefresh()}
  };
  window.pilotProposePause=async function(){
    const button=E("pilotPauseAction");if(button)button.disabled=true;
@@ -7294,7 +7307,7 @@ window.addEventListener(
      if(!proposal?.open||proposal.proposer_me)return;
      await R("cast_debate_pause_vote",{p_proposal_id:proposal.id,p_choice:choice});
      await pilotRefresh();
-   }catch(e){console.error("PAUSE VOTE ERROR",e);alert("No se ha podido registrar tu voto.");await pilotRefresh();}
+   }catch(e){console.error("PAUSE VOTE ERROR",e);await pilotExplainVoteFailure("pause",e,"No se ha podido registrar tu voto.");await pilotRefresh();}
  };
  window.pilotAbandon=async function(){
    try{
@@ -8015,5 +8028,68 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   observer.observe(document.body,{childList:true,subtree:true});
 });
+</script><script>
+(function(){
+ const E=id=>document.getElementById(id);
+ const boxes=["pilotUnanimity","pilotGiroVoteBox","pilotCloseBox","pilotGroupRevoteProposal",
+  "pilotPauseProposal","pilotPresenceRequestBox","pilotInlineRevote","pilotSecretRevotePicker"];
+ let lateTimer;
+ function visible(node){return !!node&&getComputedStyle(node).display!=="none"&&getComputedStyle(node).visibility!=="hidden"}
+ function stage(){
+  const grid=E("pilotActionGrid");if(!grid)return null;
+  let root=E("pilotVoteStage");
+  if(!root){root=document.createElement("div");root.id="pilotVoteStage"}
+  const anchor=E("pilotInstructionsRow")||E("pilotAssistantActions")||grid;
+  if(root.previousElementSibling!==anchor)anchor.insertAdjacentElement("afterend",root);
+  for(const id of boxes){const box=E(id);if(box&&box.parentElement!==root)root.appendChild(box)}
+  if(!E("pilotVoteLate")){const banner=document.createElement("div");banner.id="pilotVoteLate";banner.setAttribute("role","status");root.appendChild(banner)}
+  return root;
+ }
+ function lockActions(){
+  if(!stage())return;
+  const active=boxes.filter(id=>id!=="pilotSecretRevotePicker").some(id=>visible(E(id)));
+  const secret=E("pilotSecretRevotePicker");
+  if(active&&visible(secret))secret.style.display="none";
+  const locked=active||visible(secret);
+  if(!locked)return;
+  document.querySelectorAll("#pilotActionGrid > button,#pilotAssistantActions > button").forEach(button=>{
+   if(button.id==="pilotAbandonBtn"||button.id==="pilotSecretRevoteAction"&&!active)return;
+   button.disabled=true;
+  });
+ }
+ async function closed(type){
+  const roundId=currentRoundId;
+  if(!roundId)return false;
+  const call=async(name,args={p_round_id:roundId})=>{const {data,error}=await sb.rpc(name,args);if(error)throw error;return data};
+  if(type==="giro")return (await call("get_debate_twist_proposal"))?.status!=="open";
+  if(type==="group")return (await call("get_debate_revote_proposal"))?.status!=="open";
+  if(type==="pause")return !(await call("get_debate_pause_proposal"))?.open;
+  if(type==="presence")return !(await call("get_presence_request"))?.id;
+  if(type==="optional")return !(await call("get_optional_debate_revote"))?.open;
+  if(type==="unanimity"){
+   const state=await call("get_debate_state");
+   if(state.phase!=="debate")return true;
+   const result=await call("get_debate_unanimity_state");
+   return !!result?.outcome;
+  }
+  const state=await call("get_debate_state");
+  if(type==="close")return state.phase!=="closing";
+  if(type==="twist_revote")return state.phase!=="twist";
+  return false;
+ }
+ window.pilotExplainVoteFailure=async function(type,error,fallback){
+  let late=false;
+  try{late=await closed(type)}catch(e){console.error("VOTE STATUS",e)}
+  if(!late){alert(fallback);return}
+  const root=stage(),banner=E("pilotVoteLate");
+  if(!root||!banner){alert("HAS LLEGADO TARDE A LA VOTACIÓN. LA MESA YA HA DECIDIDO.");return}
+  banner.innerHTML="<strong>⚠ VOTACIÓN CERRADA</strong>HAS LLEGADO TARDE A LA VOTACIÓN.<br>LA MESA YA HA DECIDIDO.";
+  banner.style.display="block";root.scrollIntoView({block:"nearest",behavior:"smooth"});
+  clearTimeout(lateTimer);lateTimer=setTimeout(()=>banner.style.display="none",6000);
+ };
+ const previous=window.pilotRefresh;
+ window.pilotRefresh=async function(){await previous.apply(this,arguments);lockActions()};
+ document.addEventListener("DOMContentLoaded",()=>{stage();lockActions()});
+})();
 </script></body>
 </html>
