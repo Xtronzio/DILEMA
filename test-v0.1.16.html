@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R61</div>
+    <div class="version">DILEMA · V0.1.16-010C-R62</div>
   </main>
 
 
@@ -7137,7 +7137,7 @@ window.addEventListener(
     }
     if(cb)cb.querySelectorAll("[data-close]").forEach(b=>b.disabled=isAbsent);
     const secretButton=el("pilotSecretRevoteAction"),secretPicker=el("pilotSecretRevotePicker");
-    const secretReady=!!s.secret_revote_mine&&s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen;
+    const secretReady=!!s.secret_revote_mine&&s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen&&!unanimous&&!giroOpen&&groupRevoteProposal?.status!=="open";
     if(secretButton){secretButton.style.display="block";secretButton.disabled=!secretReady;secretButton.textContent=s.secret_revote_mine?"CAMBIAR MI VOTO · 1/1":"CAMBIAR MI VOTO · 0/1";}
     if(secretPicker){
       if(!secretReady)secretPicker.style.display="none";
