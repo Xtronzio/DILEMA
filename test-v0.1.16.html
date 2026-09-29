@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R60</div>
+    <div class="version">DILEMA · V0.1.16-010C-R61</div>
   </main>
 
 
@@ -7816,7 +7816,11 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 <style>
 #pilotReplyPending{display:none;margin:18px 0;padding:16px;border:1px solid #facc15;border-radius:12px;background:#10100a;color:#fff}
 #pilotReplyPending b,#pilotReplyInbox summary{color:#facc15;font-size:11px;letter-spacing:1px;font-weight:900}
-#pilotReplyPending p,#pilotReplyInbox p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4;font-size:14px;font-weight:700}
+#pilotReplyPending p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4;font-size:14px;font-weight:700}
+#pilotReplyInboxList{display:grid;gap:12px;margin-top:15px}
+#pilotReplyInboxList .reply-item{padding:14px;border:1px solid #49432a;border-radius:10px;background:#15140f}
+#pilotReplyInboxList .reply-sender{display:block;margin-bottom:9px;color:#facc15;font-size:11px;font-weight:900;letter-spacing:.7px;overflow-wrap:anywhere}
+#pilotReplyInboxList .reply-message{margin:0;color:#fff;font-size:14px;font-weight:400;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
 #pilotReplyPending button{width:100%;min-height:46px;border:1px solid #facc15;border-radius:9px;background:#0b0b0b;color:#facc15;font-weight:900}
 #pilotReplyInbox{display:none;margin:12px 0 18px;padding:12px;border:1px solid #49432a;border-radius:10px;color:#fff}
 #pilotReplyInbox summary{cursor:pointer}
@@ -7908,7 +7912,13 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
      const newest=Number(responses[0].id);if(newest>lastReplyId){lastReplyId=newest;inbox.open=true}
      E("pilotReplyInboxTitle").textContent="RESPUESTAS RECIBIDAS · "+responses.length;
      const list=E("pilotReplyInboxList");list.replaceChildren();
-     responses.forEach(item=>{const p=document.createElement("p");p.textContent=item.text;list.appendChild(p)});
+     responses.forEach(item=>{
+       const match=String(item.text||"").match(/^(.+? RESPONDE:)\s*([\s\S]*)$/i);
+       const card=document.createElement("article");card.className="reply-item";
+       const sender=document.createElement("strong");sender.className="reply-sender";sender.textContent=match?match[1]:"RESPUESTA";
+       const message=document.createElement("p");message.className="reply-message";message.textContent=match?match[2]:item.text;
+       card.append(sender,message);list.appendChild(card);
+      });
     }
    }
   }catch(error){console.error("RESPUESTAS A PROCLAMAS",error)}
