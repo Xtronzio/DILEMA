@@ -1460,7 +1460,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R55</div>
+    <div class="version">DILEMA · V0.1.16-010C-R56</div>
   </main>
 
 
@@ -8039,7 +8039,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const grid=E("pilotActionGrid");if(!grid)return null;
   let root=E("pilotVoteStage");
   if(!root){root=document.createElement("div");root.id="pilotVoteStage"}
-  const anchor=E("pilotInstructionsRow")||E("pilotAssistantActions")||grid;
+  const anchor=E("pilotTwist")||E("pilotEvent")||grid;
   if(root.previousElementSibling!==anchor)anchor.insertAdjacentElement("afterend",root);
   for(const id of boxes){const box=E(id);if(box&&box.parentElement!==root)root.appendChild(box)}
   if(!E("pilotVoteLate")){const banner=document.createElement("div");banner.id="pilotVoteLate";banner.setAttribute("role","status");root.appendChild(banner)}
