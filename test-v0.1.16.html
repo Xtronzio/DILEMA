@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R62</div>
+    <div class="version">DILEMA · V0.1.16-010C-R63</div>
   </main>
 
 
@@ -7991,7 +7991,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   line(root,"PUEDES RESPONDER",chosen.respuesta);
   const question=document.createElement("div");question.className="am-question";question.textContent=guide.pregunta_mesa||"";root.appendChild(question);
   const label=document.createElement("p");label.className="am-mode";
-  label.textContent=mode==="IA"?"AYUDA PERSONALIZADA CON IA":"AYUDA BÁSICA · IA PENDIENTE DE CONFIGURACIÓN";root.appendChild(label);
+  label.textContent=mode==="IA"?"AYUDA PERSONALIZADA CON IA":"AYUDA BÁSICA DE RESPALDO";root.appendChild(label);
  }
  function paint(){
   const state=window.dilemaAssistantState,btn=E("pilotAssistantOpen"),request=E("pilotAssistantRequest");
