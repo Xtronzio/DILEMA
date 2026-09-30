@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R70</div>
+    <div class="version">DILEMA · V0.1.16-010C-R71</div>
   </main>
 
 
@@ -4165,7 +4165,7 @@ let selectionBusy=false;
 let selectionRefreshPromise=null;
 let selectionQuestionsStamp=null;
 
-function openSuggestedDebate(){showScreen("dilemmaSources")}
+async function openSuggestedDebate(){await beginCatalogSelection()}
 async function beginCatalogSelection(){
  if(privateSelectionMode){await openPrivateCatalog();return;}
  if(currentRoomHostId!==localPlayerId)return;
@@ -4268,6 +4268,7 @@ function renderSelectionFilters(s){
   btn.onclick=()=>{selectionDraftTheme=selectionDraftTheme===theme?null:theme;renderSelectionFilters(s)};
   choices.appendChild(btn);
  }
+ appendCurrentAiOption(choices);
  confirm.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity||!selectionDraftTheme;
  confirm.textContent=s.my_vote?"VOTO REGISTRADO":"VOTAR ESTA ELECCIÓN";
 }
@@ -8045,7 +8046,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   const state=window.dilemaAssistantState,btn=E("pilotAssistantOpen"),request=E("pilotAssistantRequest");
   if(!btn||!request)return;
   const history=E("pilotAssistantHistory");
-  if(history)history.disabled=!state?.active||state.roundId!==currentRoundId;
+  if(history)paintGuideHistory();
   const same=access&&Number(access.cycle)===Number(state?.cycle);
   const active=!!state?.active&&state.roundId===currentRoundId&&!!state.choice&&same&&!!access.active;
   const group=!!access?.approved&&!!access?.mine_requested&&!access?.mine_group_used;
@@ -8102,7 +8103,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    if(error)throw error;
    if(!data?.guide?.rutas?.length)throw Error(data?.error||"No hay ayuda disponible");
    guide={...data.guide,mode:data.mode,source:data.source};guideKey=state.roundId+":"+state.cycle+":"+state.choice+":"+data.source;
-   selectedRoute=0;render(data.mode);await refreshAccess();
+   selectedRoute=0;render(data.mode);await refreshAccess();await refreshGuideHistoryCount(true);
   }catch(error){
    console.error("ASISTENTE",error);
    E("amContent").textContent="";
@@ -8344,8 +8345,9 @@ function renderPrivateDilemma(){
   b.setAttribute("aria-pressed",String(privateDilemma.choice===choice));b.disabled=privateBusy;
  }
  const chosen=privateDilemma.choice;
- document.getElementById("privateHistory").disabled=privateBusy||!privateGuides.length;
- document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS"+(privateGuides.length?" · "+privateGuides.length:"");
+ const historyCounts=guideHistoryCounts(privateGuides,privateDilemma.choice);
+ document.getElementById("privateHistory").disabled=privateBusy||!historyCounts.matching;
+ document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS · "+historyCounts.matching+"/"+historyCounts.total;
  document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
  const help=document.getElementById("privateHelp");
  const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide&&g.signature===JSON.stringify([privateDilemma.question,privateDilemma.option_a,privateDilemma.option_b,privateDilemma.context||""]));
@@ -8415,19 +8417,20 @@ async function openPrivateHelpHistory(){
  privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
  try{
   await loadPrivateGuides();if(op!==privateOperation)return;
-  window.showAssistantHistory(privateGuides,true);
+  window.showAssistantHistory(privateGuides.filter(g=>g.choice===privateDilemma.choice),true);
  }catch(error){document.getElementById("privateBoardError").textContent="No se ha podido cargar el historial. Inténtalo de nuevo."}
  finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
 }
 async function openDebateHelpHistory(){
- const round=currentRoundId;if(!round)return;
+ const round=currentRoundId,choice=window.dilemaAssistantState?.choice;if(!round||!choice)return;
  const button=document.getElementById("pilotAssistantHistory");if(button)button.disabled=true;
  try{
   const {data,error}=await sb.from("debate_assistant_guides").select("id,cycle_number,choice,guide,mode,created_at").eq("round_id",round).eq("user_id",currentUserId).eq("status","ready").order("created_at",{ascending:false}).limit(100);
   if(error)throw error;if(round!==currentRoundId)return;
-  window.showAssistantHistory(data||[],false);
+  if(choice!==window.dilemaAssistantState?.choice)return;
+  window.showAssistantHistory((data||[]).filter(g=>g.choice===choice),false);
  }catch(error){alert("No se ha podido cargar tu historial de ayudas. Inténtalo de nuevo.")}
- finally{if(button)button.disabled=!window.dilemaAssistantState?.active}
+ finally{await refreshGuideHistoryCount(true);paintGuideHistory()}
 }
 
 function exitPrivateDilemma(){
@@ -8438,20 +8441,11 @@ function exitPrivateDilemma(){
 
 
 <style>
-#dilemmaSources .source-note{display:block;margin-top:7px;font-size:10px;letter-spacing:1px;color:#777}
 #privateCatalog .selection-intensities{margin:14px 0 20px}
 #privateCatalog .selection-themes{margin:14px 0 20px}
 #privateCatalog .selection-audience-row{margin:20px 0}
 #privateCatalogTeens.selected{background:#fff;color:#0b0b0b;border-color:#fff}
 </style>
-<section id="dilemmaSources" class="screen center">
- <button class="back" onclick="showScreen('debateChoice')">←</button>
- <div class="game-category">PROPÓNNOS UN DILEMA</div>
- <h1 class="title">¿DE DÓNDE SALE?</h1>
- <p class="subtitle">Elige qué quieres explorar.</p>
- <button class="btn btn-secondary" onclick="beginCatalogSelection()">CATÁLOGO</button>
- <button class="btn btn-secondary" disabled aria-disabled="true">ACTUALIDAD<span class="source-note">EN CONSTRUCCIÓN</span></button>
-</section>
 <section id="privateCatalog" class="screen">
  <button class="back" onclick="backPrivateCatalog()">←</button>
  <div class="game-category">CATÁLOGO · HOY ESTÁS TÚ</div>
@@ -8531,6 +8525,7 @@ function renderPrivateCatalog(){
   b.onclick=()=>{privateCatalogueTheme=privateCatalogueTheme===theme?null:theme;renderPrivateCatalog()};
   themes.appendChild(b);
  }
+ appendCurrentAiOption(themes);
  const confirm=document.getElementById("privateCatalogConfirm");confirm.disabled=privateBusy||!privateCatalogueAudience||!privateCatalogueTheme||!privateCatalogueIntensity;
  confirm.textContent=privateCatalogueTheme==="ALEATORIO"?"PROPONER UNO AL AZAR":"VER DILEMAS";
  const list=document.getElementById("privateCatalogQuestions");list.replaceChildren();
@@ -8552,7 +8547,7 @@ function samplePrivateCatalog(){
 }
 function backPrivateCatalog(){
  privateOperation++;privateBusy=false;
- if(privateCatalogueSamples.length){privateCatalogueSamples=[];renderPrivateCatalog()}else showScreen("dilemmaSources");
+ if(privateCatalogueSamples.length){privateCatalogueSamples=[];renderPrivateCatalog()}else showScreen("debateChoice");
 }
 async function choosePrivateCatalogueDilemma(d){
  if(privateBusy||!privateCatalogueSamples.some(x=>x.id===d.id))return;
@@ -8705,7 +8700,7 @@ function ensureDebateContext(){
  }
  if(!document.getElementById('pilotContextRequest')){
   const button=document.createElement('button');button.id='pilotContextRequest';button.type='button';button.className='btn btn-secondary';button.textContent='SOLICITAR AÑADIR CONTEXTO';button.onclick=()=>contextAction('request');
-  document.getElementById('pilotActionGrid').insertAdjacentElement('afterend',button);
+  document.getElementById('pilotActionGrid').insertAdjacentElement('beforebegin',button);
  }
  window.syncCharacterCounters?.();
 }
@@ -8759,6 +8754,46 @@ window.pilotRefresh=async function(){await previousContextPilotRefresh.apply(thi
 document.addEventListener('DOMContentLoaded',()=>{ensureContextForms();normalizeDilemmaWindows()});
 </script>
 
+<style>
+.selection-chip.current-ai{border-color:#345f62;color:#65c9c5;background:#0b0b0b}
+.selection-chip.current-ai:disabled{opacity:.5;cursor:default}
+.selection-chip.current-ai span{display:block;font-size:8px;font-weight:400;margin-top:5px;letter-spacing:.6px}
+#pilotContextRequest{margin:0 0 14px!important}
+</style>
+<script>
+function appendCurrentAiOption(container){
+ if(!container||container.querySelector('.current-ai'))return;
+ const button=document.createElement('button');button.type='button';button.className='selection-chip current-ai';button.disabled=true;button.setAttribute('aria-disabled','true');
+ const title=document.createElement('b');title.textContent='ACTUALIDAD IA';const note=document.createElement('span');note.textContent='EN CONSTRUCCIÓN';button.append(title,note);container.appendChild(button);
+}
+let guideHistoryRows=[],guideHistoryRound=null,guideHistoryUser=null,guideHistoryAt=0,guideHistoryPending=null;
+function guideHistoryCounts(rows,choice){return {matching:choice?rows.filter(row=>row.choice===choice).length:0,total:rows.length}}
+function paintGuideHistory(){
+ const button=document.getElementById('pilotAssistantHistory');if(!button)return;
+ const state=window.dilemaAssistantState;
+ const valid=guideHistoryRound===currentRoundId&&guideHistoryUser===currentUserId;
+ const counts=guideHistoryCounts(valid?guideHistoryRows:[],state?.choice);
+ button.textContent='MIS AYUDAS GUARDADAS · '+counts.matching+'/'+counts.total;
+ button.disabled=!state?.active||state.roundId!==currentRoundId||!counts.matching||!!document.querySelector('#debatePilotPanel.pilot-process-locked');
+}
+async function refreshGuideHistoryCount(force=false){
+ const round=currentRoundId,user=currentUserId;
+ if(!round||!user)return;
+ if(!force&&guideHistoryRound===round&&guideHistoryUser===user&&Date.now()-guideHistoryAt<30000){paintGuideHistory();return}
+ if(guideHistoryPending){await guideHistoryPending;if(force&&currentRoundId===round)return refreshGuideHistoryCount(false);return}
+ guideHistoryPending=(async()=>{
+  const {data,error}=await sb.from('debate_assistant_guides').select('id,choice').eq('round_id',round).eq('user_id',user).eq('status','ready').order('created_at',{ascending:false}).limit(100);
+  if(error){console.error('GUIDE HISTORY COUNT',error);return}
+  if(currentRoundId!==round||currentUserId!==user)return;
+  guideHistoryRows=data||[];guideHistoryRound=round;guideHistoryUser=user;guideHistoryAt=Date.now();paintGuideHistory();
+ })();
+ try{await guideHistoryPending}finally{guideHistoryPending=null}
+}
+const r71PreviousRefresh=window.pilotRefresh;
+window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,arguments);await refreshGuideHistoryCount();paintGuideHistory()};
+</script>
+
 </body>
 </html>
+
 
