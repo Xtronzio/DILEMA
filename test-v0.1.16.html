@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R69</div>
+    <div class="version">DILEMA · V0.1.16-010C-R70</div>
   </main>
 
 
@@ -1725,9 +1725,9 @@
     <div class="title">TENEMOS UN DILEMA</div>
     <div class="subtitle">Es vuestro dilema. DILEMA no lo cambia.</div>
 
-    <textarea id="customQuestion" class="text-input debate-input" maxlength="240" placeholder="PREGUNTA" oninput="updateCustomDebateButton()"></textarea>
-    <textarea id="customA" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN A" oninput="updateCustomDebateButton()"></textarea>
-    <textarea id="customB" class="text-input debate-input" maxlength="240" placeholder="OPCIÓN B" oninput="updateCustomDebateButton()"></textarea>
+    <textarea id="customQuestion" class="text-input debate-input" maxlength="1000" placeholder="PREGUNTA" oninput="updateCustomDebateButton()"></textarea>
+    <textarea id="customA" class="text-input debate-input" maxlength="500" placeholder="OPCIÓN A" oninput="updateCustomDebateButton()"></textarea>
+    <textarea id="customB" class="text-input debate-input" maxlength="500" placeholder="OPCIÓN B" oninput="updateCustomDebateButton()"></textarea>
 
     <div id="customError" class="error"></div>
 
@@ -2271,6 +2271,7 @@ function normalizeJoinCode() {
 function showScreen(
   id
 ) {
+  window.normalizeDilemmaWindows?.();
 
   if(id==="debateChoice")syncDilemmaChoice();
   if(window.syncCharacterCounters)window.syncCharacterCounters();
@@ -4312,6 +4313,7 @@ async function drawRandomDilemma(){
 function openCustomDebate() {
   if(privateSelectionMode){openPrivateDilemmaForm();return;}
   document.getElementById("customQuestion").value = "";
+  document.getElementById("customContext").value="";
   document.getElementById("customA").value = "";
   document.getElementById("customB").value = "";
   document.getElementById("customError").textContent = "";
@@ -4358,7 +4360,8 @@ async function refreshDilemmaProposal(){
    }
   return;
  }
- document.getElementById("proposalQuestion").textContent=proposal.question;
+ renderDilemmaCopy(document.getElementById("proposalQuestion"),proposal.question);
+ renderContextText(document.getElementById("proposalContext"),proposal.context||"");
  document.getElementById("proposalA").textContent=proposal.option_a;
  document.getElementById("proposalB").textContent=proposal.option_b;
  document.getElementById("proposalCount").textContent=`${proposal.yes} SÍ · ${proposal.no} DESCARTAR · ${proposal.total} EN LA MESA`;
@@ -4404,7 +4407,7 @@ async function startCustomDebate(){
  const b=document.getElementById("customB").value.trim();
  if(!question||!a||!b)return;
  const submit=document.getElementById("customDebateBtn");submit.disabled=true;submit.classList.add("is-selected");
- const {error}=await sb.rpc("debate_propose_dilemma",{p_room:currentRoomId,p_question:question,p_a:a,p_b:b});
+ const {error}=await sb.rpc("debate_propose_with_context",{p_room:currentRoomId,p_question:question,p_a:a,p_b:b,p_context:document.getElementById("customContext").value.trim()});
  if(error){console.error("CUSTOM PROPOSAL ERROR:",error);document.getElementById("customError").textContent=error.message;submit.disabled=false;submit.classList.remove("is-selected");return}
  announceHallChange("custom-dilemma");
  await refreshDilemmaProposal();
@@ -4439,7 +4442,7 @@ async function launchDebateDilemma(dilemma) {
       status: "voting",
       started_at: new Date().toISOString()
     })
-    .select("id, room_id, round_number, dilemma_id, status, started_at")
+    .select("id, room_id, round_number, dilemma_id, status, started_at, context")
     .single();
 
   if (roundError || !round) {
@@ -4607,7 +4610,7 @@ async function startGame() {
 
     })
     .select(
-      "id, room_id, round_number, dilemma_id, status, started_at"
+      "id, room_id, round_number, dilemma_id, status, started_at, context"
     )
     .single();
 
@@ -4689,7 +4692,7 @@ async function loadCurrentRound() {
       "rounds"
     )
     .select(
-      "id, room_id, round_number, dilemma_id, status, started_at"
+      "id, room_id, round_number, dilemma_id, status, started_at, context"
     )
     .eq(
       "room_id",
@@ -4960,6 +4963,7 @@ async function refreshGame() {
 
     currentRoundStatus =
       round.status;
+    window.dilemaRoundContext=round.context||"";
 
 
     if (
@@ -7000,6 +7004,7 @@ window.addEventListener(
    busy=true;
    try{
     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
+    window.dilemaContextSnapshot={round:currentRoundId,data:s.context_state};
     const presenceView=await rpc("get_presence_request",{p_round_id:currentRoundId});
     window.dilemaPresenceView=presenceView;
     const isAbsent=presenceView?.my_presence==="absent";
@@ -8145,7 +8150,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(document.getElementById("pilotInstructionsModal"))return;
   const modal=document.createElement("div");modal.id="pilotInstructionsModal";
   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
-  const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
+  const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["SOLICITAR AÑADIR CONTEXTO","Propone añadir información al dilema. La mayoría decide y quien lo solicitó escribe después. La mesa recibe el contexto sin nombre; no cambia los votos ni abre un re-voto automático."],["CONTEXTO ADICIONAL","En privado puedes escribirlo y actualizarlo directamente. En grupo, el contexto inicial acompaña la propuesta y las aportaciones posteriores requieren aprobación de la mesa."],["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -8320,7 +8325,7 @@ function openPrivateDilemma(){
 }
 function openPrivateDilemmaForm(){
  privateOperation++;privateBusy=false;
- ["privateQuestion","privateA","privateB","privateFormError"].forEach(id=>{
+ ["privateQuestion","privateA","privateB","privateContext","privateFormError"].forEach(id=>{
   const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
  });
  document.getElementById("privateResume").style.display=localStorage.getItem("dilema_private_session")?"block":"none";
@@ -8328,7 +8333,9 @@ function openPrivateDilemmaForm(){
 }
 function renderPrivateDilemma(){
  if(!privateDilemma)return;
- document.getElementById("privateBoardQuestion").textContent=privateDilemma.question;
+ renderDilemmaCopy(document.getElementById("privateBoardQuestion"),privateDilemma.question);
+ const contextField=document.getElementById("privateBoardContext");
+ if(contextField&&contextField.dataset.session!==privateDilemma.id){contextField.dataset.session=privateDilemma.id;contextField.value=privateDilemma.context||"";window.syncCharacterCounters?.()}
  document.getElementById("privateOptionA").textContent=privateDilemma.option_a;
  document.getElementById("privateOptionB").textContent=privateDilemma.option_b;
  for(const choice of ["A","B"]){
@@ -8341,7 +8348,7 @@ function renderPrivateDilemma(){
  document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS"+(privateGuides.length?" · "+privateGuides.length:"");
  document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
  const help=document.getElementById("privateHelp");
- const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide);
+ const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide&&g.signature===JSON.stringify([privateDilemma.question,privateDilemma.option_a,privateDilemma.option_b,privateDilemma.context||""]));
  help.disabled=privateBusy||!chosen;
  help.textContent=privateBusy?"PREPARANDO…":hasGuide?"SIGO DUDANDO · OTRA PERSPECTIVA":"AYÚDAME A PENSAR";
  help.onclick=()=>openPrivateHelp(hasGuide);
@@ -8353,7 +8360,7 @@ async function createPrivateDilemma(){
  try{
   await ensureAnonymousAuth();
   const {data,error}=await sb.from("private_dilemma_sessions").insert({
-   question:document.getElementById("privateQuestion").value.trim(),
+   question:document.getElementById("privateQuestion").value.trim(),context:document.getElementById("privateContext").value.trim(),
    option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim()
   }).select().single();
   if(error)throw error;if(op!==privateOperation)return;
@@ -8397,7 +8404,7 @@ async function openPrivateHelp(newPerspective=false){
 
 async function loadPrivateGuides(){
  const id=privateDilemma?.id;if(!id)return;
- const {data,error}=await sb.from("private_dilemma_guides").select("id,choice,guide,mode,created_at").eq("session_id",id).eq("user_id",currentUserId).order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await sb.from("private_dilemma_guides").select("id,choice,guide,mode,created_at,signature").eq("session_id",id).eq("user_id",currentUserId).order("created_at",{ascending:false}).limit(100);
  if(error)throw error;if(privateDilemma?.id!==id)return;
  privateGuides=data||[];
  const latest={};for(const entry of privateGuides){if(!latest[entry.choice])latest[entry.choice]=entry}
@@ -8600,5 +8607,158 @@ async function choosePrivateCatalogueDilemma(d){
 })();
 </script>
 
+<style>
+.screen .back{left:50%;transform:translateX(-50%);top:14px;color:#ccc;font-size:32px;min-width:48px;min-height:44px;padding:0;z-index:2}
+.screen:has(> .back){padding-top:70px}
+.dilemma-copy{font-weight:400!important;line-height:1.45;overflow-wrap:anywhere}
+.dilemma-copy .dilemma-heading{display:block;font-weight:900;font-size:1.06em;margin-bottom:12px}
+.dilemma-copy .dilemma-body{display:block;font-weight:400}
+.context-details{margin:18px 0;border:1px solid #444;border-radius:12px;padding:14px;color:#fff;font-size:14px;line-height:1.5}
+.context-details summary{cursor:pointer;font-weight:800;font-size:12px;letter-spacing:1px}
+.context-details .context-content{white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400;margin:14px 0 0}
+.context-details label{display:block;margin:14px 0 8px;font-size:12px;font-weight:400}
+.context-details .text-input{margin:10px 0 4px;font-weight:400;min-height:110px;font-size:15px;text-align:left;letter-spacing:0}
+.context-details .btn{margin:14px 0 0;min-height:46px;font-size:12px}
+#pilotContextDecision{border:1px solid #facc15;border-radius:14px;background:#10100a;padding:16px;margin:18px 0;color:#fff;text-align:center}
+#pilotContextDecision strong{display:block;color:#facc15;font-size:12px;letter-spacing:1px;margin-bottom:12px}
+#pilotContextDecision p{font-weight:400;line-height:1.5;margin-bottom:14px}
+#pilotContextDecision .context-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#pilotContextDecision button{border:1px solid #8e7a13;border-radius:12px;min-height:48px;background:#0b0b0b;color:#fff;font-weight:800}
+#pilotContextDecision button.selected{background:#facc15;color:#0b0b0b}
+#pilotContextDecision button:disabled{opacity:.35}
+#pilotContextDecision .text-input{font-weight:400;text-align:left;letter-spacing:0;font-size:15px}
+#pilotContextProgress{display:block;color:#aaa;font-size:11px;margin:12px 0}
+#pilotContextError{font-size:12px;color:#facc15;font-weight:400;margin-top:12px}
+#pilotContextRequest{margin:14px 0}
+.context-note{font-size:12px;color:#aaa;font-weight:400;margin:10px 0}
+</style>
+<script>
+/* R70: títulos y contenido separados; contexto privado y colectivo. */
+function renderDilemmaCopy(node,text){
+ if(!node)return;
+ const value=String(text||'');
+ if(node.dataset.dilemmaCopy===value&&node.classList.contains('dilemma-copy'))return;
+ node.dataset.dilemmaCopy=value;node.classList.add('dilemma-copy');node.replaceChildren();
+ const match=value.match(/^([A-ZÁÉÍÓÚÜÑ0-9][A-ZÁÉÍÓÚÜÑ0-9\s¿?¡!,'’"\-]{1,90}[.:!])\s+([\s\S]+)$/);
+ if(match){const title=document.createElement('strong');title.className='dilemma-heading';title.textContent=match[1];node.appendChild(title)}
+ const body=document.createElement('span');body.className='dilemma-body';body.textContent=match?match[2]:value;node.appendChild(body);
+}
+function normalizeDilemmaWindows(){
+ for(const id of ['gameQuestion','resultQuestion','debateQuestion','proposalQuestion','privateBoardQuestion']){
+  const node=document.getElementById(id);if(!node)continue;
+  if(!node.querySelector('.dilemma-body')){node.dataset.dilemmaCopy='';renderDilemmaCopy(node,node.textContent)}
+ }
+ for(const id of ['gameQuestion','resultQuestion']){const anchor=document.getElementById(id);if(anchor){const details=contextViewer(id+'Context','CONTEXTO DEL DILEMA');if(!details.parentElement)anchor.insertAdjacentElement('afterend',details);renderContextText(details,window.dilemaRoundContext||'');}}
+ document.querySelectorAll('.selection-question').forEach(n=>{if(!n.querySelector('.dilemma-body')){n.dataset.dilemmaCopy='';renderDilemmaCopy(n,n.textContent)}});
+}
+function contextEditor(id,description){
+ const details=document.createElement('details');details.className='context-details';
+ const summary=document.createElement('summary');summary.textContent='CONTEXTO ADICIONAL · OPCIONAL';details.appendChild(summary);
+ const label=document.createElement('label');label.htmlFor=id;label.textContent=description;details.appendChild(label);
+ const field=document.createElement('textarea');field.id=id;field.className='text-input';field.maxLength=3000;field.rows=4;field.placeholder='Antecedentes, detalles o información que cambie cómo se entiende el dilema…';details.appendChild(field);
+ return details;
+}
+function renderContextText(details,text){
+ details.style.display=text?'block':'none';const target=details.querySelector('.context-content');if(target.textContent!==text)target.textContent=text||'';
+}
+function contextViewer(id,title){
+ let d=document.getElementById(id);if(d)return d;
+ d=document.createElement('details');d.id=id;d.className='context-details';d.style.display='none';
+ const s=document.createElement('summary');s.textContent=title;const p=document.createElement('div');p.className='context-content';d.append(s,p);return d;
+}
+function ensureContextForms(){
+ for(const [anchor,id,note] of [['privateQuestion','privateContext','Este contexto es privado y ayuda al asistente a entender tu situación.'],['customQuestion','customContext','Este contexto se compartirá con la mesa junto al dilema.']]){
+  if(document.getElementById(id))continue;
+  const field=document.getElementById(anchor);if(field){const anchor=field.nextElementSibling?.classList.contains('character-count')?field.nextElementSibling:field;anchor.insertAdjacentElement('afterend',contextEditor(id,note));}
+ }
+ if(!document.getElementById('privateBoardContext')){
+  const details=contextEditor('privateBoardContext','Puedes actualizar los detalles. Las ayudas guardadas conservan su contenido anterior.');details.id='privateBoardContextDetails';
+  const button=document.createElement('button');button.type='button';button.className='btn btn-secondary';button.textContent='GUARDAR CONTEXTO';button.onclick=savePrivateContext;details.appendChild(button);
+  document.getElementById('privateBoardQuestion').insertAdjacentElement('afterend',details);
+ }
+ if(!document.getElementById('proposalContext'))document.getElementById('proposalQuestion').insertAdjacentElement('afterend',contextViewer('proposalContext','CONTEXTO DEL DILEMA'));
+ window.syncCharacterCounters?.();
+}
+async function savePrivateContext(){
+ if(privateBusy||!privateDilemma)return;
+ const field=document.getElementById('privateBoardContext'),text=field.value.trim(),op=++privateOperation;privateBusy=true;
+ const button=field.parentElement.querySelector('button');button.disabled=true;
+ try{
+  const {data,error}=await sb.from('private_dilemma_sessions').update({context:text}).eq('id',privateDilemma.id).select().single();
+  if(error)throw error;if(op!==privateOperation)return;
+  privateDilemma=data;document.getElementById('privateBoardContextDetails').open=false;
+  document.getElementById('privateBoardError').textContent='CONTEXTO GUARDADO · TU PRÓXIMA AYUDA LO TENDRÁ EN CUENTA.';
+ }catch(e){document.getElementById('privateBoardError').textContent='No se ha podido guardar el contexto. Inténtalo de nuevo.'}
+ finally{if(op===privateOperation){privateBusy=false;button.disabled=false;renderPrivateDilemma()}}
+}
+let debateContextView=null,contextBusy=false,contextRound=null,contextStamp='';
+function ensureDebateContext(){
+ const panel=document.getElementById('debatePilotPanel'),stage=document.getElementById('pilotVoteStage');if(!panel||!stage)return;
+ let viewer=document.getElementById('pilotSharedContext');if(!viewer){viewer=contextViewer('pilotSharedContext','CONTEXTO DEL DILEMA');document.getElementById('pilotTwist').insertAdjacentElement('beforebegin',viewer)}
+ if(!document.getElementById('pilotContextDecision')){
+  const box=document.createElement('div');box.id='pilotContextDecision';box.style.display='none';
+  box.innerHTML='<strong>⚠ CONTEXTO · DECISIÓN DE LA MESA</strong><p id="pilotContextMessage"></p><div id="pilotContextVotes" class="context-actions"><button type="button" data-context-vote="yes">SÍ</button><button type="button" data-context-vote="no">NO</button></div><small id="pilotContextProgress"></small><div id="pilotContextWrite" style="display:none"><textarea id="pilotContextText" class="text-input" maxlength="3000" rows="4" placeholder="Escribe el contexto que quieres aportar…"></textarea><button id="pilotContextPublish" type="button">AÑADIR A LA MESA</button></div><button id="pilotContextCancel" type="button" style="display:none">CANCELAR SOLICITUD</button><div id="pilotContextError" role="status"></div>';
+  stage.appendChild(box);
+  box.querySelectorAll('[data-context-vote]').forEach(b=>b.onclick=()=>contextAction('vote',b.dataset.contextVote==='yes'));
+  document.getElementById('pilotContextPublish').onclick=()=>contextAction('submit');
+  document.getElementById('pilotContextCancel').onclick=()=>contextAction('cancel');
+ }
+ if(!document.getElementById('pilotContextRequest')){
+  const button=document.createElement('button');button.id='pilotContextRequest';button.type='button';button.className='btn btn-secondary';button.textContent='SOLICITAR AÑADIR CONTEXTO';button.onclick=()=>contextAction('request');
+  document.getElementById('pilotActionGrid').insertAdjacentElement('afterend',button);
+ }
+ window.syncCharacterCounters?.();
+}
+function paintDebateContext(){
+ const v=debateContextView,box=document.getElementById('pilotContextDecision');if(!box||!v)return;
+ renderContextText(document.getElementById('pilotSharedContext'),v.context||'');
+ const open=!!v.id;box.style.display=open?'block':'none';
+ const canAct=!!window.dilemaAssistantState?.active;
+ const otherOpen=['pilotUnanimity','pilotGiroVoteBox','pilotCloseBox','pilotGroupRevoteProposal','pilotPauseProposal','pilotPresenceRequestBox','pilotInlineRevote','pilotSecretRevotePicker'].some(id=>{const n=document.getElementById(id);return n&&getComputedStyle(n).display!=='none'});
+ document.getElementById('pilotContextRequest').disabled=contextBusy||open||otherOpen||!canAct;
+ if(!open)return;
+ const approved=v.status==='approved';
+ document.getElementById('pilotContextMessage').textContent=approved?(v.requester_me?'LA MESA LO HA APROBADO. ESCRIBE EL CONTEXTO QUE QUIERES APORTAR.':'LA MESA LO HA APROBADO. ESPERANDO EL CONTEXTO.'):'ALGUIEN QUIERE AÑADIR CONTEXTO AL DILEMA. ¿LO PERMITIMOS?';
+ document.getElementById('pilotContextProgress').textContent=approved?'EL CONTEXTO SE MOSTRARÁ SIN IDENTIFICAR A QUIEN LO APORTA.':(v.mine===true?'TU SÍ YA ESTÁ REGISTRADO · ':'')+(v.voted||0)+' / '+v.players+' HAN VOTADO · MAYORÍA DECIDE';
+ document.getElementById('pilotContextVotes').style.display=approved?'none':'grid';
+ box.querySelectorAll('[data-context-vote]').forEach(b=>{b.disabled=contextBusy||v.mine!==null||!canAct;b.classList.toggle('selected',v.mine!==null&&(b.dataset.contextVote==='yes')===v.mine)});
+ document.getElementById('pilotContextWrite').style.display=approved&&v.requester_me?'block':'none';
+ document.getElementById('pilotContextCancel').style.display=v.requester_me?'block':'none';
+ document.getElementById('pilotContextPublish').disabled=contextBusy;
+ document.getElementById('pilotContextCancel').disabled=contextBusy;
+ const stamp=currentRoundId+':'+v.id;if(stamp!==contextStamp){contextStamp=stamp;document.getElementById('pilotContextText').value='';document.getElementById('pilotContextError').textContent='';window.syncCharacterCounters?.()}
+ document.getElementById('debatePilotPanel').classList.add('pilot-process-locked');
+ document.querySelectorAll('#pilotActionGrid > button,#pilotAssistantActions > button,#pilotPauseBtn').forEach(b=>{if(b.id!=='pilotAbandonBtn')b.disabled=true});
+}
+async function refreshDebateContext(){
+ if(!currentRoundId||!document.getElementById('debate')?.classList.contains('active'))return;
+ ensureDebateContext();const round=currentRoundId;
+ const snapshot=window.dilemaContextSnapshot;
+ const {data,error}=snapshot?.round===round&&snapshot.data?{data:snapshot.data,error:null}:await sb.rpc('debate_context_state',{p_round:round});
+ if(error){console.error('CONTEXT STATE',error);return}if(round!==currentRoundId)return;
+ if(contextRound!==round){contextRound=round;contextStamp=''}debateContextView=data;paintDebateContext();
+}
+async function contextAction(action,yes){
+ if(contextBusy||!currentRoundId)return;
+ contextBusy=true;const round=currentRoundId,v=debateContextView;paintDebateContext();
+ try{
+  let name='debate_request_context',args={p_round:round};
+  if(action==='vote'){name='debate_vote_context';args.p_id=v.id;args.p_yes=yes}
+  if(action==='submit'){name='debate_submit_context';args.p_id=v.id;args.p_text=document.getElementById('pilotContextText').value.trim();if(!args.p_text)throw Error('Escribe el contexto antes de enviarlo.')}
+  if(action==='cancel'){name='debate_cancel_context';args.p_id=v.id}
+  const {error}=await sb.rpc(name,args);if(error)throw error;
+  if(currentRoundId===round){window.dilemaContextSnapshot=null;await window.pilotRefresh();}
+ }catch(e){
+  const text=String(e?.message||'');
+  const errorNode=document.getElementById('pilotContextError');if(document.getElementById('pilotContextDecision').style.display==='none')alert(/Another proposal/.test(text)?'LA MESA TIENE OTRA DECISIÓN ABIERTA.':'No se ha podido completar la solicitud. Inténtalo de nuevo.');
+  errorNode.textContent=/Voting closed/.test(text)?'HAS LLEGADO TARDE. LA MESA YA HA DECIDIDO.':/Another proposal/.test(text)?'LA MESA TIENE OTRA DECISIÓN ABIERTA.':text==='Escribe el contexto antes de enviarlo.'?text:'No se ha podido completar la solicitud. Inténtalo de nuevo.';
+ }finally{contextBusy=false;if(currentRoundId===round){window.dilemaContextSnapshot=null;await window.pilotRefresh();paintDebateContext()}}
+}
+const previousContextPilotRefresh=window.pilotRefresh;
+window.pilotRefresh=async function(){await previousContextPilotRefresh.apply(this,arguments);await refreshDebateContext();normalizeDilemmaWindows()};
+document.addEventListener('DOMContentLoaded',()=>{ensureContextForms();normalizeDilemmaWindows()});
+</script>
+
 </body>
 </html>
+
