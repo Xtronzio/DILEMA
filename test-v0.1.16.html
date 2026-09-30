@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R68</div>
+    <div class="version">DILEMA · V0.1.16-010C-R69</div>
   </main>
 
 
@@ -1673,7 +1673,8 @@
   </section>
 
   <section id="debateChoice" class="screen center">
-    <div class="game-category">SALA COMPLETA</div>
+    <button id="privateChoiceBack" class="back" onclick="showScreen('expected')" style="display:none">←</button>
+    <div class="game-category" id="dilemmaChoiceMode">SALA COMPLETA</div>
     <div class="title">¿QUÉ DEBATIMOS?</div>
     <div class="subtitle">Ponemos algo sobre la mesa.</div>
 
@@ -1685,9 +1686,8 @@
       PROPÓNNOS UN DILEMA
     </button>
 
-    <button class="btn btn-danger" onclick="confirmResetGame()">
-      CERRAR SALA
-    </button>
+    <button id="dilemmaChoiceExit" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button>
+    <button id="privateChoiceResume" class="btn btn-secondary" onclick="resumePrivateDilemma()" style="display:none">CONTINUAR MI ÚLTIMO DILEMA</button>
   </section>
 
 
@@ -2125,6 +2125,7 @@ const avatarCategories = {
 
 
 let setupExpectedPlayers = 4;
+let privateSelectionMode=false;
 
 let flowMode = null;
 let profileActionPending = false;
@@ -2271,6 +2272,8 @@ function showScreen(
   id
 ) {
 
+  if(id==="debateChoice")syncDilemmaChoice();
+  if(window.syncCharacterCounters)window.syncCharacterCounters();
   const target =
     document.getElementById(
       id
@@ -2405,6 +2408,7 @@ function openProfileChoice(
   mode
 ) {
   if(mode==="create" && currentRoomMode==="debate" && setupExpectedPlayers===1){openPrivateDilemma();return;}
+  if(mode==="create")privateSelectionMode=false;
 
 
   flowMode =
@@ -4160,7 +4164,9 @@ let selectionBusy=false;
 let selectionRefreshPromise=null;
 let selectionQuestionsStamp=null;
 
-async function openSuggestedDebate(){
+function openSuggestedDebate(){showScreen("dilemmaSources")}
+async function beginCatalogSelection(){
+ if(privateSelectionMode){await openPrivateCatalog();return;}
  if(currentRoomHostId!==localPlayerId)return;
  const {error}=await sb.rpc("debate_begin_selection",{p_room:currentRoomId});
  if(error){console.error("SELECTION START ERROR:",error);alert("NO SE HA PODIDO ABRIR LA ELECCIÓN.");return}
@@ -4304,6 +4310,7 @@ async function drawRandomDilemma(){
 }
 
 function openCustomDebate() {
+  if(privateSelectionMode){openPrivateDilemmaForm();return;}
   document.getElementById("customQuestion").value = "";
   document.getElementById("customA").value = "";
   document.getElementById("customB").value = "";
@@ -8273,16 +8280,16 @@ document.addEventListener("DOMContentLoaded",()=>{
 .private-error{color:#ff6b6b;font-size:13px;line-height:1.4;margin:10px 0;min-height:18px}
 </style>
 <section id="privateForm" class="screen">
- <button class="back" onclick="showScreen('expected')">←</button>
+ <button class="back" onclick="showScreen('debateChoice')">←</button>
  <div class="small-note">HOY ESTÁS TÚ</div>
  <h1 class="title">TENEMOS UN DILEMA</h1>
  <p class="private-note">Plantea tu pregunta y dos opciones. Después elige y abre tu guía personal.</p>
  <label for="privateQuestion">TU DILEMA</label>
- <textarea id="privateQuestion" class="text-input" maxlength="240" rows="4" placeholder="¿Qué tienes que decidir?" oninput="privateFormReady()"></textarea>
+ <textarea id="privateQuestion" class="text-input" maxlength="1000" rows="4" placeholder="¿Qué tienes que decidir?" oninput="privateFormReady()"></textarea>
  <label for="privateA">OPCIÓN A</label>
- <input id="privateA" class="text-input" maxlength="240" placeholder="Una posibilidad…" oninput="privateFormReady()">
+ <input id="privateA" class="text-input" maxlength="500" placeholder="Una posibilidad…" oninput="privateFormReady()">
  <label for="privateB">OPCIÓN B</label>
- <input id="privateB" class="text-input" maxlength="240" placeholder="La otra posibilidad…" oninput="privateFormReady()">
+ <input id="privateB" class="text-input" maxlength="500" placeholder="La otra posibilidad…" oninput="privateFormReady()">
  <p class="private-note">Solo tú puedes acceder desde tu sesión. Este dilema no entra en el catálogo.</p>
  <p id="privateFormError" class="private-error" role="status"></p>
  <button id="privateCreate" class="btn btn-secondary" onclick="createPrivateDilemma()" disabled>ELEGIR MI POSTURA</button>
@@ -8309,6 +8316,9 @@ function privateFormReady(){
  document.getElementById("privateCreate").disabled=privateBusy||!["privateQuestion","privateA","privateB"].every(id=>document.getElementById(id).value.trim());
 }
 function openPrivateDilemma(){
+ privateSelectionMode=true;privateOperation++;privateBusy=false;showScreen("debateChoice");
+}
+function openPrivateDilemmaForm(){
  privateOperation++;privateBusy=false;
  ["privateQuestion","privateA","privateB","privateFormError"].forEach(id=>{
   const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
@@ -8417,6 +8427,177 @@ function exitPrivateDilemma(){
  privateOperation++;privateBusy=false;
  document.getElementById("pilotAssistantModal")?.classList.remove("open");goHome();
 }
+</script>
+
+
+<style>
+#dilemmaSources .source-note{display:block;margin-top:7px;font-size:10px;letter-spacing:1px;color:#777}
+#privateCatalog .selection-intensities{margin:14px 0 20px}
+#privateCatalog .selection-themes{margin:14px 0 20px}
+#privateCatalog .selection-audience-row{margin:20px 0}
+#privateCatalogTeens.selected{background:#fff;color:#0b0b0b;border-color:#fff}
+</style>
+<section id="dilemmaSources" class="screen center">
+ <button class="back" onclick="showScreen('debateChoice')">←</button>
+ <div class="game-category">PROPÓNNOS UN DILEMA</div>
+ <h1 class="title">¿DE DÓNDE SALE?</h1>
+ <p class="subtitle">Elige qué quieres explorar.</p>
+ <button class="btn btn-secondary" onclick="beginCatalogSelection()">CATÁLOGO</button>
+ <button class="btn btn-secondary" disabled aria-disabled="true">ACTUALIDAD<span class="source-note">EN CONSTRUCCIÓN</span></button>
+</section>
+<section id="privateCatalog" class="screen">
+ <button class="back" onclick="backPrivateCatalog()">←</button>
+ <div class="game-category">CATÁLOGO · HOY ESTÁS TÚ</div>
+ <h1 id="privateCatalogTitle" class="title">¿QUÉ DEBATIMOS?</h1>
+ <p id="privateCatalogSubtitle" class="subtitle">Elige intensidad y dilema. Tu postura viene después.</p>
+ <div id="privateCatalogFilters">
+  <div class="selection-audience-row">
+   <button disabled>KIDS<span>EN CONSTRUCCIÓN</span></button>
+   <button id="privateCatalogTeens" onclick="togglePrivateCatalogAudience()">TEENS</button>
+   <button disabled>ADULTOS<span>EN CONSTRUCCIÓN</span></button>
+  </div>
+  <div class="small-label">INTENSIDAD</div>
+  <div id="privateCatalogIntensity" class="selection-intensities"></div>
+  <div class="small-label">¿QUÉ DILEMA TENÉIS HOY?</div>
+  <div id="privateCatalogThemes" class="selection-themes"></div>
+  <button id="privateCatalogConfirm" class="btn btn-secondary" onclick="samplePrivateCatalog()" disabled>VER DILEMAS</button>
+ </div>
+ <div id="privateCatalogQuestions" class="selection-questions" style="display:none"></div>
+ <button id="privateCatalogMore" class="btn btn-secondary" onclick="samplePrivateCatalog()" style="display:none">OTRAS PREGUNTAS</button>
+ <p id="privateCatalogError" class="private-error" role="status"></p>
+</section>
+<script>
+let privateCatalogue=null,privateCatalogueAudience=false,privateCatalogueIntensity=null,privateCatalogueTheme=null,privateCatalogueSamples=[];
+function syncDilemmaChoice(){
+ const mode=document.getElementById("dilemmaChoiceMode"),exit=document.getElementById("dilemmaChoiceExit");
+ mode.textContent=privateSelectionMode?"DILEMA PRIVADO · HOY ESTÁS TÚ":"SALA COMPLETA";
+ document.getElementById("privateChoiceBack").style.display=privateSelectionMode?"block":"none";
+ document.getElementById("privateChoiceResume").style.display=privateSelectionMode&&localStorage.getItem("dilema_private_session")?"block":"none";
+ exit.textContent=privateSelectionMode?"VOLVER AL HALL":"CERRAR SALA";
+ exit.className=privateSelectionMode?"btn btn-secondary":"btn btn-danger";
+ exit.onclick=privateSelectionMode?exitPrivateDilemma:confirmResetGame;
+}
+async function openPrivateCatalog(){
+ privateOperation++;privateBusy=false;privateCatalogueAudience=false;privateCatalogueIntensity=null;privateCatalogueTheme=null;privateCatalogueSamples=[];
+ const op=privateOperation;
+ document.getElementById("privateCatalogError").textContent="";
+ renderPrivateCatalog();showScreen("privateCatalog");
+ if(privateCatalogue)return;
+ document.getElementById("privateCatalogError").textContent="CARGANDO CATÁLOGO…";
+ try{
+  await ensureAnonymousAuth();
+  const {data,error}=await sb.from("dilemmas").select("id,question,option_a,option_b,intensity,debate_theme").eq("audience","teen").eq("active",true).order("id").limit(1000);
+  if(error)throw error;
+  privateCatalogue=data||[];
+  if(op!==privateOperation)return;
+  document.getElementById("privateCatalogError").textContent=privateCatalogue.length?"":"NO HAY DILEMAS DISPONIBLES.";
+  renderPrivateCatalog();
+ }catch(error){if(op===privateOperation)document.getElementById("privateCatalogError").textContent="NO SE HA PODIDO CARGAR EL CATÁLOGO. VUELVE A ENTRAR PARA REINTENTAR."}
+}
+function togglePrivateCatalogAudience(){
+ if(privateBusy)return;privateCatalogueAudience=!privateCatalogueAudience;
+ if(!privateCatalogueAudience){privateCatalogueIntensity=null;privateCatalogueTheme=null}
+ renderPrivateCatalog();
+}
+function filteredPrivateCatalogue(){
+ return (privateCatalogue||[]).filter(d=>Number(d.intensity)<=Number(privateCatalogueIntensity)&&(privateCatalogueTheme==="ALEATORIO"||d.debate_theme===privateCatalogueTheme));
+}
+function renderPrivateCatalog(){
+ const selecting=!privateCatalogueSamples.length;
+ document.getElementById("privateCatalogFilters").style.display=selecting?"block":"none";
+ document.getElementById("privateCatalogQuestions").style.display=selecting?"none":"grid";
+ document.getElementById("privateCatalogMore").style.display=selecting?"none":"block";
+ document.getElementById("privateCatalogTitle").textContent=selecting?"¿QUÉ DEBATIMOS?":"¿QUÉ DILEMA ELIGES?";
+ document.getElementById("privateCatalogSubtitle").textContent=selecting?"Elige intensidad y dilema. Tu postura viene después.":"Elige una pregunta. Verás las opciones A/B al abrirla.";
+ const teens=document.getElementById("privateCatalogTeens");teens.classList.toggle("selected",privateCatalogueAudience);teens.disabled=privateBusy||!privateCatalogue;
+ const intensities=document.getElementById("privateCatalogIntensity"),themes=document.getElementById("privateCatalogThemes");intensities.replaceChildren();themes.replaceChildren();
+ for(const value of [1,2,3]){
+  const b=document.createElement("button");b.type="button";b.className="selection-chip"+(privateCatalogueIntensity===value?" selected":"");b.textContent=["","CHILL","CRINGE","WTF"][value];
+  b.disabled=privateBusy||!privateCatalogueAudience;
+  b.onclick=()=>{privateCatalogueIntensity=privateCatalogueIntensity===value?null:value;privateCatalogueTheme=null;renderPrivateCatalog()};
+  intensities.appendChild(b);
+ }
+ for(const theme of debateThemes){
+  const b=document.createElement("button");b.type="button";b.className="selection-chip"+(privateCatalogueTheme===theme?" selected":"");b.textContent=theme;
+  const available=(privateCatalogue||[]).some(d=>Number(d.intensity)<=Number(privateCatalogueIntensity)&&(theme==="ALEATORIO"||d.debate_theme===theme));
+  b.disabled=privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity||!available;
+  b.onclick=()=>{privateCatalogueTheme=privateCatalogueTheme===theme?null:theme;renderPrivateCatalog()};
+  themes.appendChild(b);
+ }
+ const confirm=document.getElementById("privateCatalogConfirm");confirm.disabled=privateBusy||!privateCatalogueAudience||!privateCatalogueTheme||!privateCatalogueIntensity;
+ confirm.textContent=privateCatalogueTheme==="ALEATORIO"?"PROPONER UNO AL AZAR":"VER DILEMAS";
+ const list=document.getElementById("privateCatalogQuestions");list.replaceChildren();
+ for(const d of privateCatalogueSamples){
+  const b=document.createElement("button");b.type="button";b.className="selection-question";b.textContent=d.question;b.disabled=privateBusy;b.onclick=()=>choosePrivateCatalogueDilemma(d);list.appendChild(b);
+ }
+ const more=document.getElementById("privateCatalogMore");more.disabled=privateBusy;more.textContent=privateCatalogueTheme==="ALEATORIO"?"OTRO DILEMA":"OTRAS PREGUNTAS";
+}
+function samplePrivateCatalog(){
+ if(privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity||!privateCatalogueTheme)return;
+ const candidates=filteredPrivateCatalogue();
+ const previous=new Set(privateCatalogueSamples.map(d=>d.id));
+ const fresh=candidates.filter(d=>!previous.has(d.id));
+ const pool=[...(fresh.length?fresh:candidates)];
+ for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+ privateCatalogueSamples=pool.slice(0,privateCatalogueTheme==="ALEATORIO"?1:6);
+ document.getElementById("privateCatalogError").textContent=pool.length?"":"NO HAY DILEMAS CON ESTA ELECCIÓN.";
+ renderPrivateCatalog();
+}
+function backPrivateCatalog(){
+ privateOperation++;privateBusy=false;
+ if(privateCatalogueSamples.length){privateCatalogueSamples=[];renderPrivateCatalog()}else showScreen("dilemmaSources");
+}
+async function choosePrivateCatalogueDilemma(d){
+ if(privateBusy||!privateCatalogueSamples.some(x=>x.id===d.id))return;
+ privateBusy=true;renderPrivateCatalog();const op=++privateOperation;
+ document.getElementById("privateCatalogError").textContent="";
+ try{
+  await ensureAnonymousAuth();
+  const {data,error}=await sb.from("private_dilemma_sessions").insert({question:d.question,option_a:d.option_a,option_b:d.option_b}).select().single();
+  if(error)throw error;if(op!==privateOperation)return;
+  privateDilemma=data;privateGuides=[];localStorage.setItem("dilema_private_session",data.id);
+  privateBusy=false;renderPrivateDilemma();
+ }catch(error){if(op===privateOperation)document.getElementById("privateCatalogError").textContent="NO SE HA PODIDO ABRIR EL DILEMA. INTÉNTALO DE NUEVO."}
+ finally{if(op===privateOperation){privateBusy=false;if(document.getElementById("privateCatalog").classList.contains("active"))renderPrivateCatalog()}}
+}
+</script>
+
+
+<style>
+.character-count{display:block;margin:-5px 0 14px;font-size:10px;font-weight:400;line-height:1.4;color:#888;letter-spacing:.4px;text-align:right}
+.character-count.at-limit{color:#facc15}
+</style>
+<script>
+(function(){
+ const tracked=new WeakMap();
+ function scan(){
+  document.querySelectorAll('textarea[maxlength],input[maxlength]').forEach(field=>{
+   const limit=Number(field.getAttribute("maxlength"));
+   if(limit<40)return;
+   let counter=tracked.get(field);
+   if(!counter){
+    counter=document.createElement("small");counter.className="character-count";
+    field.insertAdjacentElement("afterend",counter);tracked.set(field,counter);
+    field.addEventListener("input",()=>update(field,counter));
+   }
+   update(field,counter);
+  });
+ }
+ function update(field,counter){
+  const left=Math.max(0,Number(field.getAttribute("maxlength"))-field.value.length);
+  const text=left+" CARACTERES DISPONIBLES";
+  if(counter.textContent!==text)counter.textContent=text;
+  counter.classList.toggle("at-limit",left===0);
+ }
+ let scheduled=false;
+ const observer=new MutationObserver(records=>{
+  if(!records.some(record=>[...record.addedNodes].some(node=>node.nodeType===1&&(node.matches?.('textarea[maxlength],input[maxlength]')||node.querySelector?.('textarea[maxlength],input[maxlength]')))))return;
+  if(scheduled)return;scheduled=true;
+  queueMicrotask(()=>{scheduled=false;scan()});
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
+ window.syncCharacterCounters=scan;scan();
+})();
 </script>
 
 </body>
