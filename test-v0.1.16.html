@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R67</div>
+    <div class="version">DILEMA · V0.1.16-010C-R68</div>
   </main>
 
 
@@ -8297,8 +8297,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   <button id="privateVoteB" onclick="choosePrivatePosture('B')" aria-pressed="false"><b>B</b><span id="privateOptionB"></span></button>
  </div>
  <p id="privateChoiceNote" class="private-note"></p>
- <button id="privateHelp" class="btn btn-secondary" onclick="openPrivateHelp()" disabled>ASISTENTE PERSONAL</button>
- <button id="privateMore" class="btn btn-secondary" onclick="openPrivateHelp(true)" disabled>SIGO DUDANDO · OTRA PERSPECTIVA</button>
+ <button id="privateHelp" class="btn btn-secondary" disabled>AYÚDAME A PENSAR</button>
  <button id="privateHistory" class="btn btn-secondary" onclick="openPrivateHelpHistory()">MIS AYUDAS GUARDADAS</button>
  <p id="privateBoardError" class="private-error" role="status"></p>
  <button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button>
@@ -8328,12 +8327,14 @@ function renderPrivateDilemma(){
   b.setAttribute("aria-pressed",String(privateDilemma.choice===choice));b.disabled=privateBusy;
  }
  const chosen=privateDilemma.choice;
- document.getElementById("privateMore").disabled=privateBusy||!chosen||!privateGuides.some(g=>g.choice===chosen&&g.mode==="IA");
  document.getElementById("privateHistory").disabled=privateBusy||!privateGuides.length;
  document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS"+(privateGuides.length?" · "+privateGuides.length:"");
  document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
  const help=document.getElementById("privateHelp");
- help.disabled=privateBusy||!chosen;help.textContent=privateBusy?"PREPARANDO…":privateDilemma.guides?.[chosen]?.guide?"VER MI GUÍA":"ASISTENTE PERSONAL";
+ const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide);
+ help.disabled=privateBusy||!chosen;
+ help.textContent=privateBusy?"PREPARANDO…":hasGuide?"SIGO DUDANDO · OTRA PERSPECTIVA":"AYÚDAME A PENSAR";
+ help.onclick=()=>openPrivateHelp(hasGuide);
  showScreen("privateBoard");
 }
 async function createPrivateDilemma(){
