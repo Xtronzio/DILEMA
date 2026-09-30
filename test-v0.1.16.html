@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R63</div>
+    <div class="version">DILEMA · V0.1.16-010C-R64</div>
   </main>
 
 
@@ -7944,6 +7944,13 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #pilotAssistantModal .am-route-buttons button.selected{border-color:#fff;background:#fff;color:#080808}
 #pilotAssistantModal .am-line{padding:9px 0;border-top:1px solid #333;font-size:13px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 #pilotAssistantModal .am-line b{display:block;margin-bottom:3px;color:#aaa;font-size:10px;letter-spacing:1px}
+#pilotAssistantModal .am-fold{border-top:1px solid #333;font-size:13px;line-height:1.35}
+#pilotAssistantModal .am-fold summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:9px 0;color:#aaa;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;list-style:none}
+#pilotAssistantModal .am-fold summary::-webkit-details-marker{display:none}
+#pilotAssistantModal .am-fold summary::after{content:"+";color:#fff;font-size:18px;letter-spacing:0}
+#pilotAssistantModal .am-fold[open] summary::after{content:"−"}
+#pilotAssistantModal .am-fold summary:focus-visible{outline:1px solid #fff;outline-offset:2px;border-radius:4px}
+#pilotAssistantModal .am-fold-body{padding:0 0 12px;color:#fff;font-weight:700;overflow-wrap:anywhere}
 #pilotAssistantModal .am-question{margin-top:12px;padding:12px;border:1px solid #666;border-radius:10px;font-size:13px;font-weight:800;line-height:1.35}
 #pilotAssistantModal .am-mode{font-size:10px;color:#aaa;letter-spacing:1px;margin-top:12px;text-align:center}
 #pilotAssistantModal .am-close{width:100%;min-height:46px;margin-top:16px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
@@ -7973,6 +7980,12 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   const b=document.createElement("b");b.textContent=title;const t=document.createElement("span");t.textContent=String(value||"");
   p.append(b,t);root.appendChild(p);
  }
+ function fold(root,title,value){
+  const details=document.createElement("details");details.className="am-fold";
+  const summary=document.createElement("summary");summary.textContent=title;
+  const body=document.createElement("div");body.className="am-fold-body";body.textContent=String(value||"");
+  details.append(summary,body);root.appendChild(details);
+ }
  function render(mode){
   const root=E("amContent");root.replaceChildren();
   if(!guide?.rutas?.length){root.textContent="La guía no está disponible.";return}
@@ -7986,9 +7999,9 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   });
   const chosen=guide.rutas[selectedRoute]||guide.rutas[0];
   line(root,"TU ARGUMENTO",chosen.argumento);
-  line(root,"PON UN EJEMPLO",chosen.ejemplo);
-  line(root,"PODRÍAN OBJETARTE",chosen.objecion);
-  line(root,"PUEDES RESPONDER",chosen.respuesta);
+  fold(root,"PON UN EJEMPLO",chosen.ejemplo);
+  fold(root,"PODRÍAN OBJETARTE",chosen.objecion);
+  fold(root,"PUEDES RESPONDER",chosen.respuesta);
   const question=document.createElement("div");question.className="am-question";question.textContent=guide.pregunta_mesa||"";root.appendChild(question);
   const label=document.createElement("p");label.className="am-mode";
   label.textContent=mode==="IA"?"AYUDA PERSONALIZADA CON IA":"AYUDA BÁSICA DE RESPALDO";root.appendChild(label);
