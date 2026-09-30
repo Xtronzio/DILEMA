@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R64</div>
+    <div class="version">DILEMA · V0.1.16-010C-R65</div>
   </main>
 
 
@@ -2356,7 +2356,7 @@ function changeExpected(
 
   setupExpectedPlayers =
     Math.max(
-      2,
+      currentRoomMode==="debate"?1:2,
       Math.min(
         20,
         setupExpectedPlayers +
@@ -2370,6 +2370,7 @@ function changeExpected(
     )
     .textContent =
       setupExpectedPlayers;
+  document.querySelector("#expected .subtitle").textContent=setupExpectedPlayers===1?"Hoy estás tú: plantea tu dilema y explora tu elección con la guía.":"La sala tendrá que estar completa para poder iniciar.";
 
 }
 
@@ -2403,6 +2404,8 @@ function openJoinScreen() {
 function openProfileChoice(
   mode
 ) {
+  if(mode==="create" && currentRoomMode==="debate" && setupExpectedPlayers===1){openPrivateDilemma();return;}
+
 
   flowMode =
     mode;
@@ -7989,7 +7992,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  function render(mode){
   const root=E("amContent");root.replaceChildren();
   if(!guide?.rutas?.length){root.textContent="La guía no está disponible.";return}
-  const intro=document.createElement("p");intro.className="am-intro";intro.textContent="Elige una línea para defender tu voto y llévala a la mesa.";root.appendChild(intro);
+  const intro=document.createElement("p");intro.className="am-intro";intro.textContent=guide.private?"Elige una línea para dar forma a tus razones. Despliega solo lo que necesites.":"Elige una línea para defender tu voto y llévala a la mesa.";root.appendChild(intro);
   const context=document.createElement("div");context.className="am-question";context.textContent=guide.contexto||"";root.appendChild(context);
   const choices=document.createElement("div");choices.className="am-route-buttons";root.appendChild(choices);
   guide.rutas.slice(0,3).forEach((r,i)=>{
@@ -8055,6 +8058,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   if(!access.token&&!group&&!access.mine_guide)return;
   const source=access.token?"token":group?"group":guide?.source||"token";
   const key=state.roundId+":"+state.cycle+":"+state.choice+":"+source;
+  E("amClose").textContent="VOLVER AL DEBATE";
   E("pilotAssistantModal").classList.add("open");E("amError").textContent="";
   if(guide&&guideKey===key){render(guide.mode);return}
   loading=true;E("amContent").textContent="PREPARANDO TU AYUDA…";
@@ -8070,6 +8074,11 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    E("amError").textContent=error?.message||"No se ha podido preparar la ayuda. Inténtalo de nuevo.";
   }finally{loading=false}
  }
+ window.displayPrivateGuide=function(data){
+  ensure();guide={...data.guide,mode:data.mode,private:true};guideKey="";selectedRoute=0;
+  E("amClose").textContent="VOLVER A MI DILEMA";
+  E("pilotAssistantModal").classList.add("open");E("amError").textContent="";render(data.mode);
+ };
  const previous=window.pilotRefresh;
  window.pilotRefresh=async function(){
   await previous.apply(this,arguments);ensure();
@@ -8207,5 +8216,127 @@ document.addEventListener("DOMContentLoaded",()=>{
  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check(true)});
  window.addEventListener("pageshow",()=>check());
 })();
-</script></body>
+</script>
+<style>
+#privateForm .text-input{margin-bottom:14px}
+#privateBoard .private-question{padding:18px;border:1px solid #444;border-radius:14px;font-size:19px;font-weight:800;line-height:1.4;margin:22px 0}
+#privateBoard .private-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+#privateBoard .private-options button{background:#0b0b0b;border:1px solid #444;border-radius:14px;color:#fff;min-height:120px;padding:16px;text-align:left;line-height:1.4;overflow-wrap:anywhere}
+#privateBoard .private-options button.selected{border-color:#fff;background:#fff;color:#0b0b0b}
+#privateBoard .private-options b{display:block;font-size:24px;margin-bottom:10px}
+.private-note{color:#aaa;font-size:12px;line-height:1.5;text-align:center;margin:12px 0 20px}
+.private-error{color:#ff6b6b;font-size:13px;line-height:1.4;margin:10px 0;min-height:18px}
+</style>
+<section id="privateForm" class="screen">
+ <button class="back" onclick="showScreen('expected')">←</button>
+ <div class="small-note">HOY ESTÁS TÚ</div>
+ <h1 class="title">TENEMOS UN DILEMA</h1>
+ <p class="private-note">Plantea tu pregunta y dos opciones. Después elige y abre tu guía personal.</p>
+ <label for="privateQuestion">TU DILEMA</label>
+ <textarea id="privateQuestion" class="text-input" maxlength="240" rows="4" placeholder="¿Qué tienes que decidir?" oninput="privateFormReady()"></textarea>
+ <label for="privateA">OPCIÓN A</label>
+ <input id="privateA" class="text-input" maxlength="240" placeholder="Una posibilidad…" oninput="privateFormReady()">
+ <label for="privateB">OPCIÓN B</label>
+ <input id="privateB" class="text-input" maxlength="240" placeholder="La otra posibilidad…" oninput="privateFormReady()">
+ <p class="private-note">Solo tú puedes acceder desde tu sesión. Este dilema no entra en el catálogo.</p>
+ <p id="privateFormError" class="private-error" role="status"></p>
+ <button id="privateCreate" class="btn btn-secondary" onclick="createPrivateDilemma()" disabled>ELEGIR MI POSTURA</button>
+ <button id="privateResume" class="btn btn-secondary" onclick="resumePrivateDilemma()" style="display:none">CONTINUAR MI ÚLTIMO DILEMA</button>
+</section>
+<section id="privateBoard" class="screen">
+ <div class="small-note">DILEMA PRIVADO · SOLO TÚ</div>
+ <h1 class="title">¿QUÉ ELIGES?</h1>
+ <p id="privateBoardQuestion" class="private-question"></p>
+ <div class="private-options">
+  <button id="privateVoteA" onclick="choosePrivatePosture('A')" aria-pressed="false"><b>A</b><span id="privateOptionA"></span></button>
+  <button id="privateVoteB" onclick="choosePrivatePosture('B')" aria-pressed="false"><b>B</b><span id="privateOptionB"></span></button>
+ </div>
+ <p id="privateChoiceNote" class="private-note"></p>
+ <button id="privateHelp" class="btn btn-secondary" onclick="openPrivateHelp()" disabled>ASISTENTE PERSONAL</button>
+ <p id="privateBoardError" class="private-error" role="status"></p>
+ <button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button>
+ <button class="btn btn-secondary" onclick="exitPrivateDilemma()">VOLVER AL HALL</button>
+</section>
+<script>
+let privateDilemma=null,privateBusy=false,privateOperation=0;
+function privateFormReady(){
+ document.getElementById("privateCreate").disabled=privateBusy||!["privateQuestion","privateA","privateB"].every(id=>document.getElementById(id).value.trim());
+}
+function openPrivateDilemma(){
+ privateOperation++;privateBusy=false;
+ ["privateQuestion","privateA","privateB","privateFormError"].forEach(id=>{
+  const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
+ });
+ document.getElementById("privateResume").style.display=localStorage.getItem("dilema_private_session")?"block":"none";
+ privateFormReady();showScreen("privateForm");
+}
+function renderPrivateDilemma(){
+ if(!privateDilemma)return;
+ document.getElementById("privateBoardQuestion").textContent=privateDilemma.question;
+ document.getElementById("privateOptionA").textContent=privateDilemma.option_a;
+ document.getElementById("privateOptionB").textContent=privateDilemma.option_b;
+ for(const choice of ["A","B"]){
+  const b=document.getElementById("privateVote"+choice);
+  b.classList.toggle("selected",privateDilemma.choice===choice);
+  b.setAttribute("aria-pressed",String(privateDilemma.choice===choice));b.disabled=privateBusy;
+ }
+ const chosen=privateDilemma.choice;
+ document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
+ const help=document.getElementById("privateHelp");
+ help.disabled=privateBusy||!chosen;help.textContent=privateBusy?"PREPARANDO…":privateDilemma.guides?.[chosen]?.guide?"VER MI GUÍA":"ASISTENTE PERSONAL";
+ showScreen("privateBoard");
+}
+async function createPrivateDilemma(){
+ if(privateBusy)return;privateBusy=true;privateFormReady();
+ const op=++privateOperation;document.getElementById("privateFormError").textContent="";
+ try{
+  await ensureAnonymousAuth();
+  const {data,error}=await sb.from("private_dilemma_sessions").insert({
+   question:document.getElementById("privateQuestion").value.trim(),
+   option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim()
+  }).select().single();
+  if(error)throw error;if(op!==privateOperation)return;
+  privateDilemma=data;localStorage.setItem("dilema_private_session",data.id);privateBusy=false;renderPrivateDilemma();
+ }catch(error){if(op===privateOperation)document.getElementById("privateFormError").textContent="No se ha podido guardar tu dilema. Inténtalo de nuevo.";console.error("PRIVATE CREATE",error)}
+ finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
+}
+async function resumePrivateDilemma(){
+ if(privateBusy)return;privateBusy=true;privateFormReady();const op=++privateOperation;
+ try{
+  await ensureAnonymousAuth();
+  const {data,error}=await sb.from("private_dilemma_sessions").select().eq("id",localStorage.getItem("dilema_private_session")).single();
+  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;privateBusy=false;renderPrivateDilemma();
+ }catch(error){if(op===privateOperation)document.getElementById("privateFormError").textContent="Ese dilema ya no está disponible en tu sesión. Puedes crear otro."}
+ finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
+}
+async function choosePrivatePosture(choice){
+ if(privateBusy||!privateDilemma||privateDilemma.choice===choice)return;
+ privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
+ document.getElementById("privateBoardError").textContent="";
+ try{
+  const {data,error}=await sb.from("private_dilemma_sessions").update({choice}).eq("id",privateDilemma.id).select().single();
+  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;
+ }catch(error){if(op===privateOperation)document.getElementById("privateBoardError").textContent="No se ha podido guardar tu elección. Inténtalo de nuevo."}
+ finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
+}
+async function openPrivateHelp(){
+ if(privateBusy||!privateDilemma?.choice)return;
+ privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
+ document.getElementById("privateBoardError").textContent="";
+ try{
+  const {data,error}=await sb.functions.invoke("debate-coach",{body:{privateSessionId:privateDilemma.id}});
+  if(error||!data?.guide?.rutas?.length)throw error||Error("Guide missing");
+  if(op!==privateOperation)return;
+  privateDilemma.guides={...privateDilemma.guides,[privateDilemma.choice]:data};
+  window.displayPrivateGuide(data);
+ }catch(error){if(op===privateOperation)document.getElementById("privateBoardError").textContent="No se ha podido preparar tu guía. Vuelve a intentarlo.";console.error("PRIVATE HELP",error)}
+ finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
+}
+function exitPrivateDilemma(){
+ privateOperation++;privateBusy=false;
+ document.getElementById("pilotAssistantModal")?.classList.remove("open");goHome();
+}
+</script>
+
+</body>
 </html>
