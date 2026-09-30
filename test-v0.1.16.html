@@ -1476,7 +1476,8 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R73</div>
+    <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
+    <div class="version">DILEMA · V0.1.16-010C-R74</div>
   </main>
 
 
@@ -1687,7 +1688,7 @@
     </button>
 
     <button id="dilemmaChoiceExit" class="btn btn-danger" onclick="confirmResetGame()">CERRAR SALA</button>
-    <button id="privateChoiceResume" class="btn btn-secondary" onclick="resumePrivateDilemma()" style="display:none">CONTINUAR MI ÚLTIMO DILEMA</button>
+    <button id="privateChoiceResume" class="btn btn-secondary" onclick="openSavedDilemmas()" style="display:none">MIS DILEMAS</button>
   </section>
 
 
@@ -4281,9 +4282,9 @@ async function renderDebateQuestions(roomId,stage,ids){
  for(const id of ids){
   const d=(data||[]).find(x=>String(x.id)===String(id));if(!d)continue;
   const btn=document.createElement("button");btn.type="button";btn.className="selection-question";
-  btn.textContent=d.question;btn.disabled=!!currentDebateSelection.my_vote;
+  const question=document.createElement("div");question.className="selection-question-copy";renderDilemmaCopy(question,d.question);btn.appendChild(question);btn.disabled=!!currentDebateSelection.my_vote;
   if(currentDebateSelection.my_vote===String(id))btn.classList.add("selected");
-  const count=document.createElement("span");count.className="selection-count";count.textContent=(currentDebateSelection.counts?.[String(id)]||0)+" VOTOS";
+  const count=document.createElement("span");count.className="selection-count";const votes=Number(currentDebateSelection.counts?.[String(id)])||0;count.textContent=votes+" "+(votes===1?"VOTO":"VOTOS");count.setAttribute("aria-label",votes+" votos para este dilema");
   btn.appendChild(count);btn.onclick=()=>voteDebateSelection(String(id));node.appendChild(btn);
  }
 }
@@ -8299,7 +8300,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  <p class="private-note">Solo tú puedes acceder desde tu sesión. Este dilema no entra en el catálogo.</p>
  <p id="privateFormError" class="private-error" role="status"></p>
  <button id="privateCreate" class="btn btn-secondary" onclick="createPrivateDilemma()" disabled>ELEGIR MI POSTURA</button>
- <button id="privateResume" class="btn btn-secondary" onclick="resumePrivateDilemma()" style="display:none">CONTINUAR MI ÚLTIMO DILEMA</button>
+ <button id="privateResume" class="btn btn-secondary" onclick="openSavedDilemmas()" style="display:none">MIS DILEMAS</button>
 </section>
 <section id="privateBoard" class="screen">
  <div class="small-note">DILEMA PRIVADO · SOLO TÚ</div>
@@ -8313,7 +8314,9 @@ document.addEventListener("DOMContentLoaded",()=>{
  <button id="privateHelp" class="btn btn-secondary" disabled>AYÚDAME A PENSAR</button>
  <button id="privateHistory" class="btn btn-secondary" onclick="openPrivateHelpHistory()">MIS AYUDAS GUARDADAS</button>
  <p id="privateBoardError" class="private-error" role="status"></p>
- <button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button>
+ <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
+ <div class="saved-actions"><button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button><button class="btn btn-danger" onclick="requestSavedDiscard({id:privateDilemma.id,origin:'PRIV',question:privateDilemma.question})">DESCARTAR DILEMA</button></div>
+ <p class="private-note">Nuevo dilema conserva este. Descartar lo borra junto con sus ayudas.</p>
  <button class="btn btn-secondary" onclick="exitPrivateDilemma()">VOLVER AL HALL</button>
 </section>
 <script>
@@ -8329,7 +8332,7 @@ function openPrivateDilemmaForm(){
  ["privateQuestion","privateA","privateB","privateContext","privateFormError"].forEach(id=>{
   const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
  });
- document.getElementById("privateResume").style.display=localStorage.getItem("dilema_private_session")?"block":"none";
+ document.getElementById("privateResume").style.display="block";
  privateFormReady();showScreen("privateForm");
 }
 function renderPrivateDilemma(){
@@ -8473,7 +8476,7 @@ function syncDilemmaChoice(){
  const mode=document.getElementById("dilemmaChoiceMode"),exit=document.getElementById("dilemmaChoiceExit");
  mode.textContent=privateSelectionMode?"DILEMA PRIVADO · HOY ESTÁS TÚ":"SALA COMPLETA";
  document.getElementById("privateChoiceBack").style.display=privateSelectionMode?"block":"none";
- document.getElementById("privateChoiceResume").style.display=privateSelectionMode&&localStorage.getItem("dilema_private_session")?"block":"none";
+ document.getElementById("privateChoiceResume").style.display=privateSelectionMode?"block":"none";
  exit.textContent=privateSelectionMode?"VOLVER AL HALL":"CERRAR SALA";
  exit.className=privateSelectionMode?"btn btn-secondary":"btn btn-danger";
  exit.onclick=privateSelectionMode?exitPrivateDilemma:confirmResetGame;
@@ -8566,7 +8569,7 @@ async function choosePrivateCatalogueDilemma(d){
 
 
 <style>
-.character-count{display:block;margin:-5px 0 14px;font-size:10px;font-weight:400;line-height:1.4;color:#888;letter-spacing:.4px;text-align:right}
+.character-count{display:block;margin:10px 0 20px;font-size:10px;font-weight:400;line-height:1.4;color:#888;letter-spacing:.4px;text-align:right}
 .character-count.at-limit{color:#facc15}
 </style>
 <script>
@@ -8644,7 +8647,7 @@ function normalizeDilemmaWindows(){
   if(!node.querySelector('.dilemma-body')){node.dataset.dilemmaCopy='';renderDilemmaCopy(node,node.textContent)}
  }
  for(const id of ['gameQuestion','resultQuestion']){const anchor=document.getElementById(id);if(anchor){const details=contextViewer(id+'Context','CONTEXTO DEL DILEMA');if(!details.parentElement)anchor.insertAdjacentElement('afterend',details);renderContextText(details,window.dilemaRoundContext||'');}}
- document.querySelectorAll('.selection-question').forEach(n=>{if(!n.querySelector('.dilemma-body')){n.dataset.dilemmaCopy='';renderDilemmaCopy(n,n.textContent)}});
+ document.querySelectorAll('.selection-question').forEach(n=>{if(!n.querySelector('.dilemma-body')){const count=n.querySelector('.selection-count');if(count)count.remove();n.dataset.dilemmaCopy='';renderDilemmaCopy(n,n.textContent);if(count)n.appendChild(count)}});
 }
 function contextEditor(id,description){
  const details=document.createElement('details');details.className='context-details';
@@ -8799,8 +8802,171 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
 #pilotContextActions{margin-top:16px;align-items:stretch}
 #pilotContextActions button{width:100%;min-width:0;min-height:48px;padding:12px 8px;font-size:12px;line-height:1.35;margin:0}
 </style>
+<style>
+.selection-count{display:block;margin-top:16px;padding:12px 0 0;border-top:1px solid #444;color:#facc15;font-size:12px;line-height:1.3;letter-spacing:1.5px;font-weight:800;text-align:right}
+.selection-question-copy{font-weight:400}
+.saved-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.saved-actions .btn{margin:0;min-height:48px;padding:13px 8px;font-size:11px;white-space:normal}
+.saved-card{border:1px solid #444;border-radius:14px;padding:16px;margin:16px 0;text-align:left;background:#111}
+.saved-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;color:#aaa;font-size:11px;font-weight:400}
+.saved-mark{border:1px solid #888;border-radius:6px;padding:5px 8px;font-weight:800;letter-spacing:1px;color:#fff}
+.saved-copy{font-size:15px;line-height:1.45;overflow-wrap:anywhere;font-weight:400;white-space:pre-wrap}
+.saved-card .saved-actions{margin-bottom:0}
+#savedGroupQuestion{border:1px solid #444;border-radius:14px;padding:18px;margin:24px 0}
+.saved-option{border:1px solid #444;border-radius:12px;padding:14px;margin:12px 0;font-size:14px;line-height:1.4;font-weight:400;white-space:pre-wrap}
+.saved-option strong{display:block;margin-bottom:8px}
+.saved-discard-overlay{position:fixed;inset:0;background:#000c;z-index:100001;display:none;align-items:center;justify-content:center;padding:24px}
+.saved-discard-overlay.open{display:flex}
+.saved-discard-box{width:100%;max-width:400px;padding:22px;border:1px solid #facc15;border-radius:14px;background:#111108;color:#fff;text-align:center}
+.saved-discard-box h2{margin:0 0 18px;color:#facc15;font-size:16px;letter-spacing:1px}
+.saved-discard-box p{font-size:14px;font-weight:400;line-height:1.5;margin:12px 0;overflow-wrap:anywhere}
+.saved-discard-box .btn{border-color:#8b7413;background:#0b0b0b;color:#fff}
+.saved-discard-box .btn:disabled{opacity:.4}
+</style>
+<section id="savedDilemmas" class="screen">
+ <button class="back" onclick="closeSavedDilemmas()" aria-label="Volver">←</button>
+ <div class="small-note">TU HISTORIAL · SOLO TÚ</div>
+ <h1 class="title">MIS DILEMAS</h1>
+ <p class="private-note">PRIV: tus dilemas privados. GRUP: los debates que finalizaste como anfitrión.</p>
+ <div id="savedDilemmaList"></div>
+ <p id="savedDilemmaError" class="private-error" role="status"></p>
+ <button id="savedDilemmaMore" class="btn btn-secondary" onclick="loadSavedDilemmas(false)" style="display:none">VER MÁS</button>
+ <button id="savedDilemmaRetry" class="btn btn-secondary" onclick="loadSavedDilemmas(true)" style="display:none">REINTENTAR</button>
+</section>
+<section id="savedGroupDilemma" class="screen">
+ <button class="back" onclick="openSavedDilemmas()" aria-label="Volver a mis dilemas">←</button>
+ <div class="small-note">GRUP · DEBATE GUARDADO</div>
+ <h1 class="title">EL DILEMA</h1>
+ <div id="savedGroupQuestion" class="saved-copy"></div>
+ <div class="saved-option"><strong>A</strong><span id="savedGroupA"></span></div>
+ <div class="saved-option"><strong>B</strong><span id="savedGroupB"></span></div>
+ <details id="savedGroupContext" class="context-details"><summary>CONTEXTO DEL DEBATE</summary><div id="savedGroupContextText" class="saved-copy"></div></details>
+ <button id="savedGroupGuides" class="btn btn-secondary">MIS AYUDAS GUARDADAS</button>
+ <button id="savedGroupDiscard" class="btn btn-danger">DESCARTAR DILEMA</button>
+ <button class="btn btn-secondary" onclick="openSavedDilemmas()">VOLVER A MIS DILEMAS</button>
+</section>
+<div id="savedDiscardModal" class="saved-discard-overlay" role="dialog" aria-modal="true" aria-labelledby="savedDiscardTitle">
+ <div class="saved-discard-box">
+  <h2 id="savedDiscardTitle">⚠ DESCARTAR DILEMA</h2>
+  <p id="savedDiscardQuestion"></p>
+  <p>Se borrará de tu historial junto con sus ayudas guardadas. Esta acción no se puede deshacer.</p>
+  <div class="saved-actions"><button id="savedDiscardAccept" class="btn btn-secondary" onclick="confirmSavedDiscard()">DESCARTAR</button><button id="savedDiscardCancel" class="btn btn-secondary" onclick="cancelSavedDiscard()">CANCELAR</button></div>
+  <p id="savedDiscardError" role="status"></p>
+ </div>
+</div>
+<script>
+/* R74: historial privado y archivo grupal independientes de la sala. */
+let savedLibraryRows=[],savedLibraryPage=0,savedLibraryBusy=false,savedLibraryRun=0,savedLibraryBack='home',savedDiscardTarget=null,savedDiscardFocus=null;
+async function openSavedDilemmas(){
+ if(privateBusy||savedLibraryBusy)return;
+ const screen=document.querySelector('.screen.active')?.id;
+ if(screen&&!['savedDilemmas','savedGroupDilemma'].includes(screen))savedLibraryBack=screen;
+ showScreen('savedDilemmas');await loadSavedDilemmas(true);
+}
+function closeSavedDilemmas(){
+ savedLibraryRun++;savedLibraryBusy=false;
+ if(savedLibraryBack==='privateBoard'&&privateDilemma)renderPrivateDilemma();
+ else showScreen(savedLibraryBack==='privateBoard'?'home':savedLibraryBack);
+}
+async function loadSavedDilemmas(reset=true){
+ if(savedLibraryBusy)return;
+ savedLibraryBusy=true;const run=++savedLibraryRun;
+ const errorNode=document.getElementById('savedDilemmaError'),more=document.getElementById('savedDilemmaMore'),retry=document.getElementById('savedDilemmaRetry');
+ errorNode.textContent='';more.disabled=true;retry.style.display='none';
+ if(reset){savedLibraryRows=[];savedLibraryPage=0;document.getElementById('savedDilemmaList').textContent='CARGANDO TUS DILEMAS…';more.style.display='none'}
+ try{
+  await ensureAnonymousAuth();const start=savedLibraryPage*20;
+  const results=await Promise.all([
+   sb.from('private_dilemma_sessions').select('id,question,choice,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19),
+   sb.from('saved_group_dilemmas').select('id,question,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19)
+  ]);
+  if(run!==savedLibraryRun)return;
+  for(const r of results)if(r.error)throw r.error;
+  const incoming=results.flatMap((r,i)=>(r.data||[]).map(row=>({...row,origin:i===0?'PRIV':'GRUP'})));
+  for(const row of incoming)if(!savedLibraryRows.some(old=>old.id===row.id&&old.origin===row.origin))savedLibraryRows.push(row);
+  savedLibraryRows.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));savedLibraryPage++;
+  renderSavedDilemmas();more.style.display=results.some(r=>r.data?.length===20)?'block':'none';
+ }catch(e){if(run===savedLibraryRun){errorNode.textContent='No se ha podido cargar tu historial. Inténtalo de nuevo.';retry.style.display='block';if(reset)document.getElementById('savedDilemmaList').textContent=''}}
+ finally{if(run===savedLibraryRun){savedLibraryBusy=false;more.disabled=false}}
+}
+function renderSavedDilemmas(){
+ const root=document.getElementById('savedDilemmaList');root.replaceChildren();
+ if(!savedLibraryRows.length){const p=document.createElement('p');p.className='private-note';p.textContent='Todavía no tienes dilemas guardados. Los privados se conservan al crear otro o volver al hall.';root.appendChild(p);return}
+ for(const row of savedLibraryRows){
+  const card=document.createElement('article');card.className='saved-card';
+  const meta=document.createElement('div');meta.className='saved-meta';
+  const mark=document.createElement('span');mark.className='saved-mark';mark.textContent=row.origin;
+  const date=document.createElement('time');date.dateTime=row.created_at;date.textContent=new Date(row.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
+  meta.append(mark,date);const copy=document.createElement('div');copy.className='saved-copy';renderDilemmaCopy(copy,row.question);
+  const actions=document.createElement('div');actions.className='saved-actions';
+  const resume=document.createElement('button');resume.type='button';resume.className='btn btn-secondary';resume.textContent=row.origin==='PRIV'?'RETOMAR':'VER DILEMA';resume.onclick=()=>openSavedDilemma(row);
+  const discard=document.createElement('button');discard.type='button';discard.className='btn btn-danger';discard.textContent='DESCARTAR';discard.onclick=()=>requestSavedDiscard(row);
+  actions.append(resume,discard);card.append(meta,copy,actions);root.appendChild(card);
+ }
+}
+async function openSavedDilemma(row){
+ if(savedLibraryBusy||privateBusy)return;
+ savedLibraryBusy=true;const run=++savedLibraryRun;
+ document.getElementById('savedDilemmaError').textContent='';
+ try{
+  const table=row.origin==='PRIV'?'private_dilemma_sessions':'saved_group_dilemmas';
+  const {data,error}=await sb.from(table).select().eq('id',row.id).eq('user_id',currentUserId).single();
+  if(error)throw error;if(run!==savedLibraryRun)return;
+  if(row.origin==='PRIV'){
+   privateOperation++;privateSelectionMode=true;privateDilemma=data;privateGuides=[];
+   await loadPrivateGuides();if(run!==savedLibraryRun)return;
+   localStorage.setItem('dilema_private_session',data.id);renderPrivateDilemma();
+  }else{
+   renderDilemmaCopy(document.getElementById('savedGroupQuestion'),data.question);
+   document.getElementById('savedGroupA').textContent=data.option_a;document.getElementById('savedGroupB').textContent=data.option_b;
+   document.getElementById('savedGroupContext').style.display=data.context?'block':'none';document.getElementById('savedGroupContext').open=false;
+   document.getElementById('savedGroupContextText').textContent=data.context||'';
+   const guides=document.getElementById('savedGroupGuides');guides.textContent='MIS AYUDAS GUARDADAS · '+(data.guides?.length||0);guides.disabled=!data.guides?.length;
+   guides.onclick=()=>{window.showAssistantHistory(data.guides||[],true);document.getElementById('amClose').textContent='VOLVER AL DILEMA GUARDADO'};
+   document.getElementById('savedGroupDiscard').onclick=()=>requestSavedDiscard({...data,origin:'GRUP'});
+   showScreen('savedGroupDilemma');
+  }
+ }catch(e){if(run===savedLibraryRun)document.getElementById('savedDilemmaError').textContent='No se ha podido abrir el dilema. Vuelve a intentarlo.'}
+ finally{if(run===savedLibraryRun)savedLibraryBusy=false}
+}
+function requestSavedDiscard(row){
+ if(!row?.id||savedLibraryBusy||privateBusy)return;
+ savedDiscardTarget={...row};savedDiscardFocus=document.activeElement;
+ document.getElementById('savedDiscardQuestion').textContent=row.question;
+ document.getElementById('savedDiscardError').textContent='';
+ document.getElementById('savedDiscardModal').classList.add('open');document.getElementById('savedDiscardCancel').focus();
+}
+function cancelSavedDiscard(){
+ if(savedLibraryBusy)return;savedDiscardTarget=null;
+ document.getElementById('savedDiscardModal').classList.remove('open');savedDiscardFocus?.focus();
+}
+async function confirmSavedDiscard(){
+ if(!savedDiscardTarget||savedLibraryBusy||privateBusy)return;
+ const row={...savedDiscardTarget};savedLibraryBusy=true;
+ const accept=document.getElementById('savedDiscardAccept'),cancel=document.getElementById('savedDiscardCancel');accept.disabled=cancel.disabled=true;
+ try{
+  const table=row.origin==='PRIV'?'private_dilemma_sessions':'saved_group_dilemmas';
+  const {data,error}=await sb.from(table).delete().eq('id',row.id).eq('user_id',currentUserId).select('id');
+  if(error||!data?.length)throw error||Error('Dilemma not deleted');
+  if(row.origin==='PRIV'){
+   if(localStorage.getItem('dilema_private_session')===row.id)localStorage.removeItem('dilema_private_session');
+   if(privateDilemma?.id===row.id){privateOperation++;privateDilemma=null;privateGuides=[]}
+  }
+  savedLibraryRows=savedLibraryRows.filter(r=>r.id!==row.id||r.origin!==row.origin);
+  savedDiscardTarget=null;document.getElementById('savedDiscardModal').classList.remove('open');
+  document.getElementById('pilotAssistantModal')?.classList.remove('open');goHome();
+ }catch(e){document.getElementById('savedDiscardError').textContent='No se ha podido descartar. Tu dilema sigue guardado.'}
+ finally{savedLibraryBusy=false;accept.disabled=cancel.disabled=false}
+}
+document.getElementById('savedDiscardModal').addEventListener('keydown',e=>{
+ if(e.key==='Escape'){e.preventDefault();cancelSavedDiscard()}
+ if(e.key==='Tab'){const first=document.getElementById('savedDiscardAccept'),last=document.getElementById('savedDiscardCancel');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
+});
+</script>
+
 </body>
 </html>
+
 
 
 
