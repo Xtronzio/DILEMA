@@ -1476,7 +1476,7 @@
       UNIRME
     </button>
 
-    <div class="version">DILEMA · V0.1.16-010C-R65</div>
+    <div class="version">DILEMA · V0.1.16-010C-R66</div>
   </main>
 
 
@@ -7957,19 +7957,24 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
 #pilotAssistantModal .am-question{margin-top:12px;padding:12px;border:1px solid #666;border-radius:10px;font-size:13px;font-weight:800;line-height:1.35}
 #pilotAssistantModal .am-mode{font-size:10px;color:#aaa;letter-spacing:1px;margin-top:12px;text-align:center}
 #pilotAssistantModal .am-close{width:100%;min-height:46px;margin-top:16px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
+#pilotAssistantModal .am-history-item{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;padding:14px;border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;text-align:left;cursor:pointer;line-height:1.4}
+#pilotAssistantModal .am-history-item strong{font-size:12px}
+#pilotAssistantModal .am-history-item span{font-size:13px;font-weight:400}
+#pilotAssistantModal .am-history-item small{font-size:10px;color:#aaa}
 #pilotAssistantModal .am-error{color:#ff6b78;text-align:center;font-size:12px;margin-top:12px}
 </style>
 <script>
 (function(){
  const E=id=>document.getElementById(id);
- let guide=null,guideKey="",loading=false,access=null,refreshing=false,selectedRoute=0;
+ let guide=null,guideKey="",loading=false,access=null,refreshing=false,selectedRoute=0,historyEntries=[],historyPrivate=false,historyActive=false;
  function ensure(){
   const grid=E("pilotActionGrid");
   if(grid&&!E("pilotAssistantActions")){
    const row=document.createElement("div");row.id="pilotAssistantActions";
    const btn=document.createElement("button");btn.id="pilotAssistantOpen";btn.type="button";btn.textContent="ASISTENTE · 0/1";btn.onclick=open;
    const request=document.createElement("button");request.id="pilotAssistantRequest";request.type="button";request.textContent="SOLICITAR AYUDA · 0/0";request.onclick=ask;
-   row.append(btn,request);grid.insertAdjacentElement("afterend",row);
+   const history=document.createElement("button");history.id="pilotAssistantHistory";history.type="button";history.textContent="MIS AYUDAS GUARDADAS";history.style.gridColumn="1 / -1";history.onclick=()=>window.openDebateHelpHistory();
+   row.append(btn,request,history);grid.insertAdjacentElement("afterend",row);
   }
   if(!E("pilotAssistantModal")){
    const modal=document.createElement("div");modal.id="pilotAssistantModal";
@@ -7991,6 +7996,10 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  }
  function render(mode){
   const root=E("amContent");root.replaceChildren();
+  E("pilotAssistantModal").querySelector("h2").textContent=historyActive?"AYUDA GUARDADA":"ASISTENTE DE DEBATE";
+  if(historyActive){
+   const back=document.createElement("button");back.className="am-close";back.type="button";back.textContent="← MIS AYUDAS GUARDADAS";back.onclick=historyPicker;root.appendChild(back);
+  }
   if(!guide?.rutas?.length){root.textContent="La guía no está disponible.";return}
   const intro=document.createElement("p");intro.className="am-intro";intro.textContent=guide.private?"Elige una línea para dar forma a tus razones. Despliega solo lo que necesites.":"Elige una línea para defender tu voto y llévala a la mesa.";root.appendChild(intro);
   const context=document.createElement("div");context.className="am-question";context.textContent=guide.contexto||"";root.appendChild(context);
@@ -8012,6 +8021,8 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  function paint(){
   const state=window.dilemaAssistantState,btn=E("pilotAssistantOpen"),request=E("pilotAssistantRequest");
   if(!btn||!request)return;
+  const history=E("pilotAssistantHistory");
+  if(history)history.disabled=!state?.active||state.roundId!==currentRoundId;
   const same=access&&Number(access.cycle)===Number(state?.cycle);
   const active=!!state?.active&&state.roundId===currentRoundId&&!!state.choice&&same&&!!access.active;
   const group=!!access?.approved&&!!access?.mine_requested&&!access?.mine_group_used;
@@ -8058,6 +8069,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   if(!access.token&&!group&&!access.mine_guide)return;
   const source=access.token?"token":group?"group":guide?.source||"token";
   const key=state.roundId+":"+state.cycle+":"+state.choice+":"+source;
+  historyActive=false;
   E("amClose").textContent="VOLVER AL DEBATE";
   E("pilotAssistantModal").classList.add("open");E("amError").textContent="";
   if(guide&&guideKey===key){render(guide.mode);return}
@@ -8075,15 +8087,37 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   }finally{loading=false}
  }
  window.displayPrivateGuide=function(data){
-  ensure();guide={...data.guide,mode:data.mode,private:true};guideKey="";selectedRoute=0;
+  ensure();historyActive=false;guide={...data.guide,mode:data.mode,private:true};guideKey="";selectedRoute=0;
   E("amClose").textContent="VOLVER A MI DILEMA";
   E("pilotAssistantModal").classList.add("open");E("amError").textContent="";render(data.mode);
+ };
+ function historyPicker(){
+  ensure();historyActive=false;E("pilotAssistantModal").classList.add("open");E("amError").textContent="";
+  E("pilotAssistantModal").querySelector("h2").textContent="MIS AYUDAS GUARDADAS";
+  E("amClose").textContent=historyPrivate?"VOLVER A MI DILEMA":"VOLVER AL DEBATE";
+  const root=E("amContent");root.replaceChildren();
+  const note=document.createElement("p");note.className="am-intro";
+  note.textContent="Solo tú puedes verlas. Consultarlas no consume ayudas ni cambia tu voto.";root.appendChild(note);
+  if(!historyEntries.length){const empty=document.createElement("p");empty.className="am-intro";empty.textContent="Todavía no tienes ayudas guardadas en este dilema.";root.appendChild(empty);return}
+  historyEntries.forEach((entry,i)=>{
+   const b=document.createElement("button");b.type="button";b.className="am-history-item";
+   const title=document.createElement("strong");
+   title.textContent="POSTURA "+entry.choice+(entry.cycle_number!=null?" · CICLO "+entry.cycle_number:" · AYUDA "+(historyEntries.length-i));
+   const preview=document.createElement("span");preview.textContent=entry.guide?.rutas?.[0]?.titulo||"Guía personal";
+   const time=document.createElement("small");time.textContent=new Date(entry.created_at).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+   b.append(title,preview,time);
+   b.onclick=()=>{historyActive=true;guide={...entry.guide,mode:entry.mode,private:historyPrivate};guideKey="";selectedRoute=0;render(entry.mode)};
+   root.appendChild(b);
+  });
+ }
+ window.showAssistantHistory=function(entries,isPrivate){
+  historyEntries=entries;historyPrivate=!!isPrivate;historyPicker();
  };
  const previous=window.pilotRefresh;
  window.pilotRefresh=async function(){
   await previous.apply(this,arguments);ensure();
   const state=window.dilemaAssistantState;
-  if(guide&&guideKey.indexOf(state?.roundId+":"+state?.cycle+":"+state?.choice+":")!==0){guide=null;guideKey=""}
+  if(!historyActive&&guide&&guideKey.indexOf(state?.roundId+":"+state?.cycle+":"+state?.choice+":")!==0){guide=null;guideKey=""}
   await refreshAccess();
  };
 })();
@@ -8253,12 +8287,14 @@ document.addEventListener("DOMContentLoaded",()=>{
  </div>
  <p id="privateChoiceNote" class="private-note"></p>
  <button id="privateHelp" class="btn btn-secondary" onclick="openPrivateHelp()" disabled>ASISTENTE PERSONAL</button>
+ <button id="privateMore" class="btn btn-secondary" onclick="openPrivateHelp(true)" disabled>SIGO DUDANDO · OTRA PERSPECTIVA</button>
+ <button id="privateHistory" class="btn btn-secondary" onclick="openPrivateHelpHistory()">MIS AYUDAS GUARDADAS</button>
  <p id="privateBoardError" class="private-error" role="status"></p>
  <button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button>
  <button class="btn btn-secondary" onclick="exitPrivateDilemma()">VOLVER AL HALL</button>
 </section>
 <script>
-let privateDilemma=null,privateBusy=false,privateOperation=0;
+let privateDilemma=null,privateBusy=false,privateOperation=0,privateGuides=[];
 function privateFormReady(){
  document.getElementById("privateCreate").disabled=privateBusy||!["privateQuestion","privateA","privateB"].every(id=>document.getElementById(id).value.trim());
 }
@@ -8281,6 +8317,9 @@ function renderPrivateDilemma(){
   b.setAttribute("aria-pressed",String(privateDilemma.choice===choice));b.disabled=privateBusy;
  }
  const chosen=privateDilemma.choice;
+ document.getElementById("privateMore").disabled=privateBusy||!chosen||!privateGuides.some(g=>g.choice===chosen&&g.mode==="IA");
+ document.getElementById("privateHistory").disabled=privateBusy||!privateGuides.length;
+ document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS"+(privateGuides.length?" · "+privateGuides.length:"");
  document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
  const help=document.getElementById("privateHelp");
  help.disabled=privateBusy||!chosen;help.textContent=privateBusy?"PREPARANDO…":privateDilemma.guides?.[chosen]?.guide?"VER MI GUÍA":"ASISTENTE PERSONAL";
@@ -8296,7 +8335,7 @@ async function createPrivateDilemma(){
    option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim()
   }).select().single();
   if(error)throw error;if(op!==privateOperation)return;
-  privateDilemma=data;localStorage.setItem("dilema_private_session",data.id);privateBusy=false;renderPrivateDilemma();
+  privateDilemma=data;privateGuides=[];localStorage.setItem("dilema_private_session",data.id);privateBusy=false;renderPrivateDilemma();
  }catch(error){if(op===privateOperation)document.getElementById("privateFormError").textContent="No se ha podido guardar tu dilema. Inténtalo de nuevo.";console.error("PRIVATE CREATE",error)}
  finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
 }
@@ -8305,7 +8344,7 @@ async function resumePrivateDilemma(){
  try{
   await ensureAnonymousAuth();
   const {data,error}=await sb.from("private_dilemma_sessions").select().eq("id",localStorage.getItem("dilema_private_session")).single();
-  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;privateBusy=false;renderPrivateDilemma();
+  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;await loadPrivateGuides();privateBusy=false;renderPrivateDilemma();
  }catch(error){if(op===privateOperation)document.getElementById("privateFormError").textContent="Ese dilema ya no está disponible en tu sesión. Puedes crear otro."}
  finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
 }
@@ -8315,23 +8354,53 @@ async function choosePrivatePosture(choice){
  document.getElementById("privateBoardError").textContent="";
  try{
   const {data,error}=await sb.from("private_dilemma_sessions").update({choice}).eq("id",privateDilemma.id).select().single();
-  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;
+  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;await loadPrivateGuides();
  }catch(error){if(op===privateOperation)document.getElementById("privateBoardError").textContent="No se ha podido guardar tu elección. Inténtalo de nuevo."}
  finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
 }
-async function openPrivateHelp(){
+async function openPrivateHelp(newPerspective=false){
  if(privateBusy||!privateDilemma?.choice)return;
  privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
  document.getElementById("privateBoardError").textContent="";
  try{
-  const {data,error}=await sb.functions.invoke("debate-coach",{body:{privateSessionId:privateDilemma.id}});
+  const {data,error}=await sb.functions.invoke("debate-coach",{body:{privateSessionId:privateDilemma.id,newPerspective}});
   if(error||!data?.guide?.rutas?.length)throw error||Error("Guide missing");
   if(op!==privateOperation)return;
   privateDilemma.guides={...privateDilemma.guides,[privateDilemma.choice]:data};
+  await loadPrivateGuides();
   window.displayPrivateGuide(data);
  }catch(error){if(op===privateOperation)document.getElementById("privateBoardError").textContent="No se ha podido preparar tu guía. Vuelve a intentarlo.";console.error("PRIVATE HELP",error)}
  finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
 }
+
+async function loadPrivateGuides(){
+ const id=privateDilemma?.id;if(!id)return;
+ const {data,error}=await sb.from("private_dilemma_guides").select("id,choice,guide,mode,created_at").eq("session_id",id).eq("user_id",currentUserId).order("created_at",{ascending:false}).limit(100);
+ if(error)throw error;if(privateDilemma?.id!==id)return;
+ privateGuides=data||[];
+ const latest={};for(const entry of privateGuides){if(!latest[entry.choice])latest[entry.choice]=entry}
+ privateDilemma.guides=latest;
+}
+async function openPrivateHelpHistory(){
+ if(privateBusy||!privateDilemma)return;
+ privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
+ try{
+  await loadPrivateGuides();if(op!==privateOperation)return;
+  window.showAssistantHistory(privateGuides,true);
+ }catch(error){document.getElementById("privateBoardError").textContent="No se ha podido cargar el historial. Inténtalo de nuevo."}
+ finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
+}
+async function openDebateHelpHistory(){
+ const round=currentRoundId;if(!round)return;
+ const button=document.getElementById("pilotAssistantHistory");if(button)button.disabled=true;
+ try{
+  const {data,error}=await sb.from("debate_assistant_guides").select("id,cycle_number,choice,guide,mode,created_at").eq("round_id",round).eq("user_id",currentUserId).eq("status","ready").order("created_at",{ascending:false}).limit(100);
+  if(error)throw error;if(round!==currentRoundId)return;
+  window.showAssistantHistory(data||[],false);
+ }catch(error){alert("No se ha podido cargar tu historial de ayudas. Inténtalo de nuevo.")}
+ finally{if(button)button.disabled=!window.dilemaAssistantState?.active}
+}
+
 function exitPrivateDilemma(){
  privateOperation++;privateBusy=false;
  document.getElementById("pilotAssistantModal")?.classList.remove("open");goHome();
