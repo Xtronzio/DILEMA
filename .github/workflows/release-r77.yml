@@ -1,0 +1,21 @@
+name: Publish R77 release
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/release-r77.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish R77
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api "repos/$GH_REPO/contents/releases/R77.md?ref=$GITHUB_SHA" --jq .content | base64 --decode > release-notes.md
+          if ! gh release view R77 >/dev/null 2>&1; then
+            gh release create R77 --target "$GITHUB_SHA" --title "R77 · Actualidad IA y noticias validadas" --notes-file release-notes.md
+          fi
