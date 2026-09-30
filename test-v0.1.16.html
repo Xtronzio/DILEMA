@@ -5,6 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b0b0b">
+  <meta name="referrer" content="no-referrer">
+  <script>
+  // Capture the private key only in memory; fragments are never sent to the hosting server.
+  window.dilemaIncomingAccess=new URLSearchParams(location.hash.slice(1)).get('access');
+  if(window.dilemaIncomingAccess)history.replaceState(null,'',location.pathname+location.search);
+  </script>
+
 
   <title>DILEMA</title>
 
@@ -1477,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R74</div>
+    <div class="version">DILEMA · V0.1.16-010C-R75</div>
   </main>
 
 
@@ -2027,6 +2034,7 @@ let authReady = false;
 
 
 async function ensureAnonymousAuth() {
+  if(window.dilemaIncomingAccess)throw new Error("ACCESS_RESTORE_PENDING");
 
   if (
     authReady &&
@@ -2234,6 +2242,7 @@ function saveProfiles(
     "dilema_profiles",
     JSON.stringify(profiles)
   );
+  window.dilemaSyncAccessProfiles?.();
 
 }
 
@@ -6788,6 +6797,7 @@ window.addEventListener(
   "DOMContentLoaded",
   async () => {
 
+    if(window.dilemaIncomingAccess){await restorePortableAccess();return;}
     const bootParams=new URLSearchParams(location.search);
     if(bootParams.has("_refresh")&&bootParams.get("fresh")!=="1"){
       bootParams.delete("_refresh");
@@ -8962,6 +8972,100 @@ document.getElementById('savedDiscardModal').addEventListener('keydown',e=>{
  if(e.key==='Escape'){e.preventDefault();cancelSavedDiscard()}
  if(e.key==='Tab'){const first=document.getElementById('savedDiscardAccept'),last=document.getElementById('savedDiscardCancel');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
 });
+</script>
+
+<style>
+.access-warning{border:1px solid #facc15;border-radius:14px;background:#10100a;padding:18px;margin:26px 0;text-align:center;color:#fff}
+.access-warning h2{font-size:13px;letter-spacing:1px;color:#facc15;margin:0 0 14px;font-weight:900}
+.access-warning p{font-size:13px;font-weight:400;line-height:1.5;margin:12px 0}
+.access-warning .btn{background:#0b0b0b;color:#fff;border:1px solid #8d7612;font-size:11px;min-height:48px;margin:14px 0 0;white-space:normal}
+.access-warning .btn:disabled{opacity:.4}
+.access-warning details{margin-top:18px;font-size:12px;line-height:1.4;text-align:left}
+.access-warning summary{cursor:pointer;font-weight:800;color:#facc15}
+.access-url{display:none;width:100%;margin:12px 0 0;padding:12px;border:1px solid #777;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:400}
+.access-status{font-size:12px!important;overflow-wrap:anywhere;min-height:18px}
+#portableAccessOverlay{display:none;position:fixed;inset:0;z-index:100010;background:#080808;align-items:center;justify-content:center;padding:24px}
+#portableAccessOverlay.open{display:flex}
+#portableAccessOverlay .access-warning{width:100%;max-width:420px;margin:0}
+</style>
+<div id="portableAccessOverlay" role="dialog" aria-modal="true" aria-labelledby="portableAccessTitle">
+ <div class="access-warning"><h2 id="portableAccessTitle">⚠ RECUPERAR TU ACCESO</h2><p id="portableAccessMessage">Recuperando tus perfiles, dilemas y ayudas…</p><button id="portableAccessRetry" class="btn btn-secondary" onclick="restorePortableAccess()" style="display:none">REINTENTAR</button><button id="portableAccessCancel" class="btn btn-secondary" onclick="cancelPortableAccess()">CANCELAR</button></div>
+</div>
+<script>
+/* R75: portable bearer link; secret is carried in a URL fragment and removed before boot. */
+let portableCopyBusy=false,portableRestoreBusy=false,portableSyncTimer=null;
+const portableTokenPattern=/^dl1_[A-Za-z0-9_-]{43}$/;
+function portableStorageKey(){return 'dilema_access_key:'+currentUserId}
+function portableProfiles(){return getProfiles().map(p=>({id:String(p.id),name:String(p.name||'').slice(0,16),avatar:String(p.avatar||''),motto:String(p.motto||'').slice(0,50)})).slice(0,50)}
+function portableAccessUrl(token){const url=new URL(location.href);url.search='';url.hash=new URLSearchParams({access:token}).toString();return url.href}
+function setPortableStatus(message,url=''){
+ document.querySelectorAll('.access-status').forEach(n=>n.textContent=message);
+ document.querySelectorAll('.access-url').forEach(n=>{n.value=url;n.style.display=url?'block':'none'});
+}
+function setPortableButtons(busy){document.querySelectorAll('[data-portable-copy]').forEach(b=>b.disabled=busy)}
+function savePortableProfileDraft(){
+ if(!document.getElementById('profile').classList.contains('active')||editingLobbyProfile)return;
+ const name=document.getElementById('playerName').value.trim().toUpperCase(),motto=document.getElementById('playerMotto').value.trim();
+ if(!name||!selectedAvatar)throw Error('PROFILE_REQUIRED');
+ const id=selectedSavedProfileId||crypto.randomUUID(),list=getProfiles();
+ const profile={id,name,avatar:selectedAvatar,motto};const i=list.findIndex(p=>p.id===id);if(i>=0)list[i]=profile;else list.push(profile);
+ saveProfiles(list);selectedSavedProfileId=id;
+}
+async function portableRequest(body){
+ const {data,error}=await sb.functions.invoke('access-link',{body});
+ if(error||data?.error){let code=data?.error;try{if(!code&&error?.context)code=(await error.context.json()).error}catch(_){}const e=Error(code||'UNAVAILABLE');throw e}
+ return data;
+}
+async function copyPortableAccess(renew=false){
+ if(portableCopyBusy||portableRestoreBusy||window.dilemaIncomingAccess)return;
+ portableCopyBusy=true;setPortableButtons(true);setPortableStatus('PREPARANDO TU ENLACE…');
+ try{
+  await ensureAnonymousAuth();savePortableProfileDraft();
+  const previous=localStorage.getItem(portableStorageKey());
+  const data=await portableRequest({action:renew?'renew':'copy',token:previous,profiles:portableProfiles()});
+  if(!portableTokenPattern.test(data?.token||''))throw Error('UNAVAILABLE');
+  localStorage.setItem(portableStorageKey(),data.token);const url=portableAccessUrl(data.token);
+  setPortableStatus('Guarda este enlace en un lugar privado.',url);
+  let copied=false;try{if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(url);copied=true}}catch(_){}
+  if(!copied){const field=[...document.querySelectorAll('.access-url')].find(n=>n.closest('.screen')?.classList.contains('active'));if(field){field.focus();field.select();try{copied=document.execCommand('copy')}catch(_){}}}
+  setPortableStatus(copied?'ENLACE COPIADO. Guárdalo en un lugar privado.':'Tu enlace está listo. Mantén pulsado el campo para copiarlo.',url);
+ }catch(e){
+  const text=e.message==='PROFILE_REQUIRED'?'Escribe tu nombre y elige un avatar antes de copiar el acceso.':e.message==='LINK_EXISTS'?'Ya existe un enlace para esta identidad. Usa el que guardaste o despliega «Renovar mi enlace».':'No se ha podido preparar el enlace. Inténtalo de nuevo.';
+  setPortableStatus(text);
+ }finally{portableCopyBusy=false;setPortableButtons(false)}
+}
+window.dilemaSyncAccessProfiles=function(){
+ if(!currentUserId||!localStorage.getItem(portableStorageKey())||window.dilemaIncomingAccess)return;
+ clearTimeout(portableSyncTimer);const owner=currentUserId;
+ portableSyncTimer=setTimeout(async()=>{if(owner!==currentUserId)return;try{await portableRequest({action:'sync',profiles:portableProfiles()})}catch(_){setPortableStatus('No se han sincronizado los últimos cambios de perfil. Pulsa Copiar enlace de acceso para reintentarlo.')}},350);
+};
+async function restorePortableAccess(){
+ if(portableRestoreBusy||!window.dilemaIncomingAccess)return;
+ portableRestoreBusy=true;const overlay=document.getElementById('portableAccessOverlay');overlay.classList.add('open');
+ const retry=document.getElementById('portableAccessRetry'),cancel=document.getElementById('portableAccessCancel'),message=document.getElementById('portableAccessMessage');
+ retry.style.display='none';cancel.disabled=true;message.textContent='Recuperando tus perfiles, dilemas y ayudas…';
+ try{
+  const token=window.dilemaIncomingAccess;if(!portableTokenPattern.test(token))throw Error('INVALID_LINK');
+  const data=await portableRequest({action:'restore',token});if(!data?.session?.access_token||!data?.session?.refresh_token||!data?.user_id)throw Error('UNAVAILABLE');
+  const {data:auth,error}=await sb.auth.setSession(data.session);if(error||auth.user?.id!==data.user_id)throw Error('UNAVAILABLE');
+  currentUserId=auth.user.id;authReady=true;
+  localStorage.setItem('dilema_profiles',JSON.stringify(data.profiles||[]));localStorage.setItem(portableStorageKey(),token);localStorage.removeItem('dilema_private_session');
+  privateDilemma=null;privateGuides=[];window.dilemaIncomingAccess=null;cleanupRoom();
+  goHome();
+ }catch(e){
+  message.textContent=e.message==='INVALID_LINK'?'Este enlace no es válido o ha sido reemplazado. Usa el último enlace que guardaste.':e.message==='TRY_LATER'?'Espera unos segundos y vuelve a intentarlo.':'No se ha podido recuperar el acceso. Tu historial sigue guardado; vuelve a intentarlo.';
+  retry.style.display=e.message==='INVALID_LINK'?'none':'block';
+ }finally{portableRestoreBusy=false;cancel.disabled=false}
+}
+function cancelPortableAccess(){if(portableRestoreBusy)return;window.dilemaIncomingAccess=null;goHome()}
+function addPortableAccessBox(id){
+ const screen=document.getElementById(id);if(!screen||screen.querySelector('.access-warning'))return;
+ const box=document.createElement('div');box.className='access-warning';
+ box.innerHTML='<h2>⚠ GUARDA TU ACCESO</h2><p>Copia este enlace y guárdalo en un lugar privado. Ábrelo en otro navegador o dispositivo para recuperar tus perfiles, dilemas y ayudas.</p><p>No lo compartas: quien lo tenga podrá acceder a tu historial. El enlace conserva el acceso a tu identidad; puedes seguir eligiendo quién eres hoy.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess()">COPIAR ENLACE DE ACCESO</button><input class="access-url" readonly aria-label="Tu enlace privado de acceso" onclick="this.select()"><p class="access-status" role="status"></p><details><summary>RENOVAR MI ENLACE</summary><p>Si lo has compartido por error, genera otro. El enlace anterior dejará de funcionar. Las sesiones que ya estén abiertas seguirán abiertas.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess(true)">RENOVAR E INVALIDAR EL ANTERIOR</button></details>';
+ screen.appendChild(box);
+}
+for(const id of ['profile','profileChoice','savedDilemmas'])addPortableAccessBox(id);
+if(window.dilemaIncomingAccess)document.getElementById('portableAccessOverlay').classList.add('open');
 </script>
 
 </body>
