@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R77</div>
+    <div class="version">DILEMA · V0.1.16-010C-R78</div>
   </main>
 
 
@@ -8163,7 +8163,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const modal=document.createElement("div");modal.id="pilotInstructionsModal";
   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
   const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["SOLICITAR AÑADIR CONTEXTO","Propone añadir información al dilema. La mayoría decide y quien lo solicitó escribe después. La mesa recibe el contexto sin nombre; no cambia los votos ni abre un re-voto automático."],["CONTEXTO ADICIONAL","En privado puedes escribirlo y actualizarlo directamente. En grupo, el contexto inicial acompaña la propuesta y las aportaciones posteriores requieren aprobación de la mesa."],["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
-  groups.push({title:'ACTUALIDAD IA',entries:[['ACTUALIDAD IA','Elige TEENS, intensidad y, si quieres, categoría. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
+  groups.push({title:'DILEMAS POR EL MUNDO',entries:[['DILEMAS POR EL MUNDO','Elige TEENS, intensidad y, si quieres, categoría. Prioriza noticias de España y amplía al exterior cuando no haya suficientes noticias españolas válidas. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -8780,7 +8780,7 @@ document.addEventListener('DOMContentLoaded',()=>{ensureContextForms();normalize
 function appendCurrentAiOption(container){
  if(!container||container.querySelector('.current-ai'))return;
  const button=document.createElement('button');button.type='button';button.className='selection-chip current-ai';button.disabled=true;button.setAttribute('aria-disabled','true');
- const title=document.createElement('b');title.textContent='ACTUALIDAD IA';const note=document.createElement('span');note.textContent='EN CONSTRUCCIÓN';button.append(title,note);container.appendChild(button);
+ const title=document.createElement('b');title.textContent='DILEMAS POR EL MUNDO';const note=document.createElement('span');note.textContent='EN CONSTRUCCIÓN';button.append(title,note);container.appendChild(button);
 }
 let guideHistoryRows=[],guideHistoryRound=null,guideHistoryUser=null,guideHistoryAt=0,guideHistoryPending=null;
 function guideHistoryCounts(rows,choice){return {matching:choice?rows.filter(row=>row.choice===choice).length:0,total:rows.length}}
@@ -9079,9 +9079,9 @@ if(window.dilemaIncomingAccess)document.getElementById('portableAccessOverlay').
 <script>
 /* R76: sourced news inspire independent hypothetical dilemmas. */
 let selectionCurrentAi=false,privateCurrentAi=false,newsAttemptKey='',newsAttemptAt=0,newsPending=false,newsFailed=false;
-const newsErrors={AI_UNCONFIGURED:'La IA requiere configuración. Puedes seguir con el catálogo.',AI_UNAVAILABLE:'Actualidad IA no está disponible ahora. Revisa el servicio o el saldo de IA; el catálogo sigue disponible.',NO_CURRENT_NEWS:'No hemos podido validar noticias recientes con enlaces a artículos concretos. Reintenta la búsqueda o elige catálogo.',QUALITY_FAILED:'Las propuestas no han pasado la revisión de formato. Prueba más tarde o elige catálogo.',DAILY_LIMIT:'Hemos alcanzado el límite de nuevas búsquedas de hoy. Puedes seguir con el catálogo.'};
+const newsErrors={AI_UNCONFIGURED:'La IA requiere configuración. Puedes seguir con el catálogo.',AI_UNAVAILABLE:'Dilemas por el mundo no está disponible ahora. Revisa el servicio o el saldo de IA; el catálogo sigue disponible.',NO_CURRENT_NEWS:'No hemos podido validar noticias recientes con enlaces a artículos concretos. Reintenta la búsqueda o elige catálogo.',QUALITY_FAILED:'Las propuestas no han pasado la revisión de formato. Prueba más tarde o elige catálogo.',DAILY_LIMIT:'Hemos alcanzado el límite de nuevas búsquedas de hoy. Puedes seguir con el catálogo.'};
 function newsDetail(meta){
- const details=document.createElement('details');details.className='news-source';const title=document.createElement('summary');title.textContent='INSPIRADO EN… · ACTUALIDAD IA';details.appendChild(title);
+ const details=document.createElement('details');details.className='news-source';const title=document.createElement('summary');title.textContent='INSPIRADO EN… · DILEMAS POR EL MUNDO';details.appendChild(title);
  const headline=document.createElement('strong');headline.textContent=meta.title||'';const facts=document.createElement('p');facts.textContent=meta.summary||'';
  const date=document.createElement('small');date.textContent='PUBLICADO: '+(meta.date||'')+' · CONSULTADO: '+String(meta.retrieved_at||meta.generated_at||'').slice(0,10);
  details.append(headline,facts,date);try{const url=new URL(meta.url);if(url.protocol==='https:'){const link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';link.textContent='LEER LA FUENTE · '+url.hostname;details.appendChild(link)}}catch(_){}
@@ -9104,7 +9104,7 @@ appendCurrentAiOption=function(container){
  const button=document.createElement('button');button.type='button';button.className='selection-chip current-ai';
  const on=personal?privateCurrentAi:selectionCurrentAi;button.classList.toggle('selected',on);button.setAttribute('aria-pressed',String(on));
  button.disabled=personal?(privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity):(!selectionAudienceChosen||!selectionDraftIntensity||!!s?.my_vote||s?.phase==='runoff');
- const title=document.createElement('b');title.textContent='ACTUALIDAD IA';const note=document.createElement('span');note.textContent='INSPIRADO EN NOTICIAS';button.append(title,note);
+ const title=document.createElement('b');title.textContent='DILEMAS POR EL MUNDO';const note=document.createElement('span');note.textContent='INSPIRADO EN NOTICIAS';button.append(title,note);
  button.onclick=()=>{if(personal){privateCurrentAi=!privateCurrentAi;renderPrivateCatalog()}else{selectionCurrentAi=!selectionCurrentAi;renderSelectionFilters(currentDebateSelection)}};container.appendChild(button);
 };
 const beforeNewsGroupFilters=renderSelectionFilters;
@@ -9118,13 +9118,13 @@ renderSelectionFilters=function(s){
  }
  if(s.my_vote)selectionCurrentAi=String(s.my_vote).includes('|ACTUALIDAD IA:');
  beforeNewsGroupFilters(s);
- const confirm=document.getElementById('selectionConfirm');if(selectionCurrentAi){confirm.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity;confirm.textContent=s.my_vote?'VOTO REGISTRADO':'VOTAR ACTUALIDAD IA'}
+ const confirm=document.getElementById('selectionConfirm');if(selectionCurrentAi){confirm.disabled=!!s.my_vote||!selectionAudienceChosen||!selectionDraftIntensity;confirm.textContent=s.my_vote?'VOTO REGISTRADO':'VOTAR DILEMAS POR EL MUNDO'}
 };
 voteSelectionFilters=async function(){if(!currentDebateSelection||!selectionAudienceChosen||!selectionDraftIntensity||(!selectionCurrentAi&&!selectionDraftTheme))return;await voteDebateSelection(selectionDraftIntensity+'|'+(selectionCurrentAi?'ACTUALIDAD IA:'+(selectionDraftTheme||'ALEATORIO'):selectionDraftTheme))};
 const beforeNewsGroupRender=renderDebateSelection;
 renderDebateSelection=function(){
  beforeNewsGroupRender();const s=currentDebateSelection;if(!s)return;if(s.phase!=='news_loading'&&newsFailed){newsFailed=false;document.getElementById('suggestedError').textContent=''}
- let loading=document.getElementById('newsGroupLoading');if(!loading){loading=document.createElement('div');loading.id='newsGroupLoading';loading.className='news-loading';loading.innerHTML='<strong>ACTUALIDAD IA</strong><p>Buscando noticias y preparando propuestas para la mesa…</p><button type="button" class="btn btn-secondary" onclick="retryGroupNews()">REINTENTAR</button>';document.getElementById('selectionStatus').before(loading)}
+ let loading=document.getElementById('newsGroupLoading');if(!loading){loading=document.createElement('div');loading.id='newsGroupLoading';loading.className='news-loading';loading.innerHTML='<strong>DILEMAS POR EL MUNDO</strong><p>Buscando noticias y preparando propuestas para la mesa…</p><button type="button" class="btn btn-secondary" onclick="retryGroupNews()">REINTENTAR</button>';document.getElementById('selectionStatus').before(loading)}
  loading.style.display=s.phase==='news_loading'?'block':'none';
  if(s.phase==='news_loading'){
   const key=currentRoomId+':'+s.stage;if(newsAttemptKey!==key){newsAttemptKey=key;newsAttemptAt=0;newsFailed=false}
@@ -9141,7 +9141,7 @@ async function requestGroupNews(){
 }
 function retryGroupNews(){newsFailed=false;newsAttemptAt=0;document.getElementById('suggestedError').textContent='';requestGroupNews()}
 const beforeNewsPrivateCatalog=renderPrivateCatalog;
-renderPrivateCatalog=function(){beforeNewsPrivateCatalog();if(privateCurrentAi){const b=document.getElementById('privateCatalogConfirm');b.disabled=privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity;b.textContent='BUSCAR ACTUALIDAD IA'}
+renderPrivateCatalog=function(){beforeNewsPrivateCatalog();if(privateCurrentAi){const b=document.getElementById('privateCatalogConfirm');b.disabled=privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity;b.textContent='BUSCAR DILEMAS POR EL MUNDO'}
  const buttons=[...document.querySelectorAll('#privateCatalogQuestions .selection-question')];for(let i=0;i<privateCatalogueSamples.length;i++){const meta=privateCatalogueSamples[i].news_meta;if(meta&&buttons[i])buttons[i].after(newsDetail(meta))}
  const more=document.getElementById('privateCatalogMore');if(privateCatalogueSamples.some(d=>d.news_meta)){more.textContent='VOLVER A ELEGIR';more.onclick=()=>{privateCatalogueSamples=[];renderPrivateCatalog()}}else more.onclick=()=>samplePrivateCatalog();
 };
@@ -9151,7 +9151,7 @@ const beforeNewsPrivateSample=samplePrivateCatalog;
 samplePrivateCatalog=async function(){
  if(!privateCurrentAi)return beforeNewsPrivateSample();if(privateBusy||!privateCatalogueAudience||!privateCatalogueIntensity)return;
  privateBusy=true;const op=++privateOperation;renderPrivateCatalog();const errorNode=document.getElementById('privateCatalogError');errorNode.textContent='BUSCANDO NOTICIAS Y PREPARANDO DILEMAS…';
- try{await ensureAnonymousAuth();let data;for(let n=0;n<50;n++){if(op!==privateOperation)return;data=await invokeCurrentNews({intensity:privateCatalogueIntensity,theme:privateCatalogueTheme||'ALEATORIO'});if(data.status==='ready')break;errorNode.textContent='ACTUALIDAD IA ESTÁ PREPARANDO LAS PROPUESTAS…';await new Promise(resolve=>setTimeout(resolve,2000))}if(data?.status!=='ready')throw Error('AI_UNAVAILABLE');if(op!==privateOperation)return;privateCatalogueSamples=data.candidates;errorNode.textContent=''}catch(e){if(op===privateOperation)errorNode.textContent=newsErrors[e.message]||newsErrors.AI_UNAVAILABLE}
+ try{await ensureAnonymousAuth();let data;for(let n=0;n<50;n++){if(op!==privateOperation)return;data=await invokeCurrentNews({intensity:privateCatalogueIntensity,theme:privateCatalogueTheme||'ALEATORIO'});if(data.status==='ready')break;errorNode.textContent='DILEMAS POR EL MUNDO ESTÁ PREPARANDO LAS PROPUESTAS…';await new Promise(resolve=>setTimeout(resolve,2000))}if(data?.status!=='ready')throw Error('AI_UNAVAILABLE');if(op!==privateOperation)return;privateCatalogueSamples=data.candidates;errorNode.textContent=''}catch(e){if(op===privateOperation)errorNode.textContent=newsErrors[e.message]||newsErrors.AI_UNAVAILABLE}
  finally{if(op===privateOperation){privateBusy=false;renderPrivateCatalog()}}
 };
 const beforeNewsPrivateBack=backPrivateCatalog;
