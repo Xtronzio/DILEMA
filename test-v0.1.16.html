@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R79</div>
+    <div class="version">DILEMA · V0.1.16-010C-R80</div>
   </main>
 
 
@@ -3842,46 +3842,12 @@ function renderPlayers(
 }
 
 
-async function changeLobbyExpected(
-  change
-) {
-
-  if (
-    currentRoomHostId !==
-    localPlayerId
-  ) {
-    return;
-  }
-
-
-  const next =
-    Math.max(
-      2,
-      Math.min(
-        20,
-        currentExpectedPlayers +
-        change
-      )
-    );
-
-
-  await sb
-    .from(
-      "rooms"
-    )
-    .update({
-
-      expected_players:
-        next
-
-    })
-    .eq(
-      "id",
-      currentRoomId
-    );
-
+async function changeLobbyExpected(change) {
+ if(currentRoomHostId!==localPlayerId)return;
+ const {data,error}=await sb.rpc('change_lobby_size',{p_room_id:currentRoomId,p_delta:change});
+ if(error){alert('No se ha podido ajustar el número de participantes.');await refreshLobby();return;}
+ currentExpectedPlayers=Number(data);await refreshLobby();
 }
-
 
 async function kickPlayer(
   playerId
@@ -3906,7 +3872,7 @@ async function kickPlayer(
   }
 
 
-  await sb
+  const {error}=await sb
     .from(
       "players"
     )
@@ -3920,6 +3886,8 @@ async function kickPlayer(
       playerId
     );
 
+  if(error){alert('No se ha podido expulsar al jugador.');return;}
+  await refreshLobby();
 }
 
 
@@ -7023,6 +6991,7 @@ window.addEventListener(
    try{
     const s=await rpc("get_debate_state",{p_round_id:currentRoundId});
     window.dilemaContextSnapshot={round:currentRoundId,data:s.context_state};
+    window.dilemaLimboSnapshot={round:currentRoundId,data:s.limbo_state};
     const presenceView=await rpc("get_presence_request",{p_round_id:currentRoundId});
     window.dilemaPresenceView=presenceView;
     const isAbsent=presenceView?.my_presence==="absent";
@@ -8169,6 +8138,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   const modal=document.createElement("div");modal.id="pilotInstructionsModal";
   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
   const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["SOLICITAR AÑADIR CONTEXTO","Propone añadir información al dilema. La mayoría decide y quien lo solicitó escribe después. La mesa recibe el contexto sin nombre; no cambia los votos ni abre un re-voto automático."],["CONTEXTO ADICIONAL","En privado puedes escribirlo y actualizarlo directamente. En grupo, el contexto inicial acompaña la propuesta y las aportaciones posteriores requieren aprobación de la mesa."],["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
+  groups.push({title:'LIMBO',entries:[['PROPONER LIMBO','Elige otro participante y una duración: 3, 5, 10 minutos o hasta el fin del debate. Decide la mayoría de personas presentes, incluido el destinatario; quien propone ya vota SÍ. No puede abrirse mientras haya otra decisión pendiente.'],['ESTÁS EN EL LIMBO','Quedas ausente y Solicitar volver permanece bloqueado durante el plazo. La cuenta atrás continúa aunque pauses o recargues. Al terminar puedes pedir volver: no te reincorporas automáticamente. Si eras anfitrión, el papel pasa a otro participante presente. El limbo termina al finalizar el debate.']]});
   groups.push({title:'DILEMAS POR EL MUNDO',entries:[['DILEMAS POR EL MUNDO','Elige TEENS, intensidad y, si quieres, categoría. Prioriza noticias de España y amplía al exterior cuando no haya suficientes noticias españolas válidas. Si la búsqueda falla, propone noticias guardadas o dilemas del catálogo, identificando su origen. La intensidad orienta la adaptación y no bloquea las propuestas. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
@@ -8193,7 +8163,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 (function(){
  const E=id=>document.getElementById(id);
  const boxes=["pilotUnanimity","pilotGiroVoteBox","pilotCloseBox","pilotGroupRevoteProposal",
-  "pilotPauseProposal","pilotPresenceRequestBox","pilotInlineRevote","pilotSecretRevotePicker","pilotContextDecision"];
+  "pilotPauseProposal","pilotPresenceRequestBox","pilotInlineRevote","pilotSecretRevotePicker","pilotContextDecision","pilotLimboVoteBox"];
  let lateTimer;
  function visible(node){return !!node&&getComputedStyle(node).display!=="none"&&getComputedStyle(node).visibility!=="hidden"}
  function stage(){
@@ -8226,6 +8196,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(type==="giro")return (await call("get_debate_twist_proposal"))?.status!=="open";
   if(type==="group")return (await call("get_debate_revote_proposal"))?.status!=="open";
   if(type==="pause")return !(await call("get_debate_pause_proposal"))?.open;
+  if(type==="limbo")return !(await call("get_debate_state"))?.limbo_state?.proposal;
   if(type==="presence")return !(await call("get_presence_request"))?.id;
   if(type==="optional")return !(await call("get_optional_debate_revote"))?.open;
   if(type==="unanimity"){
@@ -9171,6 +9142,100 @@ samplePrivateCatalog=async function(){
 };
 const beforeNewsPrivateBack=backPrivateCatalog;
 backPrivateCatalog=function(){privateCurrentAi=false;beforeNewsPrivateBack()};
+</script>
+
+<style>
+#pilotLimboAction{grid-column:1/-1}
+#pilotLimboVoteBox,#pilotLimboStatus,.limbo-card{border:1px solid #facc15!important;border-radius:14px;background:#10100a;color:#fff;padding:18px;text-align:center;margin:16px 0;box-shadow:none!important}
+#pilotLimboVoteBox::before,#pilotLimboVoteBox::after{display:none!important}
+#pilotLimboVoteBox h3,#pilotLimboStatus h3,.limbo-card h2{color:#facc15;font-size:12px;letter-spacing:1px;margin:0 0 16px;font-weight:900}
+#pilotLimboVoteBox p,#pilotLimboStatus p,.limbo-card p{font-size:14px;line-height:1.5;margin:12px 0;font-weight:400}
+#pilotLimboVoteBox .limbo-count{color:#facc15;font-size:11px;margin:18px 0}
+.limbo-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.limbo-actions button{border:1px solid #806b12;border-radius:12px;background:#0b0b0b;color:#fff;padding:14px;font:inherit;font-size:12px;cursor:pointer}
+.limbo-actions button.pilot-selected{background:#facc15;color:#000}
+.limbo-actions button:disabled{opacity:.4;cursor:default}
+#pilotLimboTimer{display:block;font-size:24px;font-weight:900;color:#facc15;margin:16px 0}
+#pilotLimboModal{display:none;position:fixed;inset:0;z-index:100005;background:#000c;align-items:center;justify-content:center;padding:20px}
+#pilotLimboModal.open{display:flex}
+#pilotLimboModal .limbo-card{width:100%;max-width:410px;max-height:calc(100dvh - 40px);overflow:auto;margin:0}
+#pilotLimboModal select{width:100%;background:#0b0b0b;color:#fff;border:1px solid #666;border-radius:12px;padding:14px;font:inherit;margin:0 0 18px}
+#pilotLimboModal .limbo-actions{margin:16px 0}
+#pilotLimboError{color:#ff6473!important}
+</style>
+<div id="pilotLimboModal" role="dialog" aria-modal="true" aria-labelledby="pilotLimboTitle">
+ <div class="limbo-card"><h2 id="pilotLimboTitle">⚠ PROPONER LIMBO</h2><p>La mesa decide por mayoría quién se ausenta y durante cuánto tiempo.</p>
+ <select id="pilotLimboTarget" aria-label="Participante"><option value="">ELIGE PARTICIPANTE</option></select>
+ <div id="pilotLimboDurations" class="limbo-actions"><button type="button" data-duration="180">3 MIN</button><button type="button" data-duration="300">5 MIN</button><button type="button" data-duration="600">10 MIN</button><button type="button" data-duration="0">HASTA FIN DEBATE</button></div>
+ <p id="pilotLimboError" role="status"></p><div class="limbo-actions"><button id="pilotLimboAccept" type="button" disabled>PROPONER</button><button id="pilotLimboCancel" type="button">CANCELAR</button></div></div>
+</div>
+<script>
+/* R80: limbo decisions share the board's decision space. Timers only update text. */
+(function(){
+ const E=id=>document.getElementById(id);let duration=null,submitting=false,offset=0,offsetStamp=null;
+ const otherBoxes=['pilotUnanimity','pilotGiroVoteBox','pilotCloseBox','pilotGroupRevoteProposal','pilotPauseProposal','pilotPresenceRequestBox','pilotInlineRevote','pilotSecretRevotePicker','pilotContextDecision'];
+ const visible=id=>{const n=E(id);return !!n&&getComputedStyle(n).display!=='none'};
+ async function call(name,args){const r=await sb.rpc(name,args);if(r.error)throw r.error;return r.data}
+ function snapshot(){const x=window.dilemaLimboSnapshot;return x?.round===currentRoundId?x.data:null}
+ function ensure(){
+  const grid=E('pilotActionGrid');if(!grid)return;
+  if(!E('pilotLimboAction')){const b=document.createElement('button');b.id='pilotLimboAction';b.className='btn btn-secondary';b.type='button';b.textContent='PROPONER LIMBO';b.onclick=open;grid.appendChild(b)}
+  const stage=E('pilotVoteStage');if(!stage)return;
+  if(!E('pilotLimboVoteBox')){const n=document.createElement('div');n.id='pilotLimboVoteBox';n.style.display='none';n.innerHTML='<h3>⚠ AVISO DE LA MESA</h3><p data-limbo-question></p><p class="limbo-count"></p><div class="limbo-actions"><button type="button" data-limbo-vote="YES">SÍ</button><button type="button" data-limbo-vote="NO">NO</button></div>';stage.appendChild(n);n.querySelectorAll('[data-limbo-vote]').forEach(b=>b.onclick=()=>vote(b.dataset.limboVote))}
+  if(!E('pilotLimboStatus')){const n=document.createElement('div');n.id='pilotLimboStatus';n.style.display='none';n.innerHTML='<h3>⚠ ESTÁS EN EL LIMBO</h3><p>La mesa ha aprobado tu ausencia.</p><span id="pilotLimboTimer" role="timer"></span><p id="pilotLimboReturnHint"></p>';stage.insertAdjacentElement('beforebegin',n)}
+ }
+ function remaining(s){return s.until_at?Math.max(0,Date.parse(s.until_at)-(Date.now()+offset)):null}
+ function blocked(s){return !!s?.blocked&&(s.until_end||remaining(s)>0)}
+ function tick(){
+  if(!E('debate')?.classList.contains('active'))return;
+  const s=snapshot();if(!s)return;
+  const active=blocked(s),n=E('pilotLimboTimer');
+  if(n&&s.blocked){const seconds=Math.ceil((remaining(s)||0)/1000);const text=s.until_end?'HASTA FIN DEBATE':`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`;if(n.textContent!==text)n.textContent=text;
+   E('pilotLimboReturnHint').textContent=active?'Podrás solicitar volver cuando termine el plazo.':'El plazo ha terminado. Ya puedes solicitar volver.';
+  }
+  const b=E('pilotAbsentBtn');if(b&&s.blocked){b.disabled=active||s.paused||!!s.proposal||otherBoxes.some(visible);b.textContent=active?'VOLVER BLOQUEADO':'SOLICITAR VOLVER'}
+ }
+ function paint(){
+  if(!E('debate')?.classList.contains('active'))return;ensure();const s=snapshot();if(!s)return;
+  if(offsetStamp!==s.server_now){offset=Date.parse(s.server_now)-Date.now();offsetStamp=s.server_now;}
+  const b=E('pilotLimboAction');if(b)b.disabled=!s.present||s.paused||s.phase!=='debate'||!s.targets?.length||!!s.proposal||otherBoxes.some(visible);
+  const box=E('pilotLimboVoteBox'),p=s.proposal;
+  if(box){box.style.display=p?'block':'none';if(p){box.querySelector('[data-limbo-question]').textContent=`¿MANDAMOS A ${p.name} AL LIMBO ${p.duration===0?'HASTA EL FIN DEL DEBATE':'DURANTE '+p.duration/60+' MINUTOS'}?`;
+   box.querySelector('.limbo-count').textContent=(p.proposer_me?'TU SÍ YA ESTÁ REGISTRADO · ':'')+(p.yes+p.no)+' / '+p.players+' HAN VOTADO · MAYORÍA DECIDE';
+   box.querySelector('.limbo-actions').style.display=p.proposer_me?'none':'grid';box.querySelectorAll('[data-limbo-vote]').forEach(x=>{x.disabled=!s.present||submitting;x.classList.toggle('pilot-selected',x.dataset.limboVote===p.mine)});
+   document.querySelectorAll('#pilotActionGrid > button,#pilotAssistantActions > button,#pilotContextRequest').forEach(x=>{if(x.id!=='pilotAbandonBtn')x.disabled=true});
+  }}
+  const status=E('pilotLimboStatus');if(status)status.style.display=s.blocked?'block':'none';tick();
+  if(p&&E('pilotLimboModal').classList.contains('open'))close();
+ }
+ function valid(){E('pilotLimboAccept').disabled=submitting||duration===null||!E('pilotLimboTarget').value}
+ function open(){
+  const s=snapshot();if(!s||E('pilotLimboAction')?.disabled)return;
+  duration=null;const select=E('pilotLimboTarget');select.replaceChildren(new Option('ELIGE PARTICIPANTE',''));
+  for(const p of s.targets||[])select.add(new Option(p.name,p.id));
+  E('pilotLimboDurations').querySelectorAll('button').forEach(b=>b.classList.remove('pilot-selected'));
+  E('pilotLimboError').textContent='';valid();E('pilotLimboModal').classList.add('open');select.focus();
+ }
+ function close(){if(submitting)return;E('pilotLimboModal').classList.remove('open');E('pilotLimboAction')?.focus()}
+ async function propose(){
+  if(submitting||duration===null||!E('pilotLimboTarget').value)return;submitting=true;valid();
+  try{await call('propose_debate_limbo',{p_round_id:currentRoundId,p_target_id:E('pilotLimboTarget').value,p_duration_seconds:duration});submitting=false;close();await pilotRefresh()}
+  catch(e){E('pilotLimboError').textContent=String(e.message).includes('Another proposal')?'La mesa está resolviendo otra propuesta. Espera a que termine.':'No se ha podido proponer el limbo. Actualiza el tablero e inténtalo de nuevo.'}
+  finally{submitting=false;valid()}
+ }
+ async function vote(choice){
+  const p=snapshot()?.proposal;if(!p||submitting)return;submitting=true;paint();
+  try{const result=await call('cast_debate_limbo_vote',{p_round_id:currentRoundId,p_proposal_id:p.id,p_choice:choice});if(result.status==='closed')await pilotExplainVoteFailure('limbo',null,'La mesa ya ha decidido.');await pilotRefresh()}
+  catch(e){await pilotExplainVoteFailure('limbo',e,'No se ha podido registrar tu voto.');await pilotRefresh()}
+  finally{submitting=false;paint()}
+ }
+ E('pilotLimboTarget').onchange=valid;E('pilotLimboAccept').onclick=propose;E('pilotLimboCancel').onclick=close;
+ E('pilotLimboDurations').querySelectorAll('button').forEach(b=>b.onclick=()=>{duration=Number(b.dataset.duration);E('pilotLimboDurations').querySelectorAll('button').forEach(x=>x.classList.toggle('pilot-selected',x===b));valid()});
+ E('pilotLimboModal').addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ const previous=window.pilotRefresh;window.pilotRefresh=async function(){await previous.apply(this,arguments);paint()};
+ const oldAbsent=window.pilotToggleAbsent;window.pilotToggleAbsent=async function(){if(blocked(snapshot()))return;return oldAbsent.apply(this,arguments)};
+ setInterval(tick,1000);
+})();
 </script>
 
 </body>
