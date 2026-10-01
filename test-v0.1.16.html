@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R86</div>
+    <div class="version">DILEMA · V0.1.16-010C-R87</div>
   </main>
 
 
@@ -9428,7 +9428,8 @@ async function discardPrivateWorldCandidates(){
 .r86-session-box h2{color:#facc15;font-size:12px;letter-spacing:1px;line-height:1.5;margin:0 0 20px;font-weight:900}
 .r86-session-box p{font-size:15px;font-weight:400;line-height:1.6;margin:16px 0 22px;overflow-wrap:anywhere}
 .r86-session-box .session-count{color:#facc15;font-size:11px;letter-spacing:1px;margin:20px 0}
-.r86-session-box .saved-actions button{background:#0b0b0b;color:#fff;border:1px solid #806b12;border-radius:12px}
+.r86-session-box .saved-actions button{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:0;padding:13px 8px;background:#0b0b0b;color:#fff;border:1px solid #806b12;border-radius:12px;font-family:inherit;font-size:11px;font-weight:900;line-height:1.35;letter-spacing:1px;cursor:pointer}
+.r86-session-box .saved-actions button:disabled{opacity:.35;cursor:default}
 .r86-session-box button.pilot-selected{background:#facc15!important;color:#000!important}
 #r86PausedSessions{margin:24px 0}
 #r86PausedSessions summary{color:#facc15;font-size:12px;font-weight:800;line-height:1.5;cursor:pointer;padding:16px 0}
@@ -9468,8 +9469,8 @@ window.dilemaStableActionLocks=r86GuardButtons;
 function ensureSessionUI(){
  const E=id=>document.getElementById(id),panel=E('debatePilotPanel'),stage=E('pilotVoteStage');
  if(panel&&!E('pilotSaveSession')){const b=document.createElement('button');b.id='pilotSaveSession';b.type='button';b.textContent='GUARDAR Y VOLVER AL HALL';b.onclick=()=>sessionAction('save');E('pilotPauseBanner').insertAdjacentElement('afterend',b)}
- if(stage&&!E('r86SessionVote')){const box=document.createElement('div');box.id='r86SessionVote';box.className='r86-session-box';box.style.display='none';box.innerHTML='<h2>⚠ DECISIÓN DE LA MESA</h2><p data-session-copy></p><p class="session-count"></p><div class="saved-actions"><button type="button" data-session-vote="yes">SÍ</button><button type="button" data-session-vote="no">NO</button></div><p class="r86-session-error" role="status"></p>';stage.appendChild(box);box.querySelectorAll('button').forEach(b=>b.onclick=()=>sessionAction('vote',null,b.dataset.sessionVote==='yes'))}
- if(!E('r86HallSessionVote')){const box=document.createElement('div');box.id='r86HallSessionVote';box.className='r86-session-box';box.style.display='none';box.innerHTML='<h2>⚠ RETOMAR DEBATE</h2><p data-session-copy></p><p class="session-count"></p><div class="saved-actions"><button type="button" data-session-vote="yes">SÍ</button><button type="button" data-session-vote="no">NO</button></div><p class="r86-session-error" role="status"></p>';E('room').appendChild(box);box.querySelectorAll('button').forEach(b=>b.onclick=()=>sessionAction('vote',null,b.dataset.sessionVote==='yes'))}
+ if(stage&&!E('r86SessionVote')){const box=document.createElement('div');box.id='r86SessionVote';box.className='r86-session-box';box.style.display='none';box.innerHTML='<h2>⚠ DECISIÓN DE LA MESA</h2><p data-session-copy></p><p class="session-count"></p><div class="saved-actions"><button type="button" class="btn btn-secondary" data-session-vote="yes">SÍ</button><button type="button" class="btn btn-secondary" data-session-vote="no">NO</button></div><p class="r86-session-error" role="status"></p>';stage.appendChild(box);box.querySelectorAll('button').forEach(b=>b.onclick=()=>sessionAction('vote',null,b.dataset.sessionVote==='yes'))}
+ if(!E('r86HallSessionVote')){const box=document.createElement('div');box.id='r86HallSessionVote';box.className='r86-session-box';box.style.display='none';box.innerHTML='<h2>⚠ RETOMAR DEBATE</h2><p data-session-copy></p><p class="session-count"></p><div class="saved-actions"><button type="button" class="btn btn-secondary" data-session-vote="yes">SÍ</button><button type="button" class="btn btn-secondary" data-session-vote="no">NO</button></div><p class="r86-session-error" role="status"></p>';E('room').appendChild(box);box.querySelectorAll('button').forEach(b=>b.onclick=()=>sessionAction('vote',null,b.dataset.sessionVote==='yes'))}
  for(const screen of ['room','debateChoice']){const target=E(screen);if(!target||target.querySelector('[data-paused-sessions]'))continue;const details=document.createElement('details');details.id=screen==='room'?'r86PausedSessions':'r86ChoicePausedSessions';details.dataset.pausedSessions='';details.innerHTML='<summary></summary><div></div>';details.style.display='none';target.appendChild(details)}
 }
 function paintSessions(){
