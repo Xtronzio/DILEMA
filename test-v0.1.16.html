@@ -9112,7 +9112,7 @@ renderSelectionFilters=function(s){
  if(s.phase==='runoff'){
   document.getElementById('intensityChoices').replaceChildren();const choices=document.getElementById('categoryChoices');choices.replaceChildren();
   const draft=selectionDraftIntensity+'|'+(selectionCurrentAi?'ACTUALIDAD IA:':'')+(selectionDraftTheme||'ALEATORIO');
-  for(const value of s.options||[]){const sep=value.indexOf('|'),intensity=Number(value.slice(0,sep)),theme=value.slice(sep+1),button=document.createElement('button');button.type='button';button.className='selection-chip';button.textContent=['','CHILL','CRINGE','WTF'][intensity]+' · '+theme;button.classList.toggle('selected',value===(s.my_vote||draft));button.disabled=!!s.my_vote;
+  for(const value of s.options||[]){const sep=value.indexOf('|'),intensity=Number(value.slice(0,sep)),theme=value.slice(sep+1),button=document.createElement('button');button.type='button';button.className='selection-chip';button.textContent=['','CHILL','CRINGE','WTF'][intensity]+ ' · '+theme.replace(/^ACTUALIDAD IA:/,'DILEMAS POR EL MUNDO · ');button.classList.toggle('selected',value===(s.my_vote||draft));button.disabled=!!s.my_vote;
    button.onclick=()=>{if(value===draft){selectionDraftIntensity=null;selectionDraftTheme=null;selectionCurrentAi=false}else{selectionDraftIntensity=intensity;selectionCurrentAi=theme.startsWith('ACTUALIDAD IA:');selectionDraftTheme=theme.replace(/^ACTUALIDAD IA:/,'')}renderSelectionFilters(s)};choices.appendChild(button)}
   const confirm=document.getElementById('selectionConfirm');confirm.disabled=!!s.my_vote||!(s.options||[]).includes(draft);confirm.textContent=s.my_vote?'VOTO REGISTRADO':'VOTAR EL DESEMPATE';return;
  }
