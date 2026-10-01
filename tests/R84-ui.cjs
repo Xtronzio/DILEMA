@@ -1,5 +1,5 @@
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
-const html=fs.readFileSync(process.argv[2]||'/tmp/r84.html','utf8');
+const html=fs.readFileSync(process.argv[2]||require('path').join(__dirname,'..','test-v0.1.16.html'),'utf8');
 const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(x=>x[1]).filter(x=>x.trim());
 scripts.forEach(x=>new vm.Script(x));
 const eventScript=scripts.find(s=>s.includes('let lastEventId='));
