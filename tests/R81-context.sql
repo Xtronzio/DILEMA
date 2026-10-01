@@ -1,0 +1,118 @@
+begin;
+do $test$
+declare room bigint;rd bigint;rid bigint;d bigint;x jsonb;before_guide jsonb;after_guide jsonb;failed boolean;count_guides bigint;
+ u1 uuid:='00000000-0081-4000-8000-000000000001';
+ u2 uuid:='00000000-0081-4000-8000-000000000002';
+ u3 uuid:='00000000-0081-4000-8000-000000000003';
+ outsider uuid:='00000000-0081-4000-8000-000000000099';
+begin
+ insert into auth.users(id,aud,role,email) values(u1,'authenticated','authenticated','r81-one@example.invalid'),(u2,'authenticated','authenticated','r81-two@example.invalid'),(u3,'authenticated','authenticated','r81-three@example.invalid');
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ insert into public.rooms(code,host_id,expected_players,mode,status) values('T81Q','r81-host',3,'debate','playing') returning id into room;
+ insert into public.players(room_id,player_id,user_id,name) values(room,'r81-host',u1,'TEST HOST'),(room,'r81-two',u2,'TEST TWO'),(room,'r81-three',u3,'TEST THREE');
+ select min(id) into d from public.dilemmas;
+ insert into public.rounds(room_id,dilemma_id,debate_phase,status,context) values(room,d,'debate','debate','CONTEXTO INICIAL') returning id into rd;
+ insert into public.debate_vote_cycles(round_id,cycle_number,player_id,user_id,choice) values(rd,1,'r81-host',u1,'A'),(rd,1,'r81-two',u2,'B'),(rd,1,'r81-three',u3,'B');
+ insert into public.debate_assistant_tokens(round_id,user_id,grant_key) values(rd,u1,'r81-fixture');
+ before_guide:=public.prepare_debate_assistant(rd);
+ if before_guide->>'context'<>'CONTEXTO INICIAL' then raise exception 'Guide context missing';end if;
+ if not public.save_debate_assistant_context(rd,1,'A',before_guide->>'source','{"version":2,"rutas":[]}'::jsonb,'BASICA',before_guide->>'context_signature') then raise exception 'Cannot save original guide';end if;
+
+ perform public.debate_request_context(rd);x:=public.debate_context_state(rd);rid:=(x->>'id')::bigint;
+ if x->>'status'<>'open' or x->>'voted'<>'1' or x->>'mine'<>'true' then raise exception 'Request automatic YES missing';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);
+ perform public.debate_vote_context(rd,rid,true);x:=public.debate_context_state(rd);
+ if x->>'status'<>'approved' then raise exception 'First majority not approved';end if;
+ failed:=false;begin perform public.debate_submit_context(rd,rid,'NON OWNER');exception when others then failed:=true;end;
+ if not failed then raise exception 'Non-owner can write';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ perform public.debate_submit_context(rd,rid,'TEXTO PENDIENTE');x:=public.debate_context_state(rd);
+ if x->>'status'<>'review' or x->>'voted'<>'1' or x->>'proposed_text'<>'TEXTO PENDIENTE' or x->>'context'<>'CONTEXTO INICIAL' or x->>'count'<>'0' then raise exception 'Draft already changed context or counters';end if;
+ failed:=false;begin perform public.debate_submit_context(rd,rid,'CHANGED AFTER VOTES');exception when others then failed:=true;end;
+ if not failed then raise exception 'Draft can be edited during review';end if;
+ failed:=false;begin perform public.propose_debate_close(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel finish allowed';end if;
+ failed:=false;begin perform public.propose_debate_revote(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel revote allowed';end if;
+ failed:=false;begin perform public.propose_debate_pause(rd,true);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel pause allowed';end if;
+ failed:=false;begin perform public.propose_debate_limbo(rd,'r81-two',180);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel limbo allowed';end if;
+ failed:=false;begin perform public.request_debate_twist(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel twist allowed';end if;
+ failed:=false;begin perform public.debate_request_context(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel context allowed';end if;
+ failed:=false;begin perform public.prepare_debate_assistant(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Assistant opens during review';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);
+ x:=public.debate_context_state(rd);
+ if x->'mine'<>'null'::jsonb then raise exception 'Permission YES carried into text vote';end if;
+ failed:=false;begin perform public.debate_vote_context(rd,rid,false);exception when others then failed:=true;end;
+ if not failed then raise exception 'Late first vote entered second stage';end if;
+ perform public.debate_review_context(rd,rid,false);
+ perform set_config('request.jwt.claim.sub',u3::text,true);
+ perform public.debate_review_context(rd,rid,true);x:=public.debate_context_state(rd);
+ if x->>'last_status'<>'published' or x->>'count'<>'1' or x->'id'<>'null'::jsonb or x->>'context'<>E'CONTEXTO INICIAL\n\nTEXTO PENDIENTE' then raise exception 'Accepted text not appended';end if;
+ failed:=false;begin perform public.debate_review_context(rd,rid,false);exception when others then failed:=true;end;
+ if not failed then raise exception 'Late vote not closed';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ after_guide:=public.prepare_debate_assistant(rd);
+ if after_guide->>'status'<>'draft' or after_guide->>'context_signature'=before_guide->>'context_signature' or after_guide->>'context'<>x->>'context' then raise exception 'Stale guide reused';end if;
+ select count(*) into count_guides from public.debate_assistant_guides where round_id=rd and user_id=u1;
+ if count_guides<>2 then raise exception 'Original guide history lost';end if;
+ if public.save_debate_assistant_context(rd,1,'A',before_guide->>'source','{"version":2}'::jsonb,'BASICA',before_guide->>'context_signature') then raise exception 'Stale generated guide saved';end if;
+ if not public.save_debate_assistant_context(rd,1,'A',after_guide->>'source','{"version":2}'::jsonb,'BASICA',after_guide->>'context_signature') then raise exception 'New context guide not saved';end if;
+
+ -- Reject text after accepting the right to propose it.
+ perform public.debate_request_context(rd);x:=public.debate_context_state(rd);rid:=(x->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_vote_context(rd,rid,true);
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.debate_submit_context(rd,rid,'REJECT THIS');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_review_context(rd,rid,false);
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.debate_review_context(rd,rid,false);
+ x:=public.debate_context_state(rd);
+ if x->>'last_status'<>'rejected' or x->>'count'<>'1' or strpos(x->>'context','REJECT THIS')>0 then raise exception 'Rejected text affected debate';end if;
+ -- Two present members: tied validation rejects.
+ update public.players set presence='absent' where room_id=room and user_id=u3;
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.debate_request_context(rd);x:=public.debate_context_state(rd);rid:=(x->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_vote_context(rd,rid,true);
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.debate_submit_context(rd,rid,'TIE');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_review_context(rd,rid,false);
+ x:=public.debate_context_state(rd);if x->>'last_status'<>'rejected' or x->>'count'<>'1' then raise exception 'Tie accepted';end if;
+ update public.players set presence='present' where room_id=room and user_id=u3;
+ -- Cancellation and loss of requester presence release the process.
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.debate_request_context(rd);x:=public.debate_context_state(rd);rid:=(x->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_vote_context(rd,rid,true);
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ failed:=false;begin perform public.debate_submit_context(rd,rid,' ');exception when others then failed:=true;end;
+ if not failed then raise exception 'Empty draft accepted';end if;
+ perform public.debate_submit_context(rd,rid,'CANCEL THIS');perform public.debate_cancel_context(rd,rid);
+ x:=public.debate_context_state(rd);if x->>'last_status'<>'cancelled' then raise exception 'Cancellation failed';end if;
+ perform public.debate_request_context(rd);update public.players set presence='absent' where room_id=room and user_id=u1;
+ perform set_config('request.jwt.claim.sub',u2::text,true);x:=public.debate_context_state(rd);
+ if x->>'last_status'<>'cancelled' then raise exception 'Absent requester leaves process blocked';end if;
+ perform private.context_guard(rd);
+ perform set_config('request.jwt.claim.sub',outsider::text,true);
+ failed:=false;begin perform public.debate_context_state(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Outsider can read pending text';end if;
+ if has_table_privilege('authenticated','private.debate_context_review_votes','select') or has_function_privilege('anon','public.debate_review_context(bigint,bigint,boolean)','execute') then raise exception 'Incorrect permissions';end if;
+ update public.players set presence='present' where room_id=room and user_id=u1;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform set_config('r81.test.round',rd::text,true);
+ raise notice 'PASS R81: two independent majorities, draft isolation, immutable review, action locks, late votes, rejection, ties, cancel, absence, context-aware guides and history';
+end $test$;
+set local role authenticated;
+do $client$
+declare rd bigint:=current_setting('r81.test.round')::bigint;failed boolean:=false;x jsonb;rid bigint;
+begin
+ x:=public.debate_context_state(rd);
+ begin update public.rounds set context='DIRECT CLIENT BYPASS' where id=rd;exception when others then failed:=true;end;
+ if not failed then raise exception 'Direct client context edit allowed';end if;
+ -- Exercise both API wrappers using the actual authenticated database role.
+ perform public.debate_request_context(rd);x:=public.debate_context_state(rd);rid:=(x->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub','00000000-0081-4000-8000-000000000003',true);perform public.debate_vote_context(rd,rid,true);
+ perform set_config('request.jwt.claim.sub','00000000-0081-4000-8000-000000000002',true);perform public.debate_submit_context(rd,rid,'AUTHENTICATED APPROVAL');
+ perform set_config('request.jwt.claim.sub','00000000-0081-4000-8000-000000000003',true);perform public.debate_review_context(rd,rid,true);
+ x:=public.debate_context_state(rd);if x->>'last_status'<>'published' then raise exception 'Authenticated review API failed';end if;
+ raise notice 'PASS R81 authenticated RPC and direct write guard';
+end $client$;
+reset role;
+rollback;
