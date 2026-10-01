@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R84</div>
+    <div class="version">DILEMA · V0.1.16-010C-R85</div>
   </main>
 
 
@@ -6369,7 +6369,7 @@ function subscribeRealtime() {
             `room_id=eq.${currentRoomId}`
         },
         () => {
-
+          if(admissionRequestId){refreshNewAdmission().catch(error=>console.error('ADMISSION PLAYER SYNC ERROR:',error));return;}
           if (
             currentRoomStatus !==
             "playing"
@@ -6395,6 +6395,7 @@ function subscribeRealtime() {
           reloadHall();
           return;
         }
+        if(admissionRequestId){refreshNewAdmission().catch(error=>console.error('ADMISSION SYNC ERROR:',error));return;}
         if(currentRoomStatus==="waiting")queueHallSync();
         else refreshGame().catch(error=>console.error("GAME SYNC ERROR:",error));
       })
@@ -6425,11 +6426,13 @@ function subscribeRealtime() {
             return;
           }
 
+          if(admissionRequestId){refreshNewAdmission().catch(error=>console.error('ADMISSION ROOM SYNC ERROR:',error));return;}
           refreshLobby().catch(error => console.error("LOBBY REFRESH ERROR:", error));
         }
       )
       .subscribe(status=>{
-        if(status==="SUBSCRIBED"&&currentRoomId)refreshLobby().catch(error=>console.error("ROOM RECONNECT ERROR:",error));
+        if(status==="SUBSCRIBED"&&admissionRequestId)refreshNewAdmission().catch(error=>console.error("ADMISSION RECONNECT ERROR:",error));
+        else if(status==="SUBSCRIBED"&&currentRoomId)refreshLobby().catch(error=>console.error("ROOM RECONNECT ERROR:",error));
       });
 
 }
@@ -6521,7 +6524,7 @@ async function restoreRoomSession() {
   }
 
   const pending=sessionStorage.getItem('dilema_admission_pending');
-  if(pending){try{const saved=JSON.parse(pending);admissionRequestId=saved.id;currentRoomId=saved.room;ensureAdmissionPending();showScreen('admissionPending');startAdmissionPending();await refreshNewAdmission();return}catch(e){sessionStorage.removeItem('dilema_admission_pending')}}
+  if(pending){try{const saved=JSON.parse(pending);admissionRequestId=saved.id;currentRoomId=saved.room;ensureAdmissionPending();showScreen('admissionPending');subscribeRealtime();startSafetyRefresh();startAdmissionPending();await refreshNewAdmission();return}catch(e){sessionStorage.removeItem('dilema_admission_pending')}}
   const raw =
     sessionStorage.getItem(
       "dilema_room_session"
@@ -7022,6 +7025,7 @@ window.addEventListener(
     window.dilemaContextSnapshot={round:currentRoundId,data:s.context_state};
     window.dilemaLimboSnapshot={round:currentRoundId,data:s.limbo_state};
     window.dilemaAdmissionSnapshot={round:currentRoundId,data:s.admission_state};
+    window.paintDebateAdmission?.();
     const presenceView=await rpc("get_presence_request",{p_round_id:currentRoundId});
     window.dilemaPresenceView=presenceView;
     const isAbsent=presenceView?.my_presence==="absent";
@@ -7182,6 +7186,7 @@ window.addEventListener(
     }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
     if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate"||isAbsent;pb.textContent=(!pr||pr.used_at)?"📣 PROCLAMAR · 0/1":"📣 PROCLAMAR · 1/1";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
+    window.paintDebateAdmission?.();
     await latestEvent();
    }catch(e){console.error("PILOT",e)}
    finally{busy=false}
@@ -8845,6 +8850,8 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
 #savedGroupQuestion{border:1px solid #444;border-radius:14px;padding:18px;margin:24px 0}
 .saved-option{border:1px solid #444;border-radius:12px;padding:14px;margin:12px 0;font-size:14px;line-height:1.4;font-weight:400;white-space:pre-wrap}
 .saved-option strong{display:block;margin-bottom:8px}
+.saved-option.saved-last-choice{border-color:#fff;background:#161616}
+.saved-last-vote{font-size:11px;font-weight:700;letter-spacing:1px;margin:18px 0;color:#fff;text-align:center}
 .saved-discard-overlay{position:fixed;inset:0;background:#000c;z-index:100001;display:none;align-items:center;justify-content:center;padding:24px}
 .saved-discard-overlay.open{display:flex}
 .saved-discard-box{width:100%;max-width:400px;padding:22px;border:1px solid #facc15;border-radius:14px;background:#111108;color:#fff;text-align:center}
@@ -8870,6 +8877,7 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
  <div id="savedGroupQuestion" class="saved-copy"></div>
  <div class="saved-option"><strong>A</strong><span id="savedGroupA"></span></div>
  <div class="saved-option"><strong>B</strong><span id="savedGroupB"></span></div>
+ <p id="savedGroupLastVote" class="saved-last-vote" role="status"></p>
  <details id="savedGroupContext" class="context-details"><summary>CONTEXTO DEL DEBATE</summary><div id="savedGroupContextText" class="saved-copy"></div></details>
  <button id="savedGroupGuides" class="btn btn-secondary">MIS AYUDAS GUARDADAS</button>
  <button id="savedGroupDiscard" class="btn btn-danger">DESCARTAR DILEMA</button>
@@ -8908,7 +8916,7 @@ async function loadSavedDilemmas(reset=true){
   await ensureAnonymousAuth();const start=savedLibraryPage*20;
   const results=await Promise.all([
    sb.from('private_dilemma_sessions').select('id,question,choice,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19),
-   sb.from('saved_group_dilemmas').select('id,question,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19)
+   sb.from('saved_group_dilemmas').select('id,question,choice,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19)
   ]);
   if(run!==savedLibraryRun)return;
   for(const r of results)if(r.error)throw r.error;
@@ -8931,7 +8939,9 @@ function renderSavedDilemmas(){
   const actions=document.createElement('div');actions.className='saved-actions';
   const resume=document.createElement('button');resume.type='button';resume.className='btn btn-secondary';resume.textContent=row.origin==='PRIV'?'RETOMAR':'VER DILEMA';resume.onclick=()=>openSavedDilemma(row);
   const discard=document.createElement('button');discard.type='button';discard.className='btn btn-danger';discard.textContent='DESCARTAR';discard.onclick=()=>requestSavedDiscard(row);
-  actions.append(resume,discard);card.append(meta,copy,actions);root.appendChild(card);
+  actions.append(resume,discard);card.append(meta,copy);
+  if(['A','B'].includes(row.choice)){const last=document.createElement('p');last.className='saved-last-vote';last.textContent='TU ÚLTIMO VOTO · '+row.choice;card.appendChild(last)}
+  card.appendChild(actions);root.appendChild(card);
  }
 }
 async function openSavedDilemma(row){
@@ -8949,6 +8959,8 @@ async function openSavedDilemma(row){
   }else{
    renderDilemmaCopy(document.getElementById('savedGroupQuestion'),data.question);
    document.getElementById('savedGroupA').textContent=data.option_a;document.getElementById('savedGroupB').textContent=data.option_b;
+   for(const choice of ['A','B']){const option=document.getElementById('savedGroup'+choice).parentElement;option.classList.toggle('saved-last-choice',data.choice===choice);if(data.choice===choice)option.setAttribute('aria-current','true');else option.removeAttribute('aria-current')}
+   document.getElementById('savedGroupLastVote').textContent=['A','B'].includes(data.choice)?'TU ÚLTIMO VOTO · '+data.choice:'SIN VOTO GUARDADO';
    document.getElementById('savedGroupContext').style.display=data.context?'block':'none';document.getElementById('savedGroupContext').open=false;
    document.getElementById('savedGroupContextText').textContent=data.context||'';
    const guides=document.getElementById('savedGroupGuides');guides.textContent='MIS AYUDAS GUARDADAS · '+(data.guides?.length||0);guides.disabled=!data.guides?.length;
@@ -9349,7 +9361,7 @@ async function beginNewAdmission(profile){
  const {data,error}=await sb.rpc('request_debate_admission',{p_room:currentRoomId,p_player:localPlayerId,p_name:profile.name,p_avatar:profile.avatar,p_motto:profile.motto||''});
  if(error)throw error;admissionRequestId=data;
  sessionStorage.setItem('dilema_admission_pending',JSON.stringify({id:data,room:currentRoomId}));
- ensureAdmissionPending();showScreen('admissionPending');
+ ensureAdmissionPending();showScreen('admissionPending');subscribeRealtime();startSafetyRefresh();
  announceHallChange('admission-request');startAdmissionPending();await refreshNewAdmission();
 }
 function ensureAdmissionPending(){
@@ -9357,20 +9369,38 @@ function ensureAdmissionPending(){
  const screen=document.createElement('section');screen.id='admissionPending';screen.className='screen center';
  screen.innerHTML='<div class="game-category">SOLICITUD DE ENTRADA</div><h1>ESPERANDO<br>A LA MESA</h1><div class="r82-card"><h2>⚠ ENTRAR AL DEBATE</h2><p id="admissionPendingText" role="status">La mesa decidirá si te unes al debate.</p></div><button type="button" id="admissionPendingCancel" class="btn btn-secondary" onclick="leaveNewAdmission()">VOLVER AL HALL</button>';document.getElementById('rejoinPending').after(screen);
 }
-function startAdmissionPending(){clearInterval(admissionPendingTimer);admissionPendingTimer=setInterval(()=>{if(document.visibilityState==='visible')refreshNewAdmission().catch(()=>{})},2500)}
+function startAdmissionPending(){clearInterval(admissionPendingTimer);admissionPendingTimer=setInterval(()=>{if(document.visibilityState==='visible')refreshNewAdmission().catch(()=>{})},1000)}
+function finishAdmissionPending(){clearInterval(admissionPendingTimer);admissionPendingTimer=null;admissionRequestId=null;sessionStorage.removeItem('dilema_admission_pending')}
+function showAcceptedAdmission(data){
+ const room=data.room,round=data.round,state=data.state;
+ if(!room||!round||!data.dilemma||!state||room.status!=='playing'||round.status!=='debate'||room.id!==currentRoomId)return false;
+ currentRoomId=room.id;currentRoomCode=room.code;currentRoomHostId=room.host_id;currentExpectedPlayers=room.expected_players;currentRoomStatus=room.status;currentRoomMode=room.mode;
+ localPlayerId=data.player_id;currentRoundId=round.id;currentRoundStatus=round.status;currentDilemma=data.dilemma;window.dilemaRoundContext=round.context||'';
+ window.dilemaDebateVoteView={roundId:round.id,revoteOpen:false,votesA:state.votes_a,votesB:state.votes_b};
+ window.dilemaContextSnapshot={round:round.id,data:state.context_state};window.dilemaLimboSnapshot={round:round.id,data:state.limbo_state};window.dilemaAdmissionSnapshot={round:round.id,data:state.admission_state};
+ window.dilemaAssistantState={roundId:round.id,cycle:state.cycle,active:false,choice:null};
+ roomMembershipConfirmed=true;membershipCheckedAt=Date.now();saveRoomSession();renderDebate();
+ for(const [id,value] of [['pilotCountA',state.votes_a],['pilotCountB',state.votes_b]]){const node=document.getElementById(id);if(node)node.textContent=value||0}
+ window.paintDebateAdmission?.();finishAdmissionPending();subscribeToRounds();startGameRefresh();
+ void window.pilotRefresh().catch(error=>console.error('ADMISSION BOARD SYNC ERROR:',error));return true;
+}
 async function refreshNewAdmission(){
  if(!admissionRequestId||admissionPendingBusy)return;admissionPendingBusy=true;const id=admissionRequestId;
  try{
-  const {data,error}=await sb.rpc('my_debate_admission',{p_id:id});if(error)throw error;if(id!==admissionRequestId)return;
+  const {data,error}=await sb.rpc('my_debate_admission',{p_id:id}).abortSignal(AbortSignal.timeout(6000));if(error)throw error;if(id!==admissionRequestId)return;
   ensureAdmissionPending();const text=document.getElementById('admissionPendingText');
   if(data.status==='accepted'){
-   clearInterval(admissionPendingTimer);admissionPendingTimer=null;admissionRequestId=null;sessionStorage.removeItem('dilema_admission_pending');
-   currentRoomId=data.room_id;localPlayerId=data.player_id;saveRoomSession();await enterRoom();return;
+   text.textContent='La mesa ha aprobado tu entrada. Preparando tu primer voto…';
+   if(showAcceptedAdmission(data))return;
+   currentRoomId=data.room_id;localPlayerId=data.player_id;saveRoomSession();admissionRequestId=null;
+   const entered=await enterRoom();
+   if(entered){finishAdmissionPending();return}
+   admissionRequestId=id;showScreen('admissionPending');text.textContent='Tu entrada está aprobada. Reconectando con el debate…';return;
   }
   if(data.status==='removed'){showRoomExpelled();return}
   if(['rejected','cancelled'].includes(data.status)){clearInterval(admissionPendingTimer);admissionPendingTimer=null;text.textContent=data.status==='rejected'?'La mesa no ha aprobado tu entrada. Puedes volver al hall.':'La solicitud ha terminado. Puedes volver al hall.';return}
   text.textContent=data.status==='queued'?'Hay otra decisión en curso. Tu solicitud espera su turno.':'La mesa está votando tu entrada. Espera su decisión.';
- }catch(e){if(id===admissionRequestId)document.getElementById('admissionPendingText').textContent='Reconectando con la mesa… Tu solicitud sigue guardada.'}
+ }catch(e){if(admissionRequestId===null&&sessionStorage.getItem('dilema_admission_pending'))admissionRequestId=id;if(id===admissionRequestId)document.getElementById('admissionPendingText').textContent='Reconectando con la mesa… Tu solicitud sigue guardada.'}
  finally{admissionPendingBusy=false}
 }
 async function leaveNewAdmission(){
@@ -9387,6 +9417,7 @@ async function leaveNewAdmission(){
   if(host&&!E('pilotAdmissionAction')){const b=document.createElement('button');b.id='pilotAdmissionAction';b.className='btn btn-secondary';b.type='button';b.textContent='AÑADIR DEBATIENTE';b.onclick=toggle;const note=document.createElement('p');note.id='pilotAdmissionHint';note.className='r82-note';host.append(b,note)}
   const stage=E('pilotVoteStage');if(!stage)return;
   if(!E('pilotAdmissionVoteBox')){const n=document.createElement('div');n.id='pilotAdmissionVoteBox';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ NUEVO DEBATIENTE</h2><p data-admission-question></p><p class="r82-count"></p><div class="limbo-actions"><button type="button" data-admission-vote="yes">SÍ</button><button type="button" data-admission-vote="no">NO</button></div>';stage.appendChild(n);n.querySelectorAll('button').forEach(b=>b.onclick=()=>vote(b.dataset.admissionVote==='yes'))}
+  if(!E('pilotAdmissionAwaitingChoice')){const n=document.createElement('div');n.id='pilotAdmissionAwaitingChoice';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ ENTRADA APROBADA</h2><p>Esperando el primer voto del nuevo debatiente.</p>';stage.appendChild(n)}
   if(!E('pilotAdmissionInitialVote')){const n=document.createElement('div');n.id='pilotAdmissionInitialVote';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ TU PRIMER VOTO</h2><p>Ya estás en la mesa. Elige tu postura para incorporarte al debate.</p><div class="limbo-actions"><button type="button" data-admission-choice="A">VOTAR A</button><button type="button" data-admission-choice="B">VOTAR B</button></div>';stage.appendChild(n);n.querySelectorAll('button').forEach(b=>b.onclick=()=>initialVote(b.dataset.admissionChoice))}
  }
  function paint(){
@@ -9395,6 +9426,7 @@ async function leaveNewAdmission(){
   if(E('pilotAdmissionHint'))E('pilotAdmissionHint').textContent=s.enabled?'ENTRADA ABIERTA · Comparte el código. La mesa decide quién se une.':s.queued?'Hay solicitudes esperando su turno.':'';
   const box=E('pilotAdmissionVoteBox');box.style.display=s.id?'block':'none';
   if(s.id){box.querySelector('[data-admission-question]').textContent=s.name+' HA ENTRADO EN LA SALA Y SOLICITA UNIRSE A LA MESA. ¿LE DAMOS PASO?';box.querySelector('.r82-count').textContent=(s.yes+s.no)+' / '+s.players+' HAN VOTADO · MAYORÍA DECIDE';box.querySelectorAll('button').forEach(b=>{b.disabled=voting||!s.present||s.mine!==null;b.classList.toggle('pilot-selected',s.mine!==null&&s.mine===(b.dataset.admissionVote==='yes'))})}
+  E('pilotAdmissionAwaitingChoice').style.display=s.waiting_votes>0&&!s.needs_vote&&!s.id?'block':'none';
   const initial=E('pilotAdmissionInitialVote');initial.style.display=s.needs_vote&&s.present&&!s.id?'block':'none';initial.querySelectorAll('button').forEach(b=>{b.disabled=voting||!s.present||!s.can_vote;b.textContent='VOTAR '+b.dataset.admissionChoice+' · '+(currentDilemma?.[b.dataset.admissionChoice==='A'?'option_a':'option_b']||'')});
   if(s.id||s.waiting_votes>0||(s.needs_vote&&s.present)){
    E('debatePilotPanel')?.classList.add('pilot-process-locked');
@@ -9402,8 +9434,9 @@ async function leaveNewAdmission(){
   }
  }
  async function toggle(){const s=snapshot();if(!s?.is_host||toggling)return;toggling=true;paint();try{const {error}=await sb.rpc('set_debate_admission',{p_room:currentRoomId,p_enabled:!s.enabled});if(error)throw error;announceHallChange('admission-door');await pilotRefresh()}catch(e){alert('No se ha podido cambiar la entrada. Reinténtalo.')}finally{toggling=false;paint()}}
- async function vote(choice){const s=snapshot();if(!s?.id||voting||s.mine!==null)return;voting=true;paint();try{const {data,error}=await sb.rpc('vote_debate_admission',{p_round:currentRoundId,p_id:s.id,p_choice:choice});if(error)throw error;if(data.status==='closed')alert('HAS LLEGADO TARDE A LA VOTACIÓN. LA MESA YA HA DECIDIDO.');announceHallChange('admission-vote');await pilotRefresh()}catch(e){alert('No se ha podido registrar tu voto. Reinténtalo.')}finally{voting=false;paint()}}
+ async function vote(choice){const s=snapshot();if(!s?.id||voting||s.mine!==null)return;voting=true;paint();try{const {data,error}=await sb.rpc('vote_debate_admission',{p_round:currentRoundId,p_id:s.id,p_choice:choice});if(error)throw error;if(data.status==='closed')alert('HAS LLEGADO TARDE A LA VOTACIÓN. LA MESA YA HA DECIDIDO.');else{window.dilemaAdmissionSnapshot={round:currentRoundId,data};paint()}announceHallChange('admission-vote');await pilotRefresh()}catch(e){alert('No se ha podido registrar tu voto. Reinténtalo.')}finally{voting=false;paint()}}
  async function initialVote(choice){if(voting||!snapshot()?.can_vote)return;voting=true;paint();try{const {error}=await sb.rpc('debate_admission_initial_vote',{p_round:currentRoundId,p_choice:choice});if(error)throw error;announceHallChange('admission-choice');await pilotRefresh()}catch(e){alert('La mesa está resolviendo otra decisión. Podrás votar al terminar.');await pilotRefresh()}finally{voting=false;paint()}}
+ window.paintDebateAdmission=paint;
  const previous=window.pilotRefresh;window.pilotRefresh=async function(){await previous.apply(this,arguments);paint()};
 })();
 
