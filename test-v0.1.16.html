@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R80</div>
+    <div class="version">DILEMA · V0.1.16-010C-R81</div>
   </main>
 
 
@@ -8078,7 +8078,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
   const group=access.approved&&access.mine_requested&&!access.mine_group_used;
   if(!access.token&&!group&&!access.mine_guide)return;
   const source=access.token?"token":group?"group":guide?.source||"token";
-  const key=state.roundId+":"+state.cycle+":"+state.choice+":"+source;
+  const key=state.roundId+":"+state.cycle+":"+state.choice+":"+source+":"+access.context_signature;
   historyActive=false;
   E("amClose").textContent="VOLVER AL DEBATE";
   E("pilotAssistantModal").classList.add("open");E("amError").textContent="";
@@ -8088,8 +8088,10 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
    const {data,error}=await sb.functions.invoke("debate-coach",{body:{roundId:state.roundId}});
    if(error)throw error;
    if(!data?.guide?.rutas?.length)throw Error(data?.error||"No hay ayuda disponible");
-   guide={...data.guide,mode:data.mode,source:data.source};guideKey=state.roundId+":"+state.cycle+":"+state.choice+":"+data.source;
-   selectedRoute=0;render(data.mode);await refreshAccess();await refreshGuideHistoryCount(true);
+   guide={...data.guide,mode:data.mode,source:data.source};guideKey=state.roundId+":"+state.cycle+":"+state.choice+":"+data.source+":"+data.context_signature;
+   await refreshAccess();
+   if(access?.context_signature!==data.context_signature)throw Error('EL CONTEXTO HA CAMBIADO. VUELVE A ABRIR EL ASISTENTE.');
+   selectedRoute=0;render(data.mode);await refreshGuideHistoryCount(true);
   }catch(error){
    console.error("ASISTENTE",error);
    E("amContent").textContent="";
@@ -8137,7 +8139,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(document.getElementById("pilotInstructionsModal"))return;
   const modal=document.createElement("div");modal.id="pilotInstructionsModal";
   modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");
-  const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["SOLICITAR AÑADIR CONTEXTO","Propone añadir información al dilema. La mayoría decide y quien lo solicitó escribe después. La mesa recibe el contexto sin nombre; no cambia los votos ni abre un re-voto automático."],["CONTEXTO ADICIONAL","En privado puedes escribirlo y actualizarlo directamente. En grupo, el contexto inicial acompaña la propuesta y las aportaciones posteriores requieren aprobación de la mesa."],["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
+  const groups=[{"title":"VOTO Y DECISIONES","entries":[["VOTAR A / B","Tu voto inicial es secreto. El tablero muestra los recuentos, nunca quién eligió cada opción."],["MANTENER A/B · VOTAR A/B","Tras un giro o un re-voto de la mesa, eliges si mantienes tu postura o cambias a la otra. El recuento empieza de nuevo desde cero."],["SÍ · NO EN AVISOS DE LA MESA","Votas la propuesta en pantalla. Quien la propone ya cuenta como SÍ. Se resuelve una propuesta antes de abrir otra."],["SEGUIR DEBATIENDO · DARLE UN GIRO · FIN DEBATE","Cuando todos votan lo mismo, la mesa decide qué hacer. El giro no es automático."]]},{"title":"BOTONERA","entries":[["📣 PROCLAMAR","Escribe un mensaje y elige destinatarios. Todos están seleccionados salvo tú. Si lo envías a toda la mesa es anónimo; si eliges solo a algunos, verán tu nombre. Se sortea y solo puedes guardar una proclama."],["CAMBIAR MI VOTO · 0/1","Si tienes el cambio sorteado, puedes pasar de A a B o de B a A en secreto, sin pedir permiso. Mantener tu voto conserva el recurso; los demás solo ven el recuento."],["PEDIR GIRO","Propone a la mesa un giro sobre el dilema. Si la mayoría acepta, aparece el giro y cada persona puede mantener o cambiar su voto. Después se sortean de nuevo las herramientas."],["PEDIR RE-VOTO","Propone que toda la mesa pueda votar de nuevo sin giro. Si la mayoría acepta, cada persona mantiene o cambia su voto; al acabar se sortean de nuevo las herramientas."],["AUSENTARME","Te aparta del debate para que continúe sin ti. Puedes dejar un mensaje o salir en silencio. Si eras anfitrión, ese papel pasa a otra persona presente."],["SOLICITAR VOLVER","Aparece cuando estás ausente. Tu solicitud cuenta como SÍ y la mesa decide si te reincorporas."],["SOLICITAR PAUSA","Propone detener temporalmente el debate. Decide la mayoría de la mesa, no solo el anfitrión."],["SOLICITAR REANUDAR","Aparece durante la pausa. La mesa vota si vuelve al debate. Durante la pausa también están disponibles FIN DEBATE y ABANDONAR."],["FIN DEBATE","Propone terminar la ronda. El cierre requiere que toda la mesa esté de acuerdo. También puede solicitarse durante una pausa."],["ABANDONAR","Sales del debate y de la sala. Para regresar, introduces el código y solicitas que la mesa apruebe tu vuelta."]]},{"title":"AYUDA Y PROCLAMAS RECIBIDAS","entries":[["SOLICITAR AÑADIR CONTEXTO","La mayoría decide si permite proponer contexto. Si acepta, quien lo solicitó escribe el texto y todos lo ven sin nombre. Una segunda votación por mayoría decide si se incorpora: solo entonces cuenta para el debate y las nuevas ayudas. El empate rechaza la propuesta. No cambia los votos ni abre un re-voto automático."],["CONTEXTO ADICIONAL","En privado puedes escribirlo y actualizarlo directamente. En grupo, el contexto inicial acompaña la propuesta y las aportaciones posteriores requieren aprobación de la mesa."],["ASISTENTE · 0/1","Ofrece en privado argumentos para defender tu voto y responder objeciones. Puedes usar la ayuda que te toque en el sorteo o la que desbloquees al solicitarla."],["SOLICITAR AYUDA","Si no tienes ayuda, la solicitas en secreto. El tablero enseña cuántas personas la piden, no sus nombres. Con mayoría se desbloquea solo para quienes la solicitaron."],["RESPONDER EN PRIVADO","Si recibes una proclama dirigida, puedes contestar una vez. La respuesta solo llega a quien te escribió."],["NO RESPONDER","Cierra la proclama dirigida sin enviar respuesta."]]},{"title":"ANFITRIÓN","entries":[["ERES ANFITRIÓN · CÓDIGO DE DEBATE","Identifica a quien organiza la sala y muestra el código. El anfitrión no decide por la mesa; el papel cambia si se ausenta o abandona."]]}];
   groups.push({title:'LIMBO',entries:[['PROPONER LIMBO','Elige otro participante y una duración: 3, 5, 10 minutos o hasta el fin del debate. Decide la mayoría de personas presentes, incluido el destinatario; quien propone ya vota SÍ. No puede abrirse mientras haya otra decisión pendiente.'],['ESTÁS EN EL LIMBO','Quedas ausente y Solicitar volver permanece bloqueado durante el plazo. La cuenta atrás continúa aunque pauses o recargues. Al terminar puedes pedir volver: no te reincorporas automáticamente. Si eras anfitrión, el papel pasa a otro participante presente. El limbo termina al finalizar el debate.']]});
   groups.push({title:'DILEMAS POR EL MUNDO',entries:[['DILEMAS POR EL MUNDO','Elige TEENS, intensidad y, si quieres, categoría. Prioriza noticias de España y amplía al exterior cuando no haya suficientes noticias españolas válidas. Si la búsqueda falla, propone noticias guardadas o dilemas del catálogo, identificando su origen. La intensidad orienta la adaptación y no bloquea las propuestas. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
@@ -8614,6 +8616,7 @@ async function choosePrivateCatalogueDilemma(d){
 #pilotContextDecision button:disabled{opacity:.35}
 #pilotContextDecision .text-input{font-weight:400;text-align:left;letter-spacing:0;font-size:15px}
 #pilotContextProgress{display:block;color:#aaa;font-size:11px;margin:12px 0}
+#pilotContextProposed{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;border-top:1px solid #635b21;border-bottom:1px solid #635b21;padding:16px 0;margin:16px 0 20px;color:#fff;font-size:15px;font-weight:400;line-height:1.55}
 #pilotContextError{font-size:12px;color:#facc15;font-weight:400;margin-top:12px}
 #pilotContextRequest{margin:14px 0}
 .context-note{font-size:12px;color:#aaa;font-weight:400;margin:10px 0}
@@ -8683,7 +8686,7 @@ function ensureDebateContext(){
  let viewer=document.getElementById('pilotSharedContext');if(!viewer){viewer=contextViewer('pilotSharedContext','CONTEXTO DEL DILEMA');document.getElementById('pilotTwist').insertAdjacentElement('beforebegin',viewer)}
  if(!document.getElementById('pilotContextDecision')){
   const box=document.createElement('div');box.id='pilotContextDecision';box.style.display='none';
-  box.innerHTML='<strong>⚠ CONTEXTO · DECISIÓN DE LA MESA</strong><p id="pilotContextMessage"></p><div id="pilotContextVotes" class="context-actions"><button type="button" data-context-vote="yes">SÍ</button><button type="button" data-context-vote="no">NO</button></div><small id="pilotContextProgress"></small><div id="pilotContextWrite" style="display:none"><textarea id="pilotContextText" class="text-input" maxlength="3000" rows="4" placeholder="Escribe el contexto que quieres aportar…"></textarea></div><div id="pilotContextActions" class="context-actions" style="display:none"><button id="pilotContextPublish" type="button">ACEPTAR</button><button id="pilotContextCancel" type="button">CANCELAR</button></div><div id="pilotContextError" role="status"></div>';
+  box.innerHTML='<strong>⚠ CONTEXTO · DECISIÓN DE LA MESA</strong><p id="pilotContextMessage"></p><p id="pilotContextProposed" style="display:none"></p><div id="pilotContextVotes" class="context-actions"><button type="button" data-context-vote="yes">SÍ</button><button type="button" data-context-vote="no">NO</button></div><small id="pilotContextProgress"></small><div id="pilotContextWrite" style="display:none"><textarea id="pilotContextText" class="text-input" maxlength="3000" rows="4" placeholder="Escribe el contexto que quieres aportar…"></textarea></div><div id="pilotContextActions" class="context-actions" style="display:none"><button id="pilotContextPublish" type="button">PROPONER A LA MESA</button><button id="pilotContextCancel" type="button">CANCELAR</button></div><div id="pilotContextError" role="status"></div>';
   stage.appendChild(box);
   box.querySelectorAll('[data-context-vote]').forEach(b=>b.onclick=()=>contextAction('vote',b.dataset.contextVote==='yes'));
   document.getElementById('pilotContextPublish').onclick=()=>contextAction('submit');
@@ -8697,15 +8700,21 @@ function ensureDebateContext(){
 }
 function paintDebateContext(){
  const v=debateContextView,box=document.getElementById('pilotContextDecision');if(!box||!v)return;
+ const decisionKey=currentRoundId+':'+v.last_id+':'+v.last_status;
+ if(['published','rejected','cancelled'].includes(v.last_status)&&box.dataset.decisionKey&&box.dataset.decisionKey!==decisionKey){
+  const banner=document.getElementById('pilotVoteLate');if(banner){banner.textContent=v.last_status==='published'?'CONTEXTO APROBADO · YA FORMA PARTE DEL DEBATE.':v.last_status==='rejected'?'LA MESA HA RECHAZADO LA PROPUESTA. EL DILEMA CONSERVA SU CONTEXTO.':'PROPUESTA DE CONTEXTO CANCELADA.';banner.style.display='block';clearTimeout(window.contextOutcomeTimer);window.contextOutcomeTimer=setTimeout(()=>{banner.style.display='none'},8000);}
+ }
+ box.dataset.decisionKey=decisionKey;
  renderContextText(document.getElementById('pilotSharedContext'),v.context||'');
  const open=!!v.id;box.style.display=open?'block':'none';
  const canAct=!!window.dilemaAssistantState?.active;
  const otherOpen=['pilotUnanimity','pilotGiroVoteBox','pilotCloseBox','pilotGroupRevoteProposal','pilotPauseProposal','pilotPresenceRequestBox','pilotInlineRevote','pilotSecretRevotePicker'].some(id=>{const n=document.getElementById(id);return n&&getComputedStyle(n).display!=='none'});
  document.getElementById('pilotContextRequest').disabled=contextBusy||open||otherOpen||!canAct;
  if(!open)return;
- const approved=v.status==='approved';
- document.getElementById('pilotContextMessage').textContent=approved?(v.requester_me?'LA MESA LO HA APROBADO. ESCRIBE EL CONTEXTO QUE QUIERES APORTAR.':'LA MESA LO HA APROBADO. ESPERANDO EL CONTEXTO.'):'ALGUIEN QUIERE AÑADIR CONTEXTO AL DILEMA. ¿LO PERMITIMOS?';
- document.getElementById('pilotContextProgress').textContent=approved?'EL CONTEXTO SE MOSTRARÁ SIN IDENTIFICAR A QUIEN LO APORTA.':(v.mine===true?'TU SÍ YA ESTÁ REGISTRADO · ':'')+(v.voted||0)+' / '+v.players+' HAN VOTADO · MAYORÍA DECIDE';
+ const approved=v.status==='approved',review=v.status==='review';
+ document.getElementById('pilotContextMessage').textContent=review?'¿ACEPTAMOS ESTE CONTEXTO EN EL DEBATE?':approved?(v.requester_me?'LA MESA PERMITE LA PROPUESTA. ESCRIBE EL CONTEXTO PARA QUE TODOS LO VALIDEN.':'LA MESA PERMITE LA PROPUESTA. ESPERANDO EL TEXTO PARA VOTARLO.'):'ALGUIEN QUIERE PROPONER CONTEXTO AL DILEMA. ¿LO PERMITIMOS?';
+ const proposed=document.getElementById('pilotContextProposed');proposed.style.display=review?'block':'none';if(proposed.textContent!==(v.proposed_text||''))proposed.textContent=v.proposed_text||'';
+ document.getElementById('pilotContextProgress').textContent=approved?'SE MOSTRARÁ SIN NOMBRE Y SOLO SE AÑADIRÁ SI LA MESA LO APRUEBA.':(v.mine===true?'TU SÍ YA ESTÁ REGISTRADO · ':'')+(v.voted||0)+' / '+v.players+' HAN VOTADO · MAYORÍA DECIDE';
  document.getElementById('pilotContextVotes').style.display=approved?'none':'grid';
  box.querySelectorAll('[data-context-vote]').forEach(b=>{b.disabled=contextBusy||v.mine!==null||!canAct;b.classList.toggle('selected',v.mine!==null&&(b.dataset.contextVote==='yes')===v.mine)});
  document.getElementById('pilotContextWrite').style.display=approved&&v.requester_me?'block':'none';
@@ -8731,11 +8740,10 @@ async function contextAction(action,yes){
  contextBusy=true;const round=currentRoundId,v=debateContextView;paintDebateContext();
  try{
   let name='debate_request_context',args={p_round:round};
-  if(action==='vote'){name='debate_vote_context';args.p_id=v.id;args.p_yes=yes}
+  if(action==='vote'){name=v.status==='review'?'debate_review_context':'debate_vote_context';args.p_id=v.id;args.p_yes=yes}
   if(action==='submit'){name='debate_submit_context';args.p_id=v.id;args.p_text=document.getElementById('pilotContextText').value.trim();if(!args.p_text)throw Error('Escribe el contexto antes de enviarlo.')}
   if(action==='cancel'){name='debate_cancel_context';args.p_id=v.id}
   const {error}=await sb.rpc(name,args);if(error)throw error;
-  if(currentRoundId===round){window.dilemaContextSnapshot=null;await window.pilotRefresh();}
  }catch(e){
   const text=String(e?.message||'');
   const errorNode=document.getElementById('pilotContextError');if(document.getElementById('pilotContextDecision').style.display==='none')alert(/Another proposal/.test(text)?'LA MESA TIENE OTRA DECISIÓN ABIERTA.':'No se ha podido completar la solicitud. Inténtalo de nuevo.');
