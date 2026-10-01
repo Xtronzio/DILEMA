@@ -91,14 +91,15 @@ Deno.serve(async(req:Request)=>{
   if(!Number.isSafeInteger(round)||round<1)return json({error:"Ronda inválida"},400);
   const c=await rpc("prepare_debate_assistant",{p_round_id:round},jwt);
   const key=Deno.env.get("OPENAI_API_KEY");
-  if(c?.status==="ready"&&c.guide?.version===2&&(c.mode==="IA"||!key))return json({guide:c.guide,mode:c.mode,cached:true,source:c.source});
+  if(c?.status==="ready"&&c.guide?.version===2&&(c.mode==="IA"||!key))return json({guide:c.guide,mode:c.mode,cached:true,source:c.source,context_signature:c.context_signature});
   let mode="BASICA",guide=basic(c);
   if(key){try{guide=await generated(c,key);mode="IA"}catch(error){console.error("AI unavailable",error instanceof Error?error.message:"unknown")}}
-  const saved=await rpc("save_debate_assistant",{p_round_id:round,p_cycle:c.cycle,p_choice:c.choice,p_source:c.source,p_guide:guide,p_mode:mode},jwt);
-  if(!saved&&c.guide?.version===2)return json({guide:c.guide,mode:c.mode,cached:true,source:c.source});
-  return json({guide,mode,cached:false,source:c.source});
+  const saved=await rpc("save_debate_assistant_context",{p_round_id:round,p_cycle:c.cycle,p_choice:c.choice,p_source:c.source,p_guide:guide,p_mode:mode,p_signature:c.context_signature},jwt);
+  if(!saved)return json({error:"El contexto o tu voto han cambiado. Vuelve a abrir el asistente."},409);
+  return json({guide,mode,cached:false,source:c.source,context_signature:c.context_signature});
  }catch(error){
   console.error("Debate assistant error",error instanceof Error?error.message:"unknown");
   return json({error:"No se ha podido preparar tu guía. Comprueba que sigues en el debate y que ya has votado."},400)
  }
 });
+
