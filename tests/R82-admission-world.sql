@@ -1,0 +1,96 @@
+begin;
+do $test$
+declare room bigint;rd bigint;d bigint;rid bigint;rid2 bigint;x jsonb;failed boolean;pid text;ids jsonb;story bigint;other bigint;
+ u1 uuid:='00000000-0082-4000-8000-000000000001';u2 uuid:='00000000-0082-4000-8000-000000000002';u3 uuid:='00000000-0082-4000-8000-000000000003';
+ newcomer uuid:='00000000-0082-4000-8000-000000000004';second uuid:='00000000-0082-4000-8000-000000000005';
+begin
+ insert into auth.users(id,aud,role,email) values(u1,'authenticated','authenticated','r82-1@example.invalid'),(u2,'authenticated','authenticated','r82-2@example.invalid'),(u3,'authenticated','authenticated','r82-3@example.invalid'),(newcomer,'authenticated','authenticated','r82-4@example.invalid'),(second,'authenticated','authenticated','r82-5@example.invalid');
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ insert into public.rooms(code,host_id,expected_players,mode,status) values('T82Q','r82-host',3,'debate','playing') returning id into room;
+ insert into public.players(room_id,player_id,user_id,name) values(room,'r82-host',u1,'HOST'),(room,'r82-two',u2,'TWO'),(room,'r82-three',u3,'THREE');
+ select min(id) into d from public.dilemmas;
+ insert into public.rounds(room_id,dilemma_id,debate_phase,status) values(room,d,'debate','debate') returning id into rd;
+ insert into public.debate_vote_cycles(round_id,cycle_number,player_id,user_id,choice) values(rd,1,'r82-host',u1,'A'),(rd,1,'r82-two',u2,'B'),(rd,1,'r82-three',u3,'B');
+ if public.debate_admission_available(room) then raise exception 'Admissions default open';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);
+ failed:=false;begin perform public.set_debate_admission(room,true);exception when others then failed:=true;end;
+ if not failed then raise exception 'Nonhost opens door';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.set_debate_admission(room,true);
+ if not public.debate_admission_available(room) then raise exception 'Door did not open';end if;
+ -- Admission is queued behind an already-open context ballot.
+ perform public.debate_request_context(rd);
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);
+ execute 'set local role authenticated';
+ rid:=public.request_debate_admission(room,'r82-new','NEW','⭐','');x:=public.my_debate_admission(rid);
+ execute 'reset role';
+ if x->>'status'<>'queued' then raise exception 'Concurrent process';end if;
+ if exists(select 1 from public.players where room_id=room and user_id=newcomer) then raise exception 'Applicant joined early';end if;
+ failed:=false;begin perform public.get_debate_state(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Applicant reads debate';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);x:=public.debate_context_state(rd);perform public.debate_cancel_context(rd,(x->>'id')::bigint);
+ x:=public.get_debate_state(rd);if x->'admission_state'->>'id'<>rid::text then raise exception 'Queue did not open';end if;
+ failed:=false;begin perform public.propose_debate_pause(rd,true);exception when others then failed:=true;end;
+ if not failed then raise exception 'Parallel proposal during admission';end if;
+ perform set_config('request.jwt.claim.sub',second::text,true);rid2:=public.request_debate_admission(room,'r82-second','SECOND','⭐','');
+ x:=public.my_debate_admission(rid2);if x->>'status'<>'queued' then raise exception 'Second admission not queued';end if;
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);
+ failed:=false;begin perform public.vote_debate_admission(rd,rid,true);exception when others then failed:=true;end;
+ if not failed then raise exception 'Applicant votes own entry';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);execute 'set local role authenticated';x:=public.vote_debate_admission(rd,rid,true);execute 'reset role';
+ if exists(select 1 from public.players where room_id=room and user_id=newcomer) then raise exception 'Only one YES accepted';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);x:=public.vote_debate_admission(rd,rid,true);
+ if not exists(select 1 from public.players where room_id=room and user_id=newcomer and presence='present') then raise exception 'Majority did not admit';end if;
+ if (select expected_players from public.rooms where id=room)<>4 then raise exception 'Capacity not updated';end if;
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);x:=public.get_debate_state(rd);
+ if x->'admission_state'->>'needs_vote'<>'true' then raise exception 'New member missing vote prompt';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ failed:=false;begin perform public.propose_debate_twist_vote(rd);exception when others then failed:=true;end;
+ if not failed then raise exception 'Giro started before new member first vote';end if;
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);
+ perform public.debate_admission_initial_vote(rd,'A');perform public.debate_admission_initial_vote(rd,'B');
+ if (select choice from public.debate_vote_cycles where round_id=rd and user_id=newcomer)<>'A' then raise exception 'New member can repeatedly change initial vote';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);x:=public.get_debate_state(rd);
+ if x->'admission_state'->>'id'<>rid2::text then raise exception 'Next ballot not opened';end if;
+ if x->>'votes_a'<>'2' or x->>'votes_b'<>'2' then raise exception 'Existing votes altered';end if;
+ x:=public.vote_debate_admission(rd,rid,true);if x->>'status'<>'closed' then raise exception 'Late vote not identified';end if;
+ perform public.set_debate_admission(room,false);
+ if public.debate_admission_available(room) then raise exception 'Door not closed';end if;
+ perform set_config('request.jwt.claim.sub',second::text,true);x:=public.my_debate_admission(rid2,true);
+ if x->>'status'<>'cancelled' then raise exception 'Cancel failed';end if;
+ -- An authenticated direct insert cannot bypass the approval.
+ execute 'set local role authenticated';
+ failed:=false;begin insert into public.players(room_id,player_id,user_id,name) values(room,'bypass',second,'BYPASS');exception when others then failed:=true;end;
+ execute 'reset role';if not failed then raise exception 'Direct join bypass';end if;
+ -- Reject a split vote; a cancelled applicant never becomes a member.
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.set_debate_admission(room,true);
+ perform set_config('request.jwt.claim.sub',second::text,true);rid2:=public.request_debate_admission(room,'r82-second','SECOND','⭐','');
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.vote_debate_admission(rd,rid2,true);
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.vote_debate_admission(rd,rid2,false);
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.vote_debate_admission(rd,rid2,true);
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);perform public.vote_debate_admission(rd,rid2,false);
+ perform set_config('request.jwt.claim.sub',second::text,true);x:=public.my_debate_admission(rid2);
+ if x->>'status'<>'rejected' then raise exception 'Tie accepted';end if;
+ -- Returning to the room hall closes previous-round admissions.
+ update public.rooms set status='waiting' where id=room;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ if public.debate_admission_available(room) then raise exception 'Hall still admits';end if;
+ -- World discard is democratic and excludes the source, including alternative wording.
+ insert into public.dilemmas(audience,category,intensity,debate_theme,question,option_a,option_b,source_kind,active,news_meta) values('teen','ACTUALIDAD IA',3,'¿LO CUENTAS?','R82 NEWS','A','B','current',true,jsonb_build_object('url','https://www.rtve.es/noticias/r82-test.shtml','date',to_char(current_date,'YYYY-MM-DD'))) returning id into story;
+ insert into public.dilemmas(audience,category,intensity,debate_theme,question,option_a,option_b,source_kind,active,news_meta) values('teen','ACTUALIDAD IA',1,'¿LO CUENTAS?','SAME STORY NEW WORDING','A','B','current',true,jsonb_build_object('url','https://www.rtve.es/noticias/r82-test.shtml','date',to_char(current_date,'YYYY-MM-DD'))) returning id into other;
+ insert into public.debate_selections(room_id,phase,stage,intensity,theme,options,last_round_id) values(room,'questions',5,3,'ACTUALIDAD IA:ALEATORIO',jsonb_build_array(story),rd);
+ perform public.debate_choose(room,'__DISCARD__');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_choose(room,'__DISCARD__');
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.debate_choose(room,story::text);
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);x:=public.debate_choose(room,'__DISCARD__');
+ if x->>'phase'<>'news_loading' then raise exception 'Discard did not restart proposals';end if;
+ if not private.world_seen(other,u1,room) then raise exception 'Same source recycled';end if;
+ perform set_config('request.jwt.claims','{"role":"service_role"}',true);
+ execute 'set local role service_role';x:=public.fresh_world_candidates(jsonb_build_array(story,other),u1,room,3,'ALEATORIO');execute 'reset role';
+ if x->'ids' @> jsonb_build_array(story) or x->'ids' @>jsonb_build_array(other) or jsonb_array_length(x->'ids')=0 then raise exception 'Repeated source returned or no fallback';end if;
+ -- Cancelling just after acceptance must not leave an active ghost member.
+ perform set_config('request.jwt.claims','{}',true);
+ perform set_config('request.jwt.claim.sub',newcomer::text,true);x:=public.my_debate_admission(rid,true);
+ if x->>'status'<>'cancelled' or exists(select 1 from public.players where room_id=room and user_id=newcomer and abandoned_at is null) then raise exception 'Cancellation after acceptance left active member';end if;
+ raise notice 'R82 admission, queue, permissions, tie, initial vote and world discard passed';
+end $test$;
+rollback;
