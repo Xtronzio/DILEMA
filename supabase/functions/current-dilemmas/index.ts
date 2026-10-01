@@ -61,7 +61,9 @@ async function generate(intensity:number,theme:string,cacheKey:string,lease:stri
 
 async function fallbackResponse(intensity:number,theme:string,room:number|null,stage:number,userId:string){
  const result=await rest('rpc/fallback_current_ai','POST',{p_intensity:intensity,p_theme:theme,p_seed:room===null?userId+new Date().toISOString().slice(0,10):room+':'+stage});
- const ids=result.ids;if(!Array.isArray(ids)||!ids.length)throw Error('NO_CATALOG');
+ const fresh=await rest('rpc/fresh_world_candidates','POST',{p_ids:result.ids,p_user:userId,p_room:room,p_intensity:intensity,p_theme:theme});
+ const ids=fresh.ids;if(!Array.isArray(ids)||!ids.length)throw Error('NO_CATALOG');
+ result.fallback=fresh.fallback||result.fallback;
  if(room!==null){const published=await rest('rpc/publish_current_ai','POST',{p_room:room,p_stage:stage,p_ids:ids});return json({status:published?'ready':'obsolete',fallback:result.fallback})}
  const candidates=await rest('dilemmas?id=in.('+ids.join(',')+')&select=id,question,option_a,option_b,news_meta,debate_theme,intensity,source_kind');
  return json({status:'ready',candidates,fallback:result.fallback,cached:true});
@@ -90,8 +92,10 @@ Deno.serve(async(req:Request)=>{
  const generated=await generate(intensity,theme,cacheKey,lease);
  ids=await rest('rpc/finish_current_ai','POST',{p_key:cacheKey,p_lease:lease,p_rows:generated.rows,p_usage:generated.usage});
  }
- if(room!==null){const published=await rest('rpc/publish_current_ai','POST',{p_room:room,p_stage:stage,p_ids:ids});return json({status:published?'ready':'obsolete'})}
- const candidates=await rest('dilemmas?id=in.('+ids.join(',')+')&select=id,question,option_a,option_b,news_meta,debate_theme,intensity');return json({status:'ready',candidates,cached:claim.status==='ready'});
+ const fresh=await rest('rpc/fresh_world_candidates','POST',{p_ids:ids,p_user:user.id,p_room:room,p_intensity:intensity,p_theme:theme});
+ ids=fresh.ids;if(!Array.isArray(ids)||!ids.length)throw Error('NO_CATALOG');
+ if(room!==null){const published=await rest('rpc/publish_current_ai','POST',{p_room:room,p_stage:stage,p_ids:ids});return json({status:published?'ready':'obsolete',fallback:fresh.fallback})}
+ const candidates=await rest('dilemmas?id=in.('+ids.join(',')+')&select=id,question,option_a,option_b,news_meta,debate_theme,intensity');return json({status:'ready',candidates,cached:claim.status==='ready',fallback:fresh.fallback});
  }catch(failure){
   const code=failure instanceof Error?failure.message:'UNAVAILABLE';
   if(lease)try{await rest('current_ai_cache?cache_key=eq.'+encodeURIComponent(cacheKey)+'&lease=eq.'+encodeURIComponent(lease),'PATCH',{status:'failed',error_detail:code.slice(0,160),lease_until:new Date(Date.now()+60000).toISOString()})}catch{}
@@ -102,3 +106,4 @@ Deno.serve(async(req:Request)=>{
  }catch(e){const code=e instanceof Error?e.message:'UNAVAILABLE';if(lease){try{await rest('current_ai_cache?cache_key=eq.'+encodeURIComponent(cacheKey)+'&lease=eq.'+encodeURIComponent(lease),'PATCH',{status:'failed',error_detail:code.slice(0,160),lease_until:new Date(Date.now()+60000).toISOString()})}catch{}}
  console.error('Current dilemma failure',code);return json({error:['AUTH','PARAMETERS','AI_UNCONFIGURED','NO_CURRENT_NEWS','QUALITY_FAILED'].includes(code)?code:'AI_UNAVAILABLE'},503)}
 });
+
