@@ -1,0 +1,63 @@
+begin;
+do $test$
+declare room bigint;rd bigint;rd2 bigint;d bigint;pid bigint;sid bigint;x jsonb;failed boolean;n bigint;request bigint;
+ u1 uuid:='00000000-0086-4000-8000-000000000001';u2 uuid:='00000000-0086-4000-8000-000000000002';u3 uuid:='00000000-0086-4000-8000-000000000003';u4 uuid:='00000000-0086-4000-8000-000000000004';
+begin
+ insert into auth.users(id,aud,role,email) values(u1,'authenticated','authenticated','r86-1@example.invalid'),(u2,'authenticated','authenticated','r86-2@example.invalid'),(u3,'authenticated','authenticated','r86-3@example.invalid'),(u4,'authenticated','authenticated','r86-4@example.invalid');
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ insert into public.rooms(code,host_id,expected_players,mode,status) values('T86Q','r86-host',3,'debate','playing') returning id into room;
+ insert into public.players(room_id,player_id,user_id,name) values(room,'r86-host',u1,'HOST'),(room,'r86-two',u2,'TWO'),(room,'r86-three',u3,'THREE');
+ select min(id) into d from public.dilemmas;
+ insert into public.rounds(room_id,dilemma_id,debate_phase,status,paused,context,twist_request_open) values(room,d,'debate','debate',true,'CONTEXTO APROBADO',true) returning id into rd;
+ insert into public.debate_vote_cycles(round_id,cycle_number,player_id,user_id,choice) values(rd,1,'r86-host',u1,'A'),(rd,1,'r86-two',u2,'B'),(rd,1,'r86-three',u3,'B');
+ execute 'set local role authenticated';x:=public.debate_session_action(room,'save');execute 'reset role';
+ pid:=(x->'proposal'->>'id')::bigint;
+ if pid is null or x->'proposal'->>'mine'<>'true' then raise exception 'Missing save ballot/proposer YES';end if;
+ failed:=false;begin perform public.propose_debate_pause(rd,false);exception when others then failed:=true;end;if not failed then raise exception 'Concurrent process allowed';end if;
+ perform set_config('request.jwt.claim.sub',u4::text,true);failed:=false;begin execute 'set local role authenticated';perform public.debate_session_action(room,'state');exception when others then failed:=true;end;execute 'reset role';if not failed then raise exception 'Outsider reads session';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);execute 'set local role authenticated';x:=public.debate_session_action(room,'vote',null,pid,true);execute 'reset role';
+ if x->>'room_status'<>'waiting' or jsonb_array_length(x->'sessions')<>1 then raise exception 'Majority did not save session';end if;
+ sid:=(x->'sessions'->0->>'id')::bigint;
+ if (select status from public.rounds where id=rd)<>'saved' or (select context from public.rounds where id=rd)<>'CONTEXTO APROBADO' then raise exception 'Saved state missing';end if;
+ if not exists(select 1 from public.saved_group_dilemmas where source_round_id=rd and user_id=u1 and session_state='paused' and choice='A') then raise exception 'Host paused library missing';end if;
+ failed:=false;begin update public.debate_vote_cycles set choice='B' where round_id=rd and user_id=u1;exception when others then failed:=true;end;if not failed then raise exception 'Frozen vote changed';end if;
+ failed:=false;begin update public.rounds set paused=false where id=rd;exception when others then failed:=true;end;if not failed then raise exception 'Frozen round changed';end if;
+ -- A new debate in the same room must not overwrite the saved round.
+ insert into public.rounds(room_id,dilemma_id,round_number,status,debate_phase) values(room,d,2,'debate','debate') returning id into rd2;
+ update public.rounds set status='finished',debate_phase='finished' where id=rd2;
+ update public.rooms set status='waiting' where id=room;
+ if (select status from public.rounds where id=rd)<>'saved' then raise exception 'New debate destroys old session';end if;
+ -- The active pointer can legitimately move backwards to the original round.
+ perform set_config('request.jwt.claim.sub',u1::text,true);execute 'set local role authenticated';x:=public.debate_session_action(room,'resume',sid);execute 'reset role';pid:=(x->'proposal'->>'id')::bigint;
+ failed:=false;begin perform public.debate_begin_selection(room);exception when others then failed:=true;end;if not failed then raise exception 'Selection bypasses resume ballot';end if;
+ perform set_config('request.jwt.claim.sub',u2::text,true);execute 'set local role authenticated';x:=public.debate_session_action(room,'vote',null,pid,true);execute 'reset role';
+ if x->>'room_status'<>'playing' or x->>'active_round_id'<>rd::text then raise exception 'Resume did not restore original active round';end if;
+ if (select vote_cycle from public.rounds where id=rd)<>1 or (select debate_phase from public.rounds where id=rd)<>'debate' or (select paused from public.rounds where id=rd) then raise exception 'Exact resume changed cycle/phase';end if;
+ if (select count(*) from public.debate_vote_cycles where round_id=rd and cycle_number=1)<>3 then raise exception 'Exact resume lost votes';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.set_debate_admission(room,true);
+ perform set_config('request.jwt.claim.sub',u4::text,true);request:=public.request_debate_admission(room,'r86-new','NEW','⭐','');
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.vote_debate_admission(rd,request,true);
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.vote_debate_admission(rd,request,true);
+ perform set_config('request.jwt.claim.sub',u4::text,true);x:=public.my_debate_admission(request);
+ if x->'round'->>'id'<>rd::text or x->'state'->'admission_state'->>'needs_vote'<>'true' then raise exception 'Admission chose newest rather than active saved round';end if;
+ perform public.debate_admission_initial_vote(rd,'A');
+ -- Save again, then change the roster. A fresh ballot is required, old votes stay in history.
+ update public.rounds set paused=true where id=rd;
+ perform set_config('request.jwt.claim.sub',u1::text,true);x:=public.debate_session_action(room,'save');pid:=(x->'proposal'->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_session_action(room,'vote',null,pid,true);
+ perform set_config('request.jwt.claim.sub',u3::text,true);x:=public.debate_session_action(room,'vote',null,pid,true);
+ if x->>'room_status'<>'waiting' then raise exception 'Second save failed';end if;
+ update public.players set abandoned_at=now() where room_id=room and user_id=u4;
+ perform set_config('request.jwt.claim.sub',u1::text,true);x:=public.debate_session_action(room,'resume',sid);pid:=(x->'proposal'->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);x:=public.debate_session_action(room,'vote',null,pid,true);
+ if (select debate_phase from public.rounds where id=rd)<>'twist' then raise exception 'Changed roster did not request a new vote';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.cast_debate_revote(rd,'B');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.cast_debate_revote(rd,'A');
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.cast_debate_revote(rd,'B');perform public.complete_debate_revote(rd);
+ if (select vote_cycle from public.rounds where id=rd)<>2 or (select debate_phase from public.rounds where id=rd)<>'debate' then raise exception 'Fresh ballot did not complete';end if;
+ if (select count(*) from public.debate_vote_cycles where round_id=rd and cycle_number=1)<>4 then raise exception 'Fresh vote destroys original history';end if;
+ update public.rounds set status='finished',debate_phase='finished' where id=rd;
+ if not exists(select 1 from public.saved_group_dilemmas where source_round_id=rd and user_id=u1 and session_state='finished' and choice='B') then raise exception 'Final archive not updated';end if;
+ raise notice 'R86 session majority, no parallel processes, owner history, frozen state, original active round, admission on resumed round, changed roster and final archive passed';
+end $test$;
+rollback;
