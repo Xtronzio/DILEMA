@@ -8959,7 +8959,10 @@ function cancelSavedDiscard(){
 }
 async function confirmSavedDiscard(){
  if(!savedDiscardTarget||savedLibraryBusy||privateBusy)return;
- const row={...savedDiscardTarget};savedLibraryBusy=true;
+ const row={...savedDiscardTarget};
+ const discardFromLibrary=document.getElementById('savedDilemmas')?.classList.contains('active');
+ const libraryScroll=window.scrollY;
+ savedLibraryBusy=true;
  const accept=document.getElementById('savedDiscardAccept'),cancel=document.getElementById('savedDiscardCancel');accept.disabled=cancel.disabled=true;
  try{
   const table=row.origin==='PRIV'?'private_dilemma_sessions':'saved_group_dilemmas';
@@ -8971,7 +8974,11 @@ async function confirmSavedDiscard(){
   }
   savedLibraryRows=savedLibraryRows.filter(r=>r.id!==row.id||r.origin!==row.origin);
   savedDiscardTarget=null;document.getElementById('savedDiscardModal').classList.remove('open');
-  document.getElementById('pilotAssistantModal')?.classList.remove('open');goHome();
+  document.getElementById('pilotAssistantModal')?.classList.remove('open');
+  if(discardFromLibrary){
+   renderSavedDilemmas();
+   window.scrollTo(0,libraryScroll);
+  }else goHome();
  }catch(e){document.getElementById('savedDiscardError').textContent='No se ha podido descartar. Tu dilema sigue guardado.'}
  finally{savedLibraryBusy=false;accept.disabled=cancel.disabled=false}
 }
