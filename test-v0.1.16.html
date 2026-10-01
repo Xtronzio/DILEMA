@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R82</div>
+    <div class="version">DILEMA · V0.1.16-010C-R83</div>
   </main>
 
 
@@ -8988,6 +8988,13 @@ document.getElementById('savedDiscardModal').addEventListener('keydown',e=>{
 .access-warning .btn:disabled{opacity:.4}
 .access-warning details{margin-top:18px;font-size:12px;line-height:1.4;text-align:left}
 .access-warning summary{cursor:pointer;font-weight:800;color:#facc15}
+details.access-warning:not([open]){padding:14px 18px}
+details.access-warning>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;list-style:none;font-size:12px;font-weight:900;letter-spacing:1px;text-align:left}
+details.access-warning>summary::-webkit-details-marker{display:none}
+details.access-warning>summary::after{content:"+";font-size:20px;line-height:1}
+details.access-warning[open]>summary{margin-bottom:18px}
+details.access-warning[open]>summary::after{content:"−"}
+details.access-warning>summary:focus-visible{outline:1px solid #facc15;outline-offset:6px;border-radius:4px}
 .access-url{display:none;width:100%;margin:12px 0 0;padding:12px;border:1px solid #777;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:400}
 .access-status{font-size:12px!important;overflow-wrap:anywhere;min-height:18px}
 #portableAccessOverlay{display:none;position:fixed;inset:0;z-index:100010;background:#080808;align-items:center;justify-content:center;padding:24px}
@@ -9066,8 +9073,8 @@ async function restorePortableAccess(){
 function cancelPortableAccess(){if(portableRestoreBusy)return;window.dilemaIncomingAccess=null;goHome()}
 function addPortableAccessBox(id){
  const screen=document.getElementById(id);if(!screen||screen.querySelector('.access-warning'))return;
- const box=document.createElement('div');box.className='access-warning';
- box.innerHTML='<h2>⚠ GUARDA TU ACCESO</h2><p>Copia este enlace y guárdalo en un lugar privado. Ábrelo en otro navegador o dispositivo para recuperar tus perfiles, dilemas y ayudas.</p><p>No lo compartas: quien lo tenga podrá acceder a tu historial. El enlace conserva el acceso a tu identidad; puedes seguir eligiendo quién eres hoy.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess()">COPIAR ENLACE DE ACCESO</button><input class="access-url" readonly aria-label="Tu enlace privado de acceso" onclick="this.select()"><p class="access-status" role="status"></p><details><summary>RENOVAR MI ENLACE</summary><p>Si lo has compartido por error, genera otro. El enlace anterior dejará de funcionar. Las sesiones que ya estén abiertas seguirán abiertas.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess(true)">RENOVAR E INVALIDAR EL ANTERIOR</button></details>';
+ const box=document.createElement('details');box.className='access-warning';
+ box.innerHTML='<summary>⚠ GUARDA TU ACCESO</summary><p>Copia este enlace y guárdalo en un lugar privado. Ábrelo en otro navegador o dispositivo para recuperar tus perfiles, dilemas y ayudas.</p><p>No lo compartas: quien lo tenga podrá acceder a tu historial. El enlace conserva el acceso a tu identidad; puedes seguir eligiendo quién eres hoy.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess()">COPIAR ENLACE DE ACCESO</button><input class="access-url" readonly aria-label="Tu enlace privado de acceso" onclick="this.select()"><p class="access-status" role="status"></p><details><summary>RENOVAR MI ENLACE</summary><p>Si lo has compartido por error, genera otro. El enlace anterior dejará de funcionar. Las sesiones que ya estén abiertas seguirán abiertas.</p><button type="button" class="btn btn-secondary" data-portable-copy onclick="copyPortableAccess(true)">RENOVAR E INVALIDAR EL ANTERIOR</button></details>';
  screen.appendChild(box);
 }
 for(const id of ['profile','profileChoice','savedDilemmas'])addPortableAccessBox(id);
