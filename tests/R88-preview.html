@@ -1,0 +1,2256 @@
+<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><title>DILEMA R88 · Prueba de interfaz</title><aside style="max-width:430px;margin:16px auto;padding:12px;border:1px solid #333;border-radius:12px"><p style="font-size:11px;margin-bottom:12px">R88 · DATOS FICTICIOS · SIN CONEXIÓN A SUPABASE NI A IA</p><button onclick="receiveTools()">RECIBIR HERRAMIENTAS</button> <button onclick="consume()">CONSUMIR PROCLAMA</button> <button onclick="lockTools()">DECISIÓN PENDIENTE</button> <button onclick="unlock()">FIN DECISIÓN</button><p id="testLog" style="margin-top:12px;font-size:11px"></p></aside><style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      background: #0b0b0b;
+    }
+
+    body {
+      min-height: 100vh;
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 40px 24px 30px;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .center {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .logo {
+      margin-bottom: 70px;
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: 4px;
+    }
+
+    .title {
+      margin-bottom: 8px;
+      text-align: center;
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      margin-bottom: 30px;
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 18px;
+      margin-bottom: 14px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #0b0b0b;
+      border: 1px solid white;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: white;
+      border: 1px solid #444;
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #4a2222;
+    }
+
+    .btn:disabled {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    .back {
+      position: absolute;
+      top: 28px;
+      border: 0;
+      background: transparent;
+      color: #777;
+      font-size: 28px;
+      cursor: pointer;
+    }
+
+    .version {
+      position: fixed;
+      bottom: 20px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: #555;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    .text-input {
+      width: 100%;
+      margin-bottom: 18px;
+      padding: 17px;
+      background: transparent;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 14px;
+      outline: none;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .text-input:focus {
+      border-color: white;
+    }
+
+    #playerName {
+      text-transform: uppercase;
+    }
+
+    .room-code-input {
+      text-transform: uppercase;
+      letter-spacing: 8px;
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .avatar-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+
+    .avatar-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .avatar-tab {
+      flex: 0 0 auto;
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid #333;
+      background: #151515;
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .avatar-tab.active {
+      background: white;
+      color: black;
+    }
+
+    .avatars {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .avatar {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 1px solid #333;
+      background: #151515;
+      font-size: 28px;
+    }
+
+    .avatar.selected {
+      background: white;
+    }
+
+    .profiles-list {
+      width: 100%;
+      margin-bottom: 22px;
+    }
+
+    .saved-profile {
+      width: 100%;
+      padding: 14px 4px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .profile-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #151515;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      flex: 0 0 48px;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .profile-motto {
+      color: #777;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .profile-delete {
+      background: transparent;
+      border: 0;
+      color: #555;
+      font-size: 20px;
+      padding: 10px;
+    }
+
+    .room-code-label,
+    .players-title,
+    .small-label {
+      color: #777;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .room-code {
+      margin: 8px 0 26px;
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: 10px;
+    }
+
+    .room-count {
+      margin-bottom: 24px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .room-count.ok {
+      color: #20d66b;
+    }
+
+    .room-count.ko {
+      color: #ff4d4d;
+    }
+
+    .room-state {
+      display: none;
+    }
+
+    .host-controls {
+      width: 100%;
+      margin-bottom: 24px;
+      padding: 18px;
+      border: 1px solid #222;
+      border-radius: 14px;
+    }
+
+    .counter {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .counter button {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #444;
+      background: transparent;
+      color: white;
+      font-size: 22px;
+    }
+
+    .counter-number {
+      min-width: 40px;
+      font-size: 26px;
+      font-weight: 900;
+    }
+
+    .players-title {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 10px;
+    }
+
+    .players-list {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .player-card {
+      width: 100%;
+      padding: 14px 4px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      text-align: left;
+    }
+
+    .own-card {
+      cursor: pointer;
+    }
+
+    .player-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      flex: 0 0 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #151515;
+      font-size: 27px;
+    }
+
+    .player-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .player-name {
+      font-weight: 900;
+      font-size: 17px;
+    }
+
+    .player-motto {
+      margin-top: 4px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .player-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .host-badge {
+      color: #555;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .edit-hint {
+      color: #888;
+      font-size: 22px;
+    }
+
+    .kick {
+      border: 0;
+      background: transparent;
+      color: #666;
+      font-size: 18px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    .small-note {
+      margin-top: 8px;
+      text-align: center;
+      color: #555;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .error {
+      min-height: 22px;
+      margin-bottom: 12px;
+      color: #999;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .start-message {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1.25;
+      margin-bottom: 20px;
+    }
+
+    .start-code {
+      color: #777;
+      font-size: 13px;
+      letter-spacing: 3px;
+    }
+
+    .game-category {
+      margin-bottom: 14px;
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+    }
+
+    .game-question {
+      width: 100%;
+      margin-bottom: 26px;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    .vote-option {
+      width: 100%;
+      margin-bottom: 14px;
+      padding: 18px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: white;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .vote-option strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 20px;
+    }
+
+    .vote-option span {
+      color: #c9c9c9;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .vote-option.selected {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px #ffffff inset;
+      background: #1d1d1d;
+    }
+
+    .vote-option:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .vote-status {
+      margin-top: 22px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .vote-count-big {
+      margin-top: 14px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .result-box {
+      width: 100%;
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .result-item {
+      padding: 22px 12px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .result-letter {
+      font-size: 30px;
+      font-weight: 900;
+    }
+
+    .result-number {
+      margin-top: 8px;
+      font-size: 22px;
+      color: #aaa;
+    }
+
+    .game-error {
+      min-height: 20px;
+      margin-top: 18px;
+      color: #ff6b6b;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .role-card {
+      width: 100%;
+      padding: 26px 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      text-align: center;
+    }
+
+    .role-kicker {
+      color: #777;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .role-title {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 24px;
+    }
+
+    .role-vote {
+      color: #aaa;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .role-vote strong {
+      color: #fff;
+      font-size: 24px;
+      margin-left: 6px;
+    }
+
+    .role-instruction {
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.45;
+      margin-bottom: 26px;
+    }
+
+    .role-waiting {
+      min-height: 22px;
+      margin-top: 12px;
+      color: #777;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .debate-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.05;
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .debate-question {
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #151515;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.45;
+      text-align: left;
+      margin-bottom: 16px;
+    }
+
+    .debate-options {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .debate-option {
+      min-height: 112px;
+      padding: 16px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      text-align: left;
+    }
+
+    .debate-option-letter {
+      font-size: 24px;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .debate-option-text {
+      color: #d0d0d0;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .tool-dock {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .tool-button {
+      min-height: 64px;
+      padding: 8px 4px;
+      border: 1px solid #2e2e2e;
+      border-radius: 12px;
+      background: #151515;
+      color: #777;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .5px;
+      cursor: default;
+    }
+
+    .tool-icon {
+      display: block;
+      margin-bottom: 5px;
+      color: #aaa;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .tool-note {
+      margin-top: 9px;
+      color: #555;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .construction-btn {
+      position: relative;
+      opacity: 0.42 !important;
+    }
+
+    .construction-label {
+      display: block;
+      margin-top: 7px;
+      color: #777;
+      font-size: 9px;
+      letter-spacing: 2px;
+    }
+
+    .waiting-phrase {
+      margin-top: 18px;
+      color: #666;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    textarea {
+      font: inherit;
+    }
+
+    .debate-input {
+      min-height: 94px;
+      resize: vertical;
+      text-align: left;
+      line-height: 1.4;
+    }
+
+    .choice-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 12px 0 26px;
+    }
+
+    .choice-chip {
+      min-height: 54px;
+      padding: 10px 7px;
+      border: 1px solid #333;
+      border-radius: 14px;
+      background: #151515;
+      color: #888;
+      font-size: 11px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .choice-chip.selected {
+      border-color: white;
+      background: white;
+      color: #0b0b0b;
+    }
+
+  
+
+  .audience-choice{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin:10px 0 22px;
+    width:100%;
+  }
+  .audience-choice .choice-btn{
+    appearance:none;
+    -webkit-appearance:none;
+    min-height:50px;
+    padding:10px 6px;
+    border:1px solid #333;
+    border-radius:14px;
+    background:#141414;
+    color:#8f8f8f;
+    font:inherit;
+    font-size:12px;
+    font-weight:800;
+    text-align:center;
+    cursor:pointer;
+  }
+  .audience-choice .choice-btn.active{
+    background:#fff;
+    color:#000;
+    border-color:#fff;
+  }
+
+
+  #waitingPhrase{
+    margin:26px auto 0;
+    max-width:520px;
+    text-align:center;
+    line-height:1.3;
+  }
+  #waitingPhrase .dilema-reminder{
+    display:block;
+    margin-bottom:8px;
+    color:#777;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.16em;
+  }
+  #waitingPhrase .dilema-shared-phrase{
+    display:block;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+
+
+  /* DILEMA V0.1.16 · 010C — exact common typography for the four marked labels */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase;
+    color: #8d8d8d !important;
+  }
+
+  #waitingPhrase {
+    margin: 30px auto 0 !important;
+    max-width: 520px;
+    text-align: center;
+  }
+
+  #waitingStatus {
+    display: block;
+    margin-bottom: 28px;
+    animation: waitingPulse 1.35s ease-in-out infinite;
+  }
+
+  #waitingPhrase .dilema-reminder {
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  #waitingPhrase .dilema-shared-phrase {
+    display: block;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1.15;
+  }
+
+  @keyframes waitingPulse {
+    0%, 100% { opacity: .35; }
+    50%      { opacity: 1; color: #fff !important; }
+  }
+
+
+  /* DILEMA V0.1.16 */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase;
+    color: #8d8d8d !important;
+  }
+
+  #waitingPhrase {
+    display:block !important;
+    margin:30px auto 0 !important;
+    max-width:520px;
+    text-align:center;
+  }
+
+  #waitingStatus {
+    display:block !important;
+    min-height:17px;
+    margin-bottom:28px;
+    }
+
+  
+
+  #waitingPhrase .dilema-reminder {
+    display:block;
+    margin-bottom:10px;
+  }
+
+  #waitingPhrase .dilema-shared-phrase {
+    display:block;
+    color:#fff;
+    font-size:18px;
+    font-weight:800;
+    letter-spacing:.02em;
+    line-height:1.15;
+  }
+
+
+  /* DILEMA V0.1.16 — four auxiliary labels, one visual language */
+  .room-code-label,
+  .players-title,
+  #waitingStatus,
+  #waitingPhrase .dilema-reminder {
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 2px !important;
+    line-height: 1.25 !important;
+    text-transform: uppercase !important;
+    color: #8d8d8d !important;
+  }
+
+  #waitingStatus {
+    display:block !important;
+    min-height:17px;
+    margin-bottom:28px;
+    }
+
+  
+
+
+  /* DILEMA V0.1.16 — waiting text static; only ellipsis changes */
+  #waitingStatus {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    color: #8d8d8d !important;
+  }
+
+
+  /* DILEMA V0.1.16 — foco inicial TEENS */
+  .audience-choice .choice-btn.construction-audience {
+    opacity: .28;
+    cursor: default;
+    min-height: 64px;
+  }
+  .audience-choice .choice-btn.construction-audience .construction-label {
+    margin-top: 5px;
+    font-size: 7px;
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+
+  /* DILEMA V0.1.16 — resultado colectivo y esperas */
+  #debateGroupVote .majority-choice {
+    color: #ff4d5a;
+    font-weight: 900;
+  }
+
+  .host-wait-animated {
+    min-height: 17px;
+  }
+
+
+#debatePilotPanel .pilot-state{line-height:2}
+#debatePilotPanel .pilot-hot{color:#fff;font-weight:900}
+#debatePilotPanel .pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+
+
+#debatePilotPanel .pilot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
+#debatePilotPanel .pilot-actions>button{width:100%!important;min-width:0!important;min-height:54px!important;margin:0!important}
+#pilotPresence{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#pilotPresence>button{width:100%!important;margin:0!important;min-height:54px!important}
+#pilotCloseBox .pilot-actions{grid-template-columns:1fr 1fr}
+
+
+#pauseDebateBtn{display:none!important}
+#debatePilotPanel #pilotHostReset{width:100%!important;min-height:54px!important;margin:0!important}
+
+
+#debatePilotPanel #pilotPresence{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+#debatePilotPanel #pilotPresence>button{display:block;width:100%!important;min-height:54px!important;margin:0!important}
+#debatePilotPanel #pilotHostBadge{grid-column:1/-1;text-align:center;font-size:11px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
+#pauseDebateBtn,#resetGameBtn,#debate #hostDebateControls{display:none!important}
+
+
+#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}
+#pilotHostBadge{grid-column:1/-1!important;margin:6px 0 -2px!important}
+
+#pilotHostReset,#resetGameBtn,#hostDebateControls,#debateHostActions{display:none!important}
+
+/* 015V visual contract: black neutral, white = my selection, green/red = validated result */
+#debatePilotPanel .pilot-main-actions{display:grid;grid-template-columns:1fr 54px;gap:9px;align-items:stretch}
+#debatePilotPanel .pilot-main-actions .btn,#pilotEndBtn{margin:0!important;min-height:54px!important}
+#pilotEndBtn{width:100%!important;margin-top:9px!important}
+.pilot-proclama-icon{border:1px solid #3a3a3a;border-radius:14px;background:#0b0b0b;color:#fff;font-size:23px;min-height:54px}
+.pilot-proclama-icon:disabled,.pilot-proclama-off{opacity:.32}
+#pilotPresence{display:block!important}
+#pilotPresence .pilot-presence-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+#pilotPresence .pilot-presence-row>button{width:100%!important;margin:0!important;min-height:54px!important}
+#pilotHostGroup{margin-top:12px}
+#pilotHostBadge{text-align:center;font-size:10px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
+#pilotHostGroup>button{width:100%!important;margin:0!important;min-height:54px!important}
+#debate .debate-option{cursor:pointer}
+#debate .debate-option.pilot-my-vote{border-color:#fff!important;box-shadow:0 0 0 2px #fff inset!important}
+#debate .pilot-vote-count{margin-top:12px;font-size:24px;font-weight:900;color:#fff}
+#debate .debate-option.pilot-win .pilot-vote-count{color:#39d353!important}
+#debate .debate-option.pilot-lose .pilot-vote-count{color:#ff4d5a!important}
+#pilotState .pilot-hot{font-weight:900;color:#fff}
+#pilotCloseBox [data-close]{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+#pilotCloseBox [data-close].pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+#resetDebateBtn{display:none!important}
+
+
+/* 015W: stable selection + balanced lower controls */
+#debate .debate-option.pilot-my-vote{animation:none!important;transition:none!important;opacity:1!important;border:2px solid #fff!important;box-shadow:none!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;margin-top:14px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{min-height:54px!important}
+#pilotHostGroup{display:none;margin:0!important;padding-top:2px!important;width:100%!important}
+#pilotHostGroup #pilotHostBadge{display:block!important;width:100%!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;font-size:10px!important;line-height:1.3!important;letter-spacing:2px!important}
+#pilotHostGroup #pilotPauseBtn{display:block!important;width:100%!important;min-height:54px!important;margin:0!important}
+
+
+/* 015X: no flashing in live debate state */
+#debatePilotPanel *,#debate .debate-option,#debate .pilot-vote-count{animation:none!important;transition:none!important}
+#debate .pilot-vote-count{opacity:1!important}
+#pilotGiroBtn:disabled,#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+#pilotGiroBtn:disabled{opacity:1!important}
+#pilotGiroBtn.pilot-selected:disabled{background:#fff!important;color:#000!important;border-color:#fff!important}
+#pilotPauseBtn.pilot-selected{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+
+
+/* 015Z: definitive lower layout + stable proclamation */
+#pilotPresence{display:block!important;width:100%!important;margin-top:12px!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{display:block!important;width:100%!important;min-width:0!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:14px 0 0!important;padding:0!important}
+#pilotHostGroup #pilotHostBadge{position:static!important;display:block!important;width:100%!important;height:auto!important;margin:0 0 8px!important;padding:0!important;text-align:center!important;line-height:14px!important}
+#pilotHostGroup #pilotPauseBtn{position:static!important;display:block!important;width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{animation:none!important;transition:none!important}
+#pilotProclamaBtn:disabled{animation:none!important;transition:none!important}
+
+
+/* 016C: same visual voting language on collective result */
+#result .result-item{background:#0b0b0b!important;border:1px solid #3a3a3a!important;transition:none!important;animation:none!important}
+#result .result-item.result-my-vote{border:2px solid #fff!important;box-shadow:none!important}
+#result .result-item .result-number{color:#fff!important}
+#result .result-item.result-win .result-number{color:#39d353!important}
+#result .result-item.result-lose .result-number{color:#ff4d5a!important}
+#result #assignRolesBtn{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
+#result #resetResultBtn{display:none!important}
+
+
+/* 016D: result ownership + clear host waiting */
+#result .result-item.result-my-vote{border:2px solid #fff!important;outline:0!important}
+#waitingRoleDraw.host-wait-animated,#waitingRoleDraw{
+  color:#fff!important;font-size:13px!important;font-weight:900!important;
+  letter-spacing:2px!important;opacity:1!important;margin:22px 0 8px!important;
+  min-height:auto!important
+}
+.host-wait-animated{animation:none!important;transition:none!important}
+
+
+/* 016E: player controls and host controls are separate, ordered blocks */
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin-top:14px!important;gap:0!important}
+#pilotPresence .pilot-presence-row{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:9px!important;width:100%!important;margin:0!important
+}
+#pilotPresence .pilot-presence-row>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;height:54px!important;margin:0!important;padding:0 10px!important;
+ font-size:11px!important;line-height:1!important;text-align:center!important
+}
+#pilotHostGroup{
+ position:static!important;width:100%!important;margin:20px 0 0!important;padding:18px 0 0!important;
+ border-top:1px solid #292929!important
+}
+#pilotHostBadge{
+ position:static!important;display:block!important;width:100%!important;margin:0 0 12px!important;padding:0!important;
+ text-align:center!important;color:#fff!important;font-size:11px!important;font-weight:900!important;
+ line-height:16px!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:grid!important;grid-template-columns:1fr!important;width:100%!important;gap:9px!important}
+#pilotHostGroup .pilot-host-actions>button{
+ position:static!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;height:54px!important;margin:0!important;padding:0 12px!important;
+ font-size:12px!important;line-height:1!important;text-align:center!important
+}
+
+
+#debatePilotPanel .pilot-main-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#debatePilotPanel .pilot-giro-cell{display:grid!important;grid-template-columns:minmax(0,1fr) 46px!important;gap:7px!important}
+#pilotGiroBtn,#pilotEndBtn{width:100%!important;height:54px!important;margin:0!important}
+#pilotProclamaBtn{width:46px!important;height:54px!important;margin:0!important}
+#pilotPresence{display:flex!important;flex-direction:column!important;width:100%!important;margin:9px 0 0!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotPresence .pilot-presence-row>button{width:100%!important;height:54px!important;margin:0!important}
+#pilotHostGroup{width:100%!important;margin:20px 0 0!important;padding:16px 0 0!important;border-top:1px solid #292929!important}
+#pilotHostBadge{width:100%!important;text-align:center!important;margin:0 0 10px!important}
+#pilotHostGroup #pilotPauseBtn{width:100%!important;height:54px!important;margin:0!important}
+
+
+/* 016G: host controls are a separate full-width block */
+#pilotPresence{display:block!important;width:100%!important}
+#pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
+#pilotHostGroup{
+ display:none;position:static!important;float:none!important;clear:both!important;
+ width:100%!important;max-width:none!important;grid-column:1 / -1!important;
+ margin:24px 0 0!important;padding:20px 0 0!important;
+ border-top:1px solid #3a3a3a!important
+}
+#pilotHostBadge{
+ position:static!important;float:none!important;width:100%!important;
+ margin:0 0 12px!important;padding:0!important;text-align:center!important;
+ color:#fff!important;font-size:11px!important;font-weight:900!important;letter-spacing:2px!important
+}
+#pilotHostGroup .pilot-host-actions{display:block!important;width:100%!important;margin:0!important}
+#pilotHostGroup #pilotPauseBtn{
+ position:static!important;float:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;max-width:none!important;height:54px!important;margin:0!important
+}
+
+
+/* V0.1.16-002: a launched GIRO clears visual request state until revote completes */
+#debatePilotPanel #pilotGiroBtn:disabled{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+
+
+/* V0.1.16-003: simplified TEENS filters and explicit CTA state */
+#debateSuggested .audience-fixed{
+ margin:8px 0 24px;padding:14px 16px;border:1px solid #343434;border-radius:14px;
+ color:#fff;background:#0b0b0b;text-align:center;font-size:12px;font-weight:900;letter-spacing:2px
+}
+#debateSuggested #categoryChoices{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+#debateSuggested #intensityChoices{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#debateSuggested .choice-chip{background:#0b0b0b!important;color:#8e96a3!important;border:1px solid #343434!important}
+#debateSuggested .choice-chip.selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+#debateSuggested .choice-chip:disabled{background:#0b0b0b!important;color:#444!important;border-color:#252525!important;opacity:1!important;cursor:default!important}
+#proposeDilemmaBtn:disabled{
+ background:#0b0b0b!important;color:#555!important;border:1px solid #292929!important;opacity:1!important
+}
+#proposeDilemmaBtn.ready{
+ background:#0b0b0b!important;color:#fff!important;border:1px solid #fff!important
+}
+
+
+/* V0.1.16-008: collective GIRO proposal */
+#pilotGiroVoteBox{display:none;margin-top:14px;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+#pilotGiroVoteBox p{font-weight:900;margin-bottom:12px;line-height:1.35}
+#pilotGiroVoteBox [data-giro-vote]{background:#0b0b0b!important;color:#fff!important;border-color:#3a3a3a!important}
+#pilotGiroVoteBox [data-giro-vote].pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+
+
+/* V0.1.16-009: host separator is the framed label itself */
+#pilotHostGroup{
+ border-top:none!important;
+ padding-top:0!important;
+ margin-top:22px!important
+}
+#pilotHostBadge{
+ box-sizing:border-box!important;
+ width:100%!important;
+ margin:0 0 12px!important;
+ padding:10px 14px!important;
+ border:1px solid #3a3a3a!important;
+ border-radius:10px!important;
+ background:#0b0b0b!important;
+ color:#fff!important;
+ text-align:center!important;
+ font-weight:900!important;
+ letter-spacing:2px!important;
+ line-height:16px!important
+}
+
+
+/* V0.1.16-010C */
+.giro-progress{display:block;margin-top:10px;color:#8d8d8d;font-size:10px;letter-spacing:1.6px;font-weight:700}
+.pilot-host-room-code{width:100%;margin:-4px 0 10px;padding:8px 10px;border:1px solid #333;border-radius:9px;text-align:center;color:#aaa;font-size:9px;font-weight:800;letter-spacing:1.5px;line-height:1.3}
+
+
+.pilot-presence-request-box{display:none;margin:14px 0;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+.pilot-presence-request-box>b{display:block;font-size:12px;letter-spacing:1.2px}
+.presence-msg{margin:12px 0;font-size:16px;font-weight:900}
+.presence-question{margin:10px 0;font-size:11px;color:#aaa;letter-spacing:1.2px}
+.pilot-presence-request-box small{display:block;margin-top:10px;color:#777;letter-spacing:1.2px}
+.pilot-presence-request-box button{background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important}
+.pilot-presence-request-box button.pilot-selected{background:#fff!important;color:#000!important;border-color:#fff!important}
+
+
+/* R18 · Código de avisos DILEMA: decisiones y eventos que interrumpen el debate */
+#debatePilotPanel #pilotUnanimity,
+#debatePilotPanel #pilotGiroVoteBox,
+#debatePilotPanel #pilotCloseBox,
+#debatePilotPanel #pilotPresenceRequestBox,
+#debatePilotPanel #pilotEvent{
+  width:100%!important;
+  margin:28px 0 30px!important;
+  padding:18px 14px 16px!important;
+  border:1px solid #facc15!important;
+  border-radius:14px!important;
+  background:#10100a!important;
+  box-shadow:none!important;
+  color:#fff!important;
+  text-align:center!important
+}
+#debatePilotPanel #pilotUnanimity::before,
+#debatePilotPanel #pilotGiroVoteBox::before,
+#debatePilotPanel #pilotCloseBox::before,
+#debatePilotPanel #pilotPresenceRequestBox::before,
+#debatePilotPanel #pilotEvent::before{
+  content:"⚠  AVISO DE LA MESA";
+  display:block;
+  color:#facc15;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1.5px;
+  line-height:1.3;
+  margin:0 0 14px
+}
+#debatePilotPanel #pilotEvent::before{content:"⚠  AVISO"}
+#debatePilotPanel #pilotUnanimity p,
+#debatePilotPanel #pilotGiroVoteBox p,
+#debatePilotPanel #pilotCloseBox p{
+  color:#fff!important;
+  margin:0 0 16px!important;
+  line-height:1.35!important
+}
+#debatePilotPanel #pilotUnanimity .giro-progress,
+#debatePilotPanel #pilotGiroVoteBox .giro-progress,
+#debatePilotPanel #pilotPresenceRequestBox small{color:#e8d178!important}
+#debatePilotPanel #pilotUnanimity .pilot-unanimity-actions button,
+#debatePilotPanel #pilotGiroVoteBox .pilot-actions button,
+#debatePilotPanel #pilotCloseBox .pilot-actions button,
+#debatePilotPanel #pilotPresenceRequestBox .pilot-actions button{
+  background:#0b0b0b!important;
+  border:1px solid #756932!important;
+  color:#fff!important
+}
+#debatePilotPanel #pilotUnanimity button.pilot-selected,
+#debatePilotPanel #pilotGiroVoteBox button.pilot-selected,
+#debatePilotPanel #pilotCloseBox button.pilot-selected,
+#debatePilotPanel #pilotPresenceRequestBox button.pilot-selected{
+  background:#facc15!important;
+  border-color:#facc15!important;
+  color:#0b0b0b!important
+}
+
+
+/* R19 · La solicitud de regreso comparte la geometría del resto de avisos */
+#debatePilotPanel #pilotPresenceRequestBox{
+  border-width:1px!important;
+  box-shadow:none!important;
+  font-family:inherit!important
+}
+#debatePilotPanel #pilotPresenceRequestBox>b{
+  color:#fff!important;
+  font-size:15px!important;
+  font-weight:900!important;
+  line-height:1.3!important;
+  letter-spacing:.2px!important;
+  margin:0 0 10px!important
+}
+#debatePilotPanel #pilotPresenceRequestBox .presence-question{
+  color:#fff!important;
+  font-size:12px!important;
+  font-weight:800!important;
+  line-height:1.3!important;
+  margin:12px 0 14px!important
+}
+#debatePilotPanel #pilotPresenceRequestBox .pilot-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+#debatePilotPanel #pilotPresenceRequestBox .pilot-actions button{
+  min-width:0!important;min-height:50px!important;
+  border-radius:12px!important;font-family:inherit!important;
+  font-size:11px!important;font-weight:900!important;
+  letter-spacing:.3px!important
+}
+#debatePilotPanel #pilotPresenceRequestBox small{
+  display:block!important;margin-top:12px!important;
+  font-size:10px!important;font-weight:800!important;letter-spacing:1.2px!important
+}
+
+
+/* R20 · Avisos de re-voto y contorno uniforme */
+#debatePilotPanel #pilotUnanimity,
+#debatePilotPanel #pilotGiroVoteBox,
+#debatePilotPanel #pilotCloseBox,
+#debatePilotPanel #pilotPresenceRequestBox,
+#debatePilotPanel #pilotEvent,
+#debatePilotPanel #pilotOptionalRevoteHint,
+#debatePilotPanel #pilotRevoteHint{
+  border:1px solid #facc15!important;
+  border-top:1px solid #facc15!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:#10100a!important;
+  background-image:none!important;
+  background-clip:padding-box!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint,
+#debatePilotPanel #pilotRevoteHint{
+  display:none;
+  width:100%!important;
+  margin:24px 0 28px!important;
+  padding:18px 14px!important;
+  border-radius:14px!important;
+  color:#fff!important;
+  text-align:center!important;
+  font-weight:900!important;
+  line-height:1.35!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint b,
+#debatePilotPanel #pilotRevoteHint::before{
+  display:block!important;
+  color:#facc15!important;
+  font-size:10px!important;
+  font-weight:900!important;
+  letter-spacing:1.5px!important;
+  margin:0 0 13px!important
+}
+#debatePilotPanel #pilotOptionalRevoteHint b::before{content:"⚠  "}
+#debatePilotPanel #pilotRevoteHint::before{content:"⚠  RE-VOTO ABIERTO"}
+#debatePilotPanel #pilotOptionalRevoteHint span{color:#fff!important;font-size:16px!important;line-height:1.35!important}
+#debatePilotPanel #pilotCloseProgress{display:block;color:#e8d178;margin:12px 0 0;font-size:10px;letter-spacing:1px}
+#debatePilotPanel #pilotGiroVoteBox .giro-progress{display:block;margin-top:12px!important}
+
+
+/* R21 · Solicitar pausa y reanudar son decisiones de la mesa */
+#debatePilotPanel #pilotPauseProposal{
+  display:none;width:100%!important;margin:28px 0 30px!important;
+  padding:18px 14px 16px!important;border:1px solid #facc15!important;
+  border-radius:14px!important;outline:0!important;box-shadow:none!important;
+  background:#10100a!important;color:#fff!important;text-align:center!important
+}
+#debatePilotPanel #pilotPauseProposal::before{
+  content:"⚠  AVISO DE LA MESA";display:block;margin:0 0 14px;
+  color:#facc15;font-size:10px;font-weight:900;letter-spacing:1.5px
+}
+#debatePilotPanel #pilotPauseProposal p{
+  color:#fff!important;font-size:15px!important;font-weight:900!important;
+  line-height:1.35!important;margin:0 0 16px!important
+}
+#debatePilotPanel #pilotPauseProposal .pilot-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#debatePilotPanel #pilotPauseProposal .pilot-actions button{
+  min-height:50px;border-radius:12px;background:#0b0b0b!important;
+  border:1px solid #756932!important;color:#fff!important;font-weight:900!important
+}
+#debatePilotPanel #pilotPauseProposal .pilot-actions button.pilot-selected{
+  background:#facc15!important;border-color:#facc15!important;color:#0b0b0b!important
+}
+#debatePilotPanel #pilotPauseProgress{display:block;margin-top:12px;color:#e8d178!important;font-size:10px;letter-spacing:1px}
+#debatePilotPanel #pilotPresence #pilotPauseAction{
+  display:block;width:100%!important;min-height:48px!important;margin:14px 0 0!important;
+  padding:10px 12px!important;border:1px solid #555!important;border-radius:12px!important;
+  background:#0b0b0b!important;color:#fff!important;font-size:11px!important;
+  font-weight:900!important;letter-spacing:1px!important
+}
+#debatePilotPanel #pilotPresence #pilotPauseAction.pilot-resume-action:not(:disabled){
+  border-color:#ff9a34!important;color:#ff9a34!important
+}
+#debatePilotPanel #pilotPresence #pilotPauseAction:disabled{
+  border-color:#303030!important;color:#666!important;cursor:default!important
+}
+
+
+#dilemmaProposal{padding-top:70px}
+#dilemmaProposal .title{text-align:center;margin-bottom:22px}
+.proposal-question{padding:20px 18px;border:1px solid #444;border-radius:14px;background:#1b1b1b;font-size:18px;font-weight:900;line-height:1.4}
+.proposal-choices,.proposal-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.proposal-choices>div{padding:16px;border:1px solid #444;border-radius:13px;min-width:0;overflow-wrap:anywhere}
+.proposal-choices strong{display:block;font-size:23px;margin-bottom:10px}
+.proposal-choices span{font-size:13px}
+#proposalCount,#proposalPending{text-align:center;margin:16px 0;color:#aaa}
+#proposalVote .btn{white-space:normal;font-size:11px;padding:14px 6px}
+#proposalHostBadge{margin-top:22px;border:1px solid #b78aff;color:#b78aff;border-radius:9px;text-align:center;padding:11px}
+.dilemma-catalog{margin:20px 0;max-height:42vh;overflow:auto}
+.catalog-card{display:block;width:100%;text-align:left;background:#1a1a1a;color:#fff;border:1px solid #444;border-radius:12px;padding:14px;margin:9px 0;cursor:pointer}
+.catalog-card strong{display:block;line-height:1.4;font-size:14px}
+.catalog-card span{display:block;color:#aaa;font-size:11px;line-height:1.35;margin-top:8px}
+.catalog-card:hover,.catalog-card:focus{border-color:#fff}
+
+
+#debateSuggested{padding-top:48px}
+#debateSuggested .title{margin:8px 0 10px;font-size:28px}
+#debateSuggested .subtitle{font-size:13px;line-height:1.4;margin-bottom:18px}
+.selection-audience{border:1px solid #aaa;border-radius:8px;display:inline-block;padding:7px 16px;margin:4px 0 14px;font-size:11px;letter-spacing:2px;font-weight:900}
+.selection-intensities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 20px}
+.selection-themes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0 22px}
+.selection-chip{border:1px solid #444;border-radius:10px;padding:12px 6px;background:#151515;color:#fff;font-size:10px;font-weight:900;min-height:48px;line-height:1.25;cursor:pointer}
+.selection-chip.selected{border-color:#fff;background:#fff;color:#111}
+.selection-chip:disabled{color:#606060;border-color:#303030;cursor:default}
+.selection-chip.selected:disabled{color:#111;background:#fff;border-color:#fff}
+.selection-questions{max-height:55vh;overflow:auto;margin:20px 0}
+.selection-question{display:block;width:100%;margin:10px 0;padding:16px;text-align:left;border:1px solid #555;border-radius:12px;background:#1a1a1a;color:white;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer}
+.selection-question.selected{border-color:white}
+.selection-question:disabled{opacity:.65;cursor:default}
+.selection-question.selected:disabled{opacity:1}
+.selection-count{display:block;margin-top:10px;color:#aaa;font-size:10px;letter-spacing:1px}
+#selectionStatus{text-align:center;margin:15px 0}
+#selectionHostBadge{border:1px solid #b78aff;color:#b78aff;border-radius:9px;text-align:center;padding:10px;margin:22px 0}
+
+
+#dilemmaProposal #proposalVote .btn,
+#dilemmaProposal #proposalLaunch,
+#customDebateBtn:not(:disabled){
+ background:#0b0b0b!important;
+ color:#fff!important;
+ border:1px solid #444!important;
+ box-shadow:none!important;
+}
+#dilemmaProposal #proposalVote .btn.is-selected,
+#dilemmaProposal #proposalLaunch.is-selected,
+#customDebateBtn.is-selected{
+ background:#fff!important;
+ color:#0b0b0b!important;
+ border-color:#fff!important;
+}
+#dilemmaProposal #proposalVote .btn:disabled{opacity:.45}
+#dilemmaProposal #proposalVote .btn.is-selected:disabled{opacity:1}
+
+
+.selection-audience-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 18px}
+.selection-audience-row button{min-width:0;min-height:52px;padding:9px 3px;border:1px solid #444;border-radius:10px;background:#0b0b0b;color:#fff;font-size:10px;font-weight:900;letter-spacing:.6px;cursor:pointer}
+.selection-audience-row button span{display:block;font-size:7px;line-height:1.3;letter-spacing:0;margin-top:4px}
+.selection-audience-row button:disabled{color:#777;border-color:#292929;cursor:default}
+.selection-audience-row #selectionTeensButton.selected{background:#fff;color:#0b0b0b;border-color:#fff}
+.hall-rejoin-vote{width:100%;margin:18px 0 22px;padding:18px 14px;border:1px solid #facc15;border-radius:14px;background:#10100a;text-align:center;color:#fff}
+.hall-rejoin-label{font-size:10px;color:#facc15;font-weight:900;letter-spacing:1.3px;margin-bottom:12px}
+.hall-rejoin-vote strong{display:block;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.hall-rejoin-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 8px}
+#hallRejoinVote .btn{margin:0;min-height:45px;padding:10px;background:#0b0b0b;color:#fff;border:1px solid #706123}
+#hallRejoinVote .btn.is-selected{background:#facc15;color:#0b0b0b;border-color:#facc15}
+#hallRejoinVote .btn.is-selected:disabled{opacity:1}
+#hallRejoinVote small{color:#aaa;letter-spacing:1px}
+#rejoinPending .title{line-height:1.1}
+#rejoinPendingStatus{margin:22px 0 12px;text-align:center;line-height:1.5}
+#rejoinPendingCount{margin:8px 0 35px}
+
+.selection-host-controls{gap:10px;margin:24px 0 12px}.selection-host-controls .btn{width:100%}
+#connectionNotice{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 30px);padding:10px 14px;border:1px solid #aaa;border-radius:12px;color:#fff;background:#111;font-size:11px;font-weight:800;letter-spacing:1px;text-align:center;z-index:9999}
+
+#debatePilotPanel #pilotInlineRevote{border:1px solid #facc15;border-radius:14px;background:#10100a;color:#fff;text-align:center;margin:22px 0 24px;padding:16px 12px;box-shadow:none}
+#pilotInlineRevote b{display:block;color:#facc15;font-size:10px;letter-spacing:1.4px;margin-bottom:10px}
+#pilotInlineRevote p{font-size:15px;font-weight:900;line-height:1.35;margin:0 0 14px;color:#fff}
+#pilotInlineRevote .pilot-inline-revote-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#pilotInlineRevote button{border:1px solid #8d7b2b;border-radius:12px;background:#0b0b0b;color:#fff;min-height:46px;font-size:11px;font-weight:900;cursor:pointer}
+#pilotInlineRevote button:disabled{opacity:.45;cursor:default}
+#pilotInstructionsRow{margin:10px 0 6px}
+#pilotInstructionsBtn{width:100%;border:1px solid #555;border-radius:12px;background:#0d0d0d;color:#fff;padding:13px;font-size:11px;font-weight:900;letter-spacing:1px}
+#pilotInstructionsModal{position:fixed;inset:0;z-index:100000;background:#000c;display:none;align-items:center;justify-content:center;padding:20px}
+#pilotInstructionsModal.open{display:flex}
+#pilotInstructionsModal .instructions-card{display:flex;flex-direction:column;background:#111;border:1px solid #555;border-radius:16px;max-width:440px;width:100%;max-height:calc(100dvh - 32px);overflow:hidden;padding:18px;color:#fff}
+#pilotInstructionsModal h2{font-size:18px;margin:0 0 12px}
+#pilotInstructionsModal .instructions-content{min-height:0;overflow-y:auto;padding-right:5px}
+#pilotInstructionsModal .instructions-content section+section{margin-top:18px}
+#pilotInstructionsModal h3{font-size:10px;color:#aaa;letter-spacing:1.2px;margin:0 0 8px}
+#pilotInstructionsModal dl{margin:0}
+#pilotInstructionsModal dt{font-size:11px;color:#facc15;font-weight:900;margin-top:12px}
+#pilotInstructionsModal dd{font-size:12px;line-height:1.4;margin:3px 0 0}
+#pilotInstructionsModal button{flex:none;width:100%;margin-top:16px;background:#fff;border:0;border-radius:10px;color:#111;padding:13px;font-weight:900}
+
+
+/* R55: un espacio para las decisiones, con amarillo reservado a las votaciones. */
+#debatePilotPanel #pilotVoteStage{width:100%;margin:18px 0 0}
+#debatePilotPanel #pilotVoteStage > div:not(#pilotVoteLate){margin:0 0 14px!important;width:100%!important;box-sizing:border-box}
+#debatePilotPanel #pilotSecretRevotePicker{border:1px solid #facc15!important;border-top:1px solid #facc15!important;border-radius:14px!important;background:#10100a!important;color:#fff!important;box-shadow:none!important;outline:0!important;padding:18px 14px!important;text-align:center!important}
+#debatePilotPanel #pilotSecretRevotePicker p{color:#facc15!important;font-size:11px!important;letter-spacing:1.4px!important;font-weight:900!important;margin:0 0 12px!important}
+#debatePilotPanel #pilotSecretRevotePicker small{color:#fff!important}
+#debatePilotPanel #pilotSecretRevotePicker [data-secret-choice]{border:1px solid #8d7b2b!important;border-radius:12px!important;background:#0b0b0b!important;color:#fff!important}
+#debatePilotPanel #pilotSecretRevotePicker [data-secret-choice]:disabled{color:#666!important;border-color:#303030!important}
+#debatePilotPanel #pilotVoteStage button:disabled{background:#0b0b0b!important;color:#666!important;border-color:#303030!important;opacity:1!important}
+#debatePilotPanel #pilotVoteLate{display:none;border:1px solid #facc15;border-radius:14px;padding:16px;color:#fff;background:#10100a;text-align:center;font-size:13px;font-weight:900;line-height:1.4}
+#debatePilotPanel #pilotVoteLate strong{display:block;color:#facc15;font-size:10px;letter-spacing:1px;margin-bottom:8px}
+#debatePilotPanel #pilotActionGrid > button:disabled,#pilotAssistantActions > button:disabled{background:#0b0b0b!important;color:#555!important;border-color:#303030!important;opacity:1!important;cursor:default!important;filter:grayscale(1)}
+
+
+/* R58: selección por acción y bloqueo estable entre refrescos. */
+#selectionDraw,#selectionConfirm{background:#0b0b0b!important;color:#fff!important;border:1px solid #555!important}
+#selectionDraw:active,#selectionConfirm:active{background:#fff!important;color:#0b0b0b!important;border-color:#fff!important}
+#selectionConfirm:disabled{background:#0b0b0b!important;color:#666!important;border-color:#303030!important}
+#debatePilotPanel.pilot-process-locked #pilotActionGrid > button:not(#pilotAbandonBtn):not(#pilotSecretRevoteAction),
+#debatePilotPanel.pilot-process-locked #pilotAssistantActions > button{
+ background:#0b0b0b!important;color:#555!important;border-color:#303030!important;filter:grayscale(1)!important;transition:none!important
+}
+#pilotReplyPending .pilot-reply-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#pilotReplyPending .pilot-reply-actions button{min-width:0;font-size:11px;padding:8px 4px;overflow-wrap:anywhere}
+#pilotReplyPending #pilotReplySkip{border-color:#666;color:#fff}
+#pilotReplyPending .pilot-reply-actions button:disabled{opacity:.4}
+
+
+#debatePilotPanel{width:100%;margin-top:18px;padding-top:18px;border-top:1px solid #292929}
+.pilot-state{text-align:center;color:#888;font-size:11px;letter-spacing:1.5px;margin-bottom:12px}
+.pilot-twist{display:none;width:100%;padding:18px;border:1px solid #fff;border-radius:14px;margin:12px 0 16px;text-align:center}
+.pilot-twist b{display:block;font-size:11px;letter-spacing:2px;color:#888;margin-bottom:10px}
+.pilot-twist span{font-size:17px;font-weight:800;line-height:1.35}
+.pilot-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.pilot-actions button{margin:0;min-height:54px;padding:10px;font-size:12px}
+#pilotEvent{display:none;margin:14px 0;padding:18px;border-radius:14px;background:#fff;color:#000;text-align:center;font-size:18px;font-weight:900}
+#pilotCloseBox{display:none;margin-top:14px;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+#pilotCloseBox p{font-weight:900;margin-bottom:12px}
+#pilotRevote{display:none;margin-top:14px}
+#pilotRevote .vote-option{margin-bottom:9px}
+
+
+/* V0.1.16 interaction rule: no actionable choice is preselected.
+   White is reserved for a choice made by this user. */
+#debateChoice .btn-primary,
+#debateChoice .btn-secondary {
+  background:#0b0b0b !important;
+  color:#fff !important;
+  border:1px solid #3a3a3a !important;
+}
+#debateChoice .btn-primary:active,
+#debateChoice .btn-secondary:active {
+  background:#fff !important;
+  color:#000 !important;
+}
+
+
+#pilotPauseBanner{display:none;width:100%;padding:18px;margin:0 0 16px;border:1px solid #ff9a34;border-radius:14px;text-align:center;font-weight:900;letter-spacing:2px;color:#ff9a34;background:#0b0b0b}
+#pilotPresence{margin-top:12px}
+
+
+/* V0.1.16-010 · unified message engine + robust framed text */
+*,*:before,*:after{box-sizing:border-box}
+.btn,.choice-btn,.tool-button,.pilot-actions button,#pilotPresence button,#pilotHostGroup button{
+ height:auto!important;min-height:54px!important;white-space:normal!important;overflow-wrap:anywhere!important;
+ line-height:1.2!important;padding-top:10px!important;padding-bottom:10px!important
+}
+.host-wait-animated{
+ display:block!important;width:100%!important;max-width:100%!important;
+ min-height:42px!important;margin:18px auto!important;padding:12px 14px!important;
+ border:1px solid #525866!important;border-radius:10px!important;
+ color:#fff!important;font-size:12px!important;font-weight:900!important;letter-spacing:1.7px!important;
+ line-height:16px!important;text-align:center!important;overflow:hidden!important
+}
+#waitingStatus.host-wait-animated{color:#fff!important;margin:0 0 26px!important}
+.message-picker-overlay{display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.92);padding:22px;align-items:center;justify-content:center}
+.message-picker-overlay.open{display:flex}
+.message-picker-card{width:min(430px,100%);max-height:90vh;overflow:auto;background:#0b0b0b;border:1px solid #343434;border-radius:16px;padding:18px}
+.message-picker-title{font-size:16px;font-weight:900;letter-spacing:2px;text-align:center;margin:4px 0 16px}
+.message-picker-choices{display:grid;gap:9px}
+.message-picker-choice,.message-picker-cancel{display:block;width:100%;min-height:52px;margin:9px 0 0;padding:11px 13px;border:1px solid #3a3a3a;border-radius:12px;background:#0b0b0b;color:#fff;font:inherit;font-size:12px;font-weight:800;line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+.message-picker-muted{color:#8d8d8d}
+.message-picker-cancel{border:0;color:#777}
+
+
+/* V0.1.16-010B validation fixes */
+#room #startGameBtn{
+ background:#0b0b0b!important;color:#fff!important;border:1px solid #3a3a3a!important;
+ transition:none!important
+}
+#room #startGameBtn:not(:disabled):active{background:#fff!important;color:#000!important;border-color:#fff!important}
+#pilotPresence .pilot-presence-row{
+ grid-template-columns:repeat(2,minmax(120px,1fr))!important;
+ gap:12px!important
+}
+#pilotPresence .pilot-presence-row>button{
+ min-height:54px!important;height:auto!important;padding:10px 16px!important;
+ white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;
+ font-size:10px!important
+}
+.message-picker-choice,.message-picker-cancel{
+ opacity:1!important;cursor:pointer!important;background:#0b0b0b!important;color:#fff!important;
+ border:1px solid #3a3a3a!important
+}
+.message-picker-choice:active,.message-picker-cancel:active,.message-picker-choice.message-picked{
+ background:#fff!important;color:#000!important;border-color:#fff!important
+}
+.message-picker-muted{color:#fff!important}
+.message-picker-cancel{color:#fff!important}
+@media(max-width:360px){
+ #pilotPresence .pilot-presence-row{grid-template-columns:1fr 1fr!important}
+ #pilotPresence .pilot-presence-row>button{padding:9px 8px!important;font-size:9px!important}
+}
+
+
+/* Available actions stay dark; white marks an actual press or selection. */
+#proposeDilemmaBtn.ready:not(:disabled),
+#customDebateBtn:not(:disabled),
+#result #assignRolesBtn:not(:disabled),
+#room #startGameBtn:not(:disabled){
+  background:#0b0b0b!important;color:#fff!important;border:1px solid #666!important;
+  opacity:1!important
+}
+#proposeDilemmaBtn:not(:disabled):active,
+#customDebateBtn:not(:disabled):active,
+#result #assignRolesBtn:not(:disabled):active,
+#room #startGameBtn:not(:disabled):active{
+  background:#fff!important;color:#0b0b0b!important;border-color:#fff!important
+}
+#proposeDilemmaBtn:disabled,
+#customDebateBtn:disabled,
+#result #assignRolesBtn:disabled,
+#room #startGameBtn:disabled{
+  background:#0b0b0b!important;color:#666!important;border:1px solid #303030!important;
+  opacity:1!important;cursor:default!important
+}
+#debatePilotPanel .pilot-main-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;align-items:stretch!important;width:100%!important
+}
+#debatePilotPanel .pilot-giro-cell{
+  display:grid!important;grid-template-columns:minmax(0,1fr) 44px!important;
+  gap:8px!important;min-width:0!important
+}
+#debatePilotPanel #pilotGiroBtn,#debatePilotPanel #pilotEndBtn,
+#pilotPresence .pilot-presence-row>button,#pilotHostGroup #pilotPauseBtn{
+  min-width:0!important;width:100%!important;min-height:54px!important;
+  height:auto!important;margin:0!important;padding:10px 8px!important;
+  line-height:1.15!important;text-align:center!important
+}
+#pilotPresence .pilot-presence-row{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;width:100%!important
+}
+#pilotHostGroup{width:100%!important;margin-top:20px!important}
+#debatePilotPanel button:disabled,#pilotPresence button:disabled{
+  background:#0b0b0b!important;color:#666!important;border-color:#303030!important;
+  opacity:1!important;cursor:default!important
+}
+#pilotProclamaBtn:disabled{color:#666!important}
+#pilotGiroVoteBox button.pilot-selected,#pilotCloseBox button.pilot-selected,
+#pilotPresenceRequestBox button.pilot-selected{
+  background:#fff!important;color:#0b0b0b!important;border-color:#fff!important
+}
+@media(max-width:360px){
+  #debatePilotPanel .pilot-main-actions,#pilotPresence .pilot-presence-row{gap:7px!important}
+  #debatePilotPanel .pilot-giro-cell{grid-template-columns:minmax(0,1fr) 40px!important;gap:5px!important}
+  #debatePilotPanel #pilotGiroBtn,#debatePilotPanel #pilotEndBtn,
+  #pilotPresence .pilot-presence-row>button{font-size:10px!important}
+}
+
+
+/* R6: two balanced action rows and host identity */
+.pilot-proposal-box{margin-top:14px;padding:16px;border:1px solid #444;border-radius:14px;text-align:center}
+.pilot-proposal-box p{font-weight:900;margin-bottom:12px;line-height:1.35}
+.pilot-proposal-box .pilot-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.pilot-proposal-box button{min-height:54px;width:100%;background:#0b0b0b;color:#fff;border:1px solid #3a3a3a;border-radius:12px}
+.pilot-proposal-box button.pilot-selected{background:#fff;color:#0b0b0b;border-color:#fff}
+.pilot-unanimity-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#debateGroupVote .majority-choice{color:#39d353!important}
+#pilotHostGroup #pilotHostBadge{padding:12px 14px!important;margin:0 0 9px!important;line-height:1.25!important;font-size:12px!important;color:#a78bfa!important;border:1px solid #a78bfa!important;border-radius:10px!important;background:#0b0b0b!important}
+#pilotOptionalRevoteHint{max-width:100%;color:#fff!important}
+#pilotOptionalRevoteHint b{color:#888!important}
+#pilotOptionalRevoteHint span{color:#fff!important}
+#waitingStatus.host-wait-animated,#waitingRoleDraw.host-wait-animated,#result .host-wait-animated,#waitingDilemma .title{
+  border:1px solid #a78bfa!important;border-radius:10px!important;
+  background:#0b0b0b!important;color:#a78bfa!important;
+  padding:12px 14px!important;font-size:12px!important;
+  letter-spacing:1.7px!important;line-height:1.25!important;
+  text-align:center!important;width:100%!important
+}
+#debatePilotPanel #pilotGiroBtn:disabled{
+  color:#555!important;border-color:#303030!important;
+  background:#0b0b0b!important;opacity:.45!important;cursor:default!important
+}
+.pilot-unanimity-actions button{min-width:0;padding:8px 4px;white-space:normal;font-size:10px;line-height:1.2}
+#debatePilotPanel #pilotPresence{
+  display:block!important;width:100%!important;
+  grid-template-columns:none!important
+}
+#debatePilotPanel .pilot-main-actions,
+#pilotPresence .pilot-presence-row{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;width:100%!important
+}
+#debatePilotPanel .pilot-main-actions>button,
+#pilotPresence .pilot-presence-row>button,
+#pilotPresence #pilotProclamaBtn{
+  width:100%!important;min-width:0!important;min-height:56px!important;
+  height:auto!important;margin:0!important;padding:9px 5px!important;
+  box-sizing:border-box!important;font-size:clamp(9px,2.6vw,11px)!important;
+  font-weight:900!important;line-height:1.25!important;
+  white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;
+  text-align:center!important
+}
+#pilotPresence{margin-top:9px!important}
+#pilotHostGroup{
+  width:100%!important;margin:20px 0 0!important;padding:14px!important;
+  border:1px solid #3a3a3a!important;border-radius:14px!important;
+  background:#0b0b0b!important
+}
+#pilotHostBadge{
+  margin:0 0 9px!important;padding:12px 14px!important;border:1px solid #a78bfa!important;
+  border-radius:10px!important;background:#0b0b0b!important;color:#a78bfa!important;
+  font-size:12px!important;line-height:1.25!important
+}
+#pilotHostRoomCode{
+  margin:0 0 10px!important;border-color:#3a3a3a!important;
+  color:#fff!important;font-size:11px!important
+}
+#pilotHostGroup #pilotPauseBtn:not(:disabled){
+  width:100%!important;background:#0b0b0b!important;color:#fff!important;
+  border:1px solid #3a3a3a!important
+}
+@media(max-width:360px){
+  #debatePilotPanel .pilot-main-actions,#pilotPresence .pilot-presence-row{gap:5px!important}
+  #debatePilotPanel .pilot-main-actions>button,#pilotPresence .pilot-presence-row>button,
+  #pilotPresence #pilotProclamaBtn{font-size:9px!important;padding:8px 3px!important}
+}
+
+
+/* Avisos: solo marco y título en color; contenido blanco. */
+#debatePilotPanel #pilotTwist{border:1px solid #60a5fa!important;color:#fff!important;background:#0b0b0b!important}
+#debatePilotPanel #pilotTwist b{color:#60a5fa!important}
+#debatePilotPanel #pilotTwist span{color:#fff!important}
+#debatePilotPanel #pilotRevoteHint{color:#fff!important}
+#debatePilotPanel #pilotOptionalRevoteHint b{color:#facc15!important}
+#debatePilotPanel #pilotOptionalRevoteHint span,#debatePilotPanel #pilotEvent>span{color:#fff!important}
+#debatePilotPanel #pilotEvent .pilot-event-dismiss{display:block;width:100%;min-height:46px;margin:17px 0 0;border:1px solid #666;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;letter-spacing:1.4px}
+
+
+#room #lobbyHostBadge{
+  display:none;width:100%;box-sizing:border-box;margin:14px auto 0;padding:12px 14px;
+  border:1px solid #a78bfa;border-radius:10px;background:#0b0b0b;color:#a78bfa;
+  text-align:center;font-size:12px;font-weight:900;letter-spacing:1.7px;line-height:1.25
+}
+
+
+#proclamationComposer{display:none;position:fixed;inset:0;z-index:100003;background:rgba(0,0,0,.92);padding:18px;align-items:center;justify-content:center}
+#proclamationComposer.open{display:flex}
+#proclamationComposer .pc-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;border:1px solid #fff;border-radius:14px;background:#0b0b0b;color:#fff;padding:20px}
+#proclamationComposer h2{text-align:center;font-size:19px;font-weight:900;margin:0 0 16px}
+#proclamationComposer .pc-label{display:block;color:#aaa;font-size:11px;letter-spacing:1.1px;line-height:1.4;margin:0 0 10px}
+#proclamationComposer textarea{width:100%;box-sizing:border-box;min-height:120px;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:14px;font:700 16px/1.35 Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#proclamationComposer textarea:focus,#proclamationComposer textarea:focus-visible{outline:none!important;box-shadow:none!important;border-color:#fff}
+#proclamationComposer .pc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 8px}
+#proclamationComposer .pc-heading .pc-label{margin:0}
+#proclamationComposer .pc-heading button{width:auto;min-height:34px;padding:7px 10px;font-size:10px}
+#proclamationComposer .pc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:min(35dvh,224px);overflow-y:auto;overscroll-behavior:contain;align-content:start;padding-right:4px;scrollbar-width:thin;scrollbar-color:#777 #0b0b0b}
+#proclamationComposer .pc-list button{min-height:48px;text-align:left;overflow-wrap:anywhere}
+#proclamationComposer button{border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;font-size:11px;font-weight:900;padding:10px}
+#proclamationComposer button.selected{border-color:#fff;background:#fff;color:#0b0b0b}
+#proclamationComposer button:disabled{color:#666;border-color:#333}
+#proclamationComposer .pc-count{margin:11px 0 14px;color:#aaa;font-size:11px;letter-spacing:1px;text-align:center}
+#proclamationComposer .pc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#proclamationComposer .pc-actions button{min-height:48px}
+#proclamationComposer .pc-error{min-height:18px;margin-top:12px;text-align:center;color:#ff4d5a;font-size:12px;font-weight:800}
+
+
+#debatePilotPanel #pilotSecretRevoteAction{display:block;width:100%;margin:10px 0 0;min-height:48px;font-weight:900;letter-spacing:.8px}
+#debatePilotPanel #pilotSecretRevotePicker{margin-top:10px}
+#debatePilotPanel #pilotSecretRevotePicker small{display:block;color:#aaa;font-size:10px;letter-spacing:1px;line-height:1.5;margin-bottom:12px}
+#debatePilotPanel #pilotSecretRevotePicker button:disabled{opacity:.35;cursor:default}
+
+
+#debatePilotPanel #pilotGroupRevoteProposal{width:100%!important;margin:28px 0 30px!important;padding:18px 14px 16px!important;border:1px solid #facc15!important;border-radius:14px!important;background:#10100a!important;color:#fff!important;text-align:center!important;box-shadow:none!important}
+#debatePilotPanel #pilotGroupRevoteProposal::before{content:"⚠  AVISO DE LA MESA";display:block;margin:0 0 14px;color:#facc15;font-size:10px;font-weight:900;letter-spacing:1.5px}
+#debatePilotPanel #pilotGroupRevoteProposal p{color:#fff!important;font-size:15px!important;font-weight:900!important;line-height:1.35!important;margin:0 0 16px!important}
+#debatePilotPanel #pilotGroupRevoteProposal .pilot-actions button{min-height:50px;border:1px solid #756932!important;background:#0b0b0b!important;color:#fff!important;font-weight:900!important}
+#debatePilotPanel #pilotGroupRevoteProposal .pilot-actions button.pilot-selected{border-color:#facc15!important;background:#facc15!important;color:#0b0b0b!important}
+#debatePilotPanel #pilotGroupRevoteProgress{display:block;margin-top:12px;color:#e8d178!important;font-size:10px;letter-spacing:1px}
+
+
+/* R44 · Cada fila del tablero agrupa acciones que se entienden juntas. */
+#debatePilotPanel #pilotActionGrid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;width:100%!important;margin:12px 0 0!important;align-items:stretch!important}
+#debatePilotPanel #pilotActionGrid>button,
+#debatePilotPanel #pilotActionGrid #pilotSecretRevoteAction,
+#debatePilotPanel #pilotActionGrid #pilotPauseAction,
+#debatePilotPanel #pilotActionGrid #pilotProclamaBtn{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-width:0!important;min-height:52px!important;
+ height:auto!important;margin:0!important;padding:9px 6px!important;
+ box-sizing:border-box!important;font-size:clamp(9px,2.5vw,11px)!important;
+ font-weight:900!important;line-height:1.2!important;white-space:normal!important;
+ overflow-wrap:anywhere!important;text-align:center!important
+}
+#debatePilotPanel #pilotActionGrid #pilotSecretRevoteAction:disabled{color:#666!important;border-color:#303030!important;background:#0b0b0b!important}
+#debatePilotPanel #pilotActionGrid #pilotAbandonBtn{color:#ff4b61!important;border-color:#55252b!important;background:#0b0b0b!important}
+#debatePilotPanel #pilotPresence{margin-top:0!important}
+@media(max-width:360px){#debatePilotPanel #pilotActionGrid{gap:6px!important}#debatePilotPanel #pilotActionGrid>button{font-size:9px!important;padding:8px 4px!important}}
+
+
+#pilotReplyPending{display:none;margin:18px 0;padding:16px;border:1px solid #facc15;border-radius:12px;background:#10100a;color:#fff}
+#pilotReplyPending b,#pilotReplyInbox summary{color:#facc15;font-size:11px;letter-spacing:1px;font-weight:900}
+#pilotReplyPending p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.4;font-size:14px;font-weight:700}
+#pilotReplyInboxList{display:grid;gap:12px;margin-top:15px}
+#pilotReplyInboxList .reply-item{padding:14px;border:1px solid #49432a;border-radius:10px;background:#15140f}
+#pilotReplyInboxList .reply-sender{display:block;margin-bottom:9px;color:#facc15;font-size:11px;font-weight:900;letter-spacing:.7px;overflow-wrap:anywhere}
+#pilotReplyInboxList .reply-message{margin:0;color:#fff;font-size:14px;font-weight:400;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+#pilotReplyPending button{width:100%;min-height:46px;border:1px solid #facc15;border-radius:9px;background:#0b0b0b;color:#facc15;font-weight:900}
+#pilotReplyInbox{display:none;margin:12px 0 18px;padding:12px;border:1px solid #49432a;border-radius:10px;color:#fff}
+#pilotReplyInbox summary{cursor:pointer}
+#proclamationReplyComposer{display:none;position:fixed;inset:0;z-index:100004;background:rgba(0,0,0,.94);padding:18px;align-items:center;justify-content:center}
+#proclamationReplyComposer.open{display:flex}
+#proclamationReplyComposer .pr-card{width:min(100%,440px);max-height:calc(100dvh - 36px);overflow:auto;box-sizing:border-box;padding:20px;background:#0b0b0b;border:1px solid #facc15;border-radius:14px;color:#fff}
+#proclamationReplyComposer h2{text-align:center;color:#facc15;font-size:19px;margin:0 0 14px}
+#proclamationReplyComposer .pr-original{padding:12px;border:1px solid #555;border-radius:9px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.4}
+#proclamationReplyComposer label{display:block;margin:16px 0 8px;color:#aaa;font-size:11px;letter-spacing:1px}
+#proclamationReplyComposer textarea{width:100%;min-height:110px;box-sizing:border-box;resize:vertical;border:1px solid #777;border-radius:10px;background:#151515;color:#fff;padding:12px;font:700 16px/1.35 Arial,sans-serif;appearance:none;-webkit-appearance:none}
+#proclamationReplyComposer textarea:focus,#proclamationReplyComposer textarea:focus-visible{outline:none!important;box-shadow:none!important;border-color:#facc15}
+#proclamationReplyComposer .pr-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+#proclamationReplyComposer button{min-height:48px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
+#proclamationReplyComposer button:disabled{opacity:.45}
+#prError{min-height:18px;margin:12px 0 0;color:#ff4d5a;font-size:12px}
+
+
+#pilotAssistantActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:100%;margin:13px 0 16px}
+#pilotAssistantActions button{min-height:50px;min-width:0;padding:9px 5px;border:1px solid #777;border-radius:10px;background:#0b0b0b;color:#fff;font-size:clamp(9px,2.5vw,11px);font-weight:900;line-height:1.2;overflow-wrap:anywhere}
+#pilotAssistantActions button:disabled{opacity:.35}
+#pilotAssistantActions #pilotAssistantRequest.requested{border-color:#facc15;color:#facc15}
+#pilotAssistantModal{display:none;position:fixed;inset:0;z-index:100005;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.94)}
+#pilotAssistantModal.open{display:flex}
+#pilotAssistantModal .am-card{width:min(100%,450px);max-height:calc(100dvh - 32px);overflow-y:auto;padding:18px;border:1px solid #ddd;border-radius:14px;background:#0b0b0b;color:#fff}
+#pilotAssistantModal h2{margin:0 0 5px;text-align:center;font-size:20px;font-weight:900}
+#pilotAssistantModal .am-private{text-align:center;color:#aaa;font-size:10px;letter-spacing:1.2px;margin-bottom:12px}
+#pilotAssistantModal .am-intro{text-align:center;font-size:13px;line-height:1.35;margin:0 0 14px;color:#ddd}
+#pilotAssistantModal .am-route-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:14px 0}
+#pilotAssistantModal .am-route-buttons button{min-height:54px;padding:6px 4px;border:1px solid #555;border-radius:9px;background:#101010;color:#fff;font-size:10px;font-weight:900;overflow-wrap:anywhere}
+#pilotAssistantModal .am-route-buttons button.selected{border-color:#fff;background:#fff;color:#080808}
+#pilotAssistantModal .am-line{padding:9px 0;border-top:1px solid #333;font-size:13px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+#pilotAssistantModal .am-line b{display:block;margin-bottom:3px;color:#aaa;font-size:10px;letter-spacing:1px}
+#pilotAssistantModal .am-fold{border-top:1px solid #333;font-size:13px;line-height:1.35}
+#pilotAssistantModal .am-fold summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:9px 0;color:#aaa;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;list-style:none}
+#pilotAssistantModal .am-fold summary::-webkit-details-marker{display:none}
+#pilotAssistantModal .am-fold summary::after{content:"+";color:#fff;font-size:18px;letter-spacing:0}
+#pilotAssistantModal .am-fold[open] summary::after{content:"−"}
+#pilotAssistantModal .am-fold summary:focus-visible{outline:1px solid #fff;outline-offset:2px;border-radius:4px}
+#pilotAssistantModal .am-fold-body{padding:0 0 12px;color:#fff;font-weight:700;overflow-wrap:anywhere}
+#pilotAssistantModal .am-question{margin-top:12px;padding:12px;border:1px solid #666;border-radius:10px;font-size:13px;font-weight:800;line-height:1.35}
+#pilotAssistantModal .am-mode{font-size:10px;color:#aaa;letter-spacing:1px;margin-top:12px;text-align:center}
+#pilotAssistantModal .am-fallback{padding:12px;border:1px solid #facc15;border-radius:10px;background:#10100a;line-height:1.5;letter-spacing:0}
+#pilotAssistantModal .am-fallback strong{display:block;color:#facc15;font-size:10px;letter-spacing:.7px;margin-bottom:7px}
+#pilotAssistantModal .am-fallback span{display:block;color:#fff;font-size:12px;font-weight:400}
+#pilotAssistantModal .am-close{width:100%;min-height:46px;margin-top:16px;border:1px solid #777;border-radius:9px;background:#0b0b0b;color:#fff;font-weight:900}
+#pilotAssistantModal .am-history-item{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:12px;padding:14px;border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;text-align:left;cursor:pointer;line-height:1.4}
+#pilotAssistantModal .am-history-item strong{font-size:12px}
+#pilotAssistantModal .am-history-item span{font-size:13px;font-weight:400}
+#pilotAssistantModal .am-history-item small{font-size:10px;color:#aaa}
+#pilotAssistantModal .am-error{color:#ff6b78;text-align:center;font-size:12px;margin-top:12px}
+
+
+#privateForm .text-input{margin-bottom:14px}
+#privateBoard .private-question{padding:18px;border:1px solid #444;border-radius:14px;font-size:19px;font-weight:800;line-height:1.4;margin:22px 0}
+#privateBoard .private-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+#privateBoard .private-options button{background:#0b0b0b;border:1px solid #444;border-radius:14px;color:#fff;min-height:120px;padding:16px;text-align:left;line-height:1.4;overflow-wrap:anywhere}
+#privateBoard .private-options button.selected{border-color:#fff;background:#fff;color:#0b0b0b}
+#privateBoard .private-options b{display:block;font-size:24px;margin-bottom:10px}
+.private-note{color:#aaa;font-size:12px;line-height:1.5;text-align:center;margin:12px 0 20px}
+.private-error{color:#ff6b6b;font-size:13px;line-height:1.4;margin:10px 0;min-height:18px}
+
+
+#privateCatalog .selection-intensities{margin:14px 0 20px}
+#privateCatalog .selection-themes{margin:14px 0 20px}
+#privateCatalog .selection-audience-row{margin:20px 0}
+#privateCatalogTeens.selected{background:#fff;color:#0b0b0b;border-color:#fff}
+
+
+.character-count{display:block;margin:10px 0 20px;font-size:10px;font-weight:400;line-height:1.4;color:#888;letter-spacing:.4px;text-align:right}
+.character-count.at-limit{color:#facc15}
+
+
+.screen .back{left:50%;transform:translateX(-50%);top:14px;color:#ccc;font-size:32px;min-width:48px;min-height:44px;padding:0;z-index:2}
+.screen:has(> .back){padding-top:70px}
+.dilemma-copy{font-weight:400!important;line-height:1.45;overflow-wrap:anywhere}
+.dilemma-copy .dilemma-heading{display:block;font-weight:900;font-size:1.06em;margin-bottom:12px}
+.dilemma-copy .dilemma-body{display:block;font-weight:400}
+.context-details{margin:18px 0;border:1px solid #444;border-radius:12px;padding:14px;color:#fff;font-size:14px;line-height:1.5}
+.context-details summary{cursor:pointer;font-weight:800;font-size:12px;letter-spacing:1px}
+.context-details .context-content{white-space:pre-wrap;overflow-wrap:anywhere;font-weight:400;margin:14px 0 0}
+.context-details label{display:block;margin:14px 0 8px;font-size:12px;font-weight:400}
+.context-details .text-input{margin:10px 0 4px;font-weight:400;min-height:110px;font-size:15px;text-align:left;letter-spacing:0}
+.context-details .btn{margin:14px 0 0;min-height:46px;font-size:12px}
+#pilotContextDecision{border:1px solid #facc15;border-radius:14px;background:#10100a;padding:16px;margin:18px 0;color:#fff;text-align:center}
+#pilotContextDecision strong{display:block;color:#facc15;font-size:12px;letter-spacing:1px;margin-bottom:12px}
+#pilotContextDecision p{font-weight:400;line-height:1.5;margin-bottom:14px}
+#pilotContextDecision .context-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#pilotContextDecision button{border:1px solid #8e7a13;border-radius:12px;min-height:48px;background:#0b0b0b;color:#fff;font-weight:800}
+#pilotContextDecision button.selected{background:#facc15;color:#0b0b0b}
+#pilotContextDecision button:disabled{opacity:.35}
+#pilotContextDecision .text-input{font-weight:400;text-align:left;letter-spacing:0;font-size:15px}
+#pilotContextProgress{display:block;color:#aaa;font-size:11px;margin:12px 0}
+#pilotContextProposed{white-space:pre-wrap;overflow-wrap:anywhere;text-align:left;border-top:1px solid #635b21;border-bottom:1px solid #635b21;padding:16px 0;margin:16px 0 20px;color:#fff;font-size:15px;font-weight:400;line-height:1.55}
+#pilotContextError{font-size:12px;color:#facc15;font-weight:400;margin-top:12px}
+#pilotContextRequest{margin:14px 0}
+.context-note{font-size:12px;color:#aaa;font-weight:400;margin:10px 0}
+
+
+.selection-chip.current-ai{border-color:#345f62;color:#65c9c5;background:#0b0b0b}
+.selection-chip.current-ai:disabled{opacity:.5;cursor:default}
+.selection-chip.current-ai span{display:block;font-size:8px;font-weight:400;margin-top:5px;letter-spacing:.6px}
+#pilotContextRequest{margin:0 0 14px!important}
+
+
+#pilotContextActions{margin-top:16px;align-items:stretch}
+#pilotContextActions button{width:100%;min-width:0;min-height:48px;padding:12px 8px;font-size:12px;line-height:1.35;margin:0}
+
+
+.selection-count{display:block;margin-top:16px;padding:12px 0 0;border-top:1px solid #444;color:#facc15;font-size:12px;line-height:1.3;letter-spacing:1.5px;font-weight:800;text-align:right}
+.selection-question-copy{font-weight:400}
+.saved-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}
+.saved-actions .btn{margin:0;min-height:48px;padding:13px 8px;font-size:11px;white-space:normal}
+.saved-card{border:1px solid #444;border-radius:14px;padding:16px;margin:16px 0;text-align:left;background:#111}
+.saved-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;color:#aaa;font-size:11px;font-weight:400}
+.saved-mark{border:1px solid #888;border-radius:6px;padding:5px 8px;font-weight:800;letter-spacing:1px;color:#fff}
+.saved-copy{font-size:15px;line-height:1.45;overflow-wrap:anywhere;font-weight:400;white-space:pre-wrap}
+.saved-card .saved-actions{margin-bottom:0}
+#savedGroupQuestion{border:1px solid #444;border-radius:14px;padding:18px;margin:24px 0}
+.saved-option{border:1px solid #444;border-radius:12px;padding:14px;margin:12px 0;font-size:14px;line-height:1.4;font-weight:400;white-space:pre-wrap}
+.saved-option strong{display:block;margin-bottom:8px}
+.saved-option.saved-last-choice{border-color:#fff;background:#161616}
+.saved-last-vote{font-size:11px;font-weight:700;letter-spacing:1px;margin:18px 0;color:#fff;text-align:center}
+.saved-discard-overlay{position:fixed;inset:0;background:#000c;z-index:100001;display:none;align-items:center;justify-content:center;padding:24px}
+.saved-discard-overlay.open{display:flex}
+.saved-discard-box{width:100%;max-width:400px;padding:22px;border:1px solid #facc15;border-radius:14px;background:#111108;color:#fff;text-align:center}
+.saved-discard-box h2{margin:0 0 18px;color:#facc15;font-size:16px;letter-spacing:1px}
+.saved-discard-box p{font-size:14px;font-weight:400;line-height:1.5;margin:12px 0;overflow-wrap:anywhere}
+.saved-discard-box .btn{border-color:#8b7413;background:#0b0b0b;color:#fff}
+.saved-discard-box .btn:disabled{opacity:.4}
+
+
+.access-warning{border:1px solid #facc15;border-radius:14px;background:#10100a;padding:18px;margin:26px 0;text-align:center;color:#fff}
+.access-warning h2{font-size:13px;letter-spacing:1px;color:#facc15;margin:0 0 14px;font-weight:900}
+.access-warning p{font-size:13px;font-weight:400;line-height:1.5;margin:12px 0}
+.access-warning .btn{background:#0b0b0b;color:#fff;border:1px solid #8d7612;font-size:11px;min-height:48px;margin:14px 0 0;white-space:normal}
+.access-warning .btn:disabled{opacity:.4}
+.access-warning details{margin-top:18px;font-size:12px;line-height:1.4;text-align:left}
+.access-warning summary{cursor:pointer;font-weight:800;color:#facc15}
+details.access-warning:not([open]){padding:14px 18px}
+details.access-warning>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:24px;list-style:none;font-size:12px;font-weight:900;letter-spacing:1px;text-align:left}
+details.access-warning>summary::-webkit-details-marker{display:none}
+details.access-warning>summary::after{content:"+";font-size:20px;line-height:1}
+details.access-warning[open]>summary{margin-bottom:18px}
+details.access-warning[open]>summary::after{content:"−"}
+details.access-warning>summary:focus-visible{outline:1px solid #facc15;outline-offset:6px;border-radius:4px}
+.access-url{display:none;width:100%;margin:12px 0 0;padding:12px;border:1px solid #777;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:400}
+.access-status{font-size:12px!important;overflow-wrap:anywhere;min-height:18px}
+#portableAccessOverlay{display:none;position:fixed;inset:0;z-index:100010;background:#080808;align-items:center;justify-content:center;padding:24px}
+#portableAccessOverlay.open{display:flex}
+#portableAccessOverlay .access-warning{width:100%;max-width:420px;margin:0}
+
+
+.selection-chip.current-ai.selected{background:#163f40;border-color:#65c9c5;color:#fff}
+.news-source{border:1px solid #345f62;border-radius:12px;margin:12px 0 22px;padding:12px 14px;color:#fff;font-size:12px;font-weight:400;line-height:1.5;text-align:left}
+.news-source summary{color:#65c9c5;cursor:pointer;font-size:10px;letter-spacing:1px;font-weight:800}
+.news-source p{font-weight:400;margin:14px 0}.news-source a{color:#65c9c5;overflow-wrap:anywhere}.news-source small{display:block;color:#aaa;margin-top:14px}
+.news-loading{border:1px solid #65c9c5;border-radius:14px;padding:20px;margin:20px 0;color:#fff;font-size:13px;line-height:1.5;text-align:center}.news-loading strong{display:block;color:#65c9c5;font-size:12px;margin-bottom:12px}
+
+
+#pilotLimboAction{grid-column:1/-1}
+#pilotLimboVoteBox,#pilotLimboStatus,.limbo-card{border:1px solid #facc15!important;border-radius:14px;background:#10100a;color:#fff;padding:18px;text-align:center;margin:16px 0;box-shadow:none!important}
+#pilotLimboVoteBox::before,#pilotLimboVoteBox::after{display:none!important}
+#pilotLimboVoteBox h3,#pilotLimboStatus h3,.limbo-card h2{color:#facc15;font-size:12px;letter-spacing:1px;margin:0 0 16px;font-weight:900}
+#pilotLimboVoteBox p,#pilotLimboStatus p,.limbo-card p{font-size:14px;line-height:1.5;margin:12px 0;font-weight:400}
+#pilotLimboVoteBox .limbo-count{color:#facc15;font-size:11px;margin:18px 0}
+.limbo-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.limbo-actions button{border:1px solid #806b12;border-radius:12px;background:#0b0b0b;color:#fff;padding:14px;font:inherit;font-size:12px;cursor:pointer}
+.limbo-actions button.pilot-selected{background:#facc15;color:#000}
+.limbo-actions button:disabled{opacity:.4;cursor:default}
+#pilotLimboTimer{display:block;font-size:24px;font-weight:900;color:#facc15;margin:16px 0}
+#pilotLimboModal{display:none;position:fixed;inset:0;z-index:100005;background:#000c;align-items:center;justify-content:center;padding:20px}
+#pilotLimboModal.open{display:flex}
+#pilotLimboModal .limbo-card{width:100%;max-width:410px;max-height:calc(100dvh - 40px);overflow:auto;margin:0}
+#pilotLimboModal select{width:100%;background:#0b0b0b;color:#fff;border:1px solid #666;border-radius:12px;padding:14px;font:inherit;margin:0 0 18px}
+#pilotLimboModal .limbo-actions{margin:16px 0}
+#pilotLimboError{color:#ff6473!important}
+
+
+/* R82: yellow labels, white text, with room to read. */
+#pilotAssistantModal .am-card{padding:24px 22px;border-color:#facc15;scrollbar-gutter:stable}
+#pilotAssistantModal h2{color:#facc15;margin-bottom:12px;line-height:1.3}
+#pilotAssistantModal .am-private{margin-bottom:24px;line-height:1.5}
+#pilotAssistantModal .am-intro{font-size:15px;font-weight:400;line-height:1.6;margin-bottom:24px;color:#fff}
+#pilotAssistantModal .am-route-buttons{gap:8px;margin:24px 0}
+#pilotAssistantModal .am-route-buttons button{padding:12px 6px;line-height:1.4;min-height:66px}
+#pilotAssistantModal .am-line{padding:22px 0;font-size:15px;font-weight:400;line-height:1.65;color:#fff}
+#pilotAssistantModal .am-line b{color:#facc15;font-size:11px;line-height:1.5;margin-bottom:12px}
+#pilotAssistantModal .am-fold{font-size:15px;font-weight:400;line-height:1.65;color:#fff}
+#pilotAssistantModal .am-fold summary{color:#facc15;font-size:11px;padding:18px 0;line-height:1.5}
+#pilotAssistantModal .am-fold-body{padding:0 0 24px;font-weight:400;white-space:pre-line}
+#pilotAssistantModal .am-question{margin-top:24px;padding:18px;font-size:15px;font-weight:400;line-height:1.6;border-color:#806b12}
+#pilotAssistantModal .am-mode{margin:24px 0 12px;line-height:1.5}
+#pilotAssistantModal .am-close{margin-top:24px;min-height:50px}
+.r82-overlay{display:none;position:fixed;inset:0;z-index:100020;align-items:center;justify-content:center;padding:24px;background:#000e}
+.r82-overlay.open{display:flex}
+.r82-card{border:1px solid #facc15!important;border-radius:14px;padding:22px 18px;margin:18px 0 24px;background:#10100a;color:#fff;box-shadow:none!important;text-align:center}
+.r82-overlay .r82-card{width:100%;max-width:420px;margin:0}
+.r82-card::before,.r82-card::after{display:none!important}
+.r82-card h2{color:#facc15;font-size:12px;letter-spacing:1px;line-height:1.5;margin:0 0 20px;font-weight:900}
+.r82-card p{color:#fff;font-size:15px;font-weight:400;line-height:1.6;margin:16px 0 22px;overflow-wrap:anywhere}
+.r82-card .btn{margin:12px 0 0;border-color:#806b12;background:#0b0b0b;color:#fff;min-height:50px}
+.r82-card .r82-count{color:#facc15;font-size:11px;margin:22px 0}
+#pilotAdmissionVoteBox .limbo-actions button.pilot-selected{background:#facc15!important;color:#000!important;border-color:#facc15!important}
+#pilotAdmissionAction{width:100%;margin-top:16px!important;min-height:50px}
+#pilotAdmissionAction.is-selected{border-color:#facc15!important;color:#facc15!important;background:#10100a!important}
+.r82-note{font-size:11px;font-weight:400;line-height:1.5;margin:16px 0 0;color:#aaa;text-align:center}
+#worldDiscardVote{margin:24px 0 12px;width:100%;border:1px solid #8b7413;background:#0b0b0b;color:#fff;min-height:50px;border-radius:12px}
+#worldDiscardVote.selected{background:#facc15;color:#000}
+
+
+
+/* One stable native disabled state, including private vote changes. */
+#debatePilotPanel .r86-locked-action{background:#0b0b0b!important;color:#555!important;border-color:#303030!important;opacity:1!important;filter:grayscale(1)!important}
+#pilotSaveSession{display:none;width:100%;margin:14px 0 22px;min-height:50px;background:#0b0b0b;color:#fff;border:1px solid #806b12;border-radius:12px}
+.r86-session-box{border:1px solid #facc15;border-radius:14px;padding:22px 18px;margin:24px 0;background:#10100a;color:#fff;text-align:center}
+.r86-session-box h2{color:#facc15;font-size:12px;letter-spacing:1px;line-height:1.5;margin:0 0 20px;font-weight:900}
+.r86-session-box p{font-size:15px;font-weight:400;line-height:1.6;margin:16px 0 22px;overflow-wrap:anywhere}
+.r86-session-box .session-count{color:#facc15;font-size:11px;letter-spacing:1px;margin:20px 0}
+.r86-session-box .saved-actions button{display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:0;padding:13px 8px;background:#0b0b0b;color:#fff;border:1px solid #806b12;border-radius:12px;font-family:inherit;font-size:11px;font-weight:900;line-height:1.35;letter-spacing:1px;cursor:pointer}
+.r86-session-box .saved-actions button:disabled{opacity:.35;cursor:default}
+.r86-session-box button.pilot-selected{background:#facc15!important;color:#000!important}
+#r86PausedSessions{margin:24px 0}
+#r86PausedSessions summary{color:#facc15;font-size:12px;font-weight:800;line-height:1.5;cursor:pointer;padding:16px 0}
+#r86PausedSessions .saved-card button{width:100%;margin:16px 0 0}
+#r86SavedResume{display:none}
+.r86-session-error{font-size:13px;font-weight:400;line-height:1.5;color:#facc15;margin:16px 0}
+
+
+/* R88: compact workbench, drawers and shared reference space. */
+#r88SourceBank[hidden],#r88Drawer[hidden],.r88-frame [hidden],#r88Drawer [hidden]{display:none!important}
+#debatePilotPanel .r88-frame{border:1px solid #383838;border-radius:14px;padding:15px;margin:16px 0 0;width:100%;background:#0b0b0b;box-shadow:none}
+#debatePilotPanel .r88-heading{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#aaa;text-align:center;line-height:1.4;margin:0 0 14px}
+.r88-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.r88-button,#r88Drawer button{border:1px solid #555;border-radius:11px;background:#0b0b0b;color:#fff;min-height:49px;min-width:0;width:100%;padding:11px 8px;font:inherit;font-size:11px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere;animation:none!important;transition:none!important;box-shadow:none!important;outline:0}
+.r88-button .r88-symbol{display:none}
+.r88-button .r88-count{display:none}
+.r88-button:disabled,#r88Drawer button:disabled{background:#0b0b0b;color:#666;border-color:#303030;cursor:default;opacity:1;filter:grayscale(1)}
+.r88-button:focus-visible,#r88Drawer button:focus-visible{outline:2px solid #facc15;outline-offset:3px}
+.r88-wide+.r88-wide{margin-top:10px}
+#r88Resources .context-details{margin:12px 0;padding:13px;border-color:#444}
+#r88Resources .r88-button{font-size:10px}
+#r88Resources .r88-note,.r88-note{margin:0;color:#aaa;font-size:12px;font-weight:400;line-height:1.6;text-align:center}
+#r88Empty{margin:0}
+#r88Workbench{min-height:90px}
+#r88ActiveTools:has(>button:not([hidden])){margin-bottom:0}
+#r88ActiveTools.r88-single{grid-template-columns:1fr}
+.r88-icons .r88-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:56px;padding:9px 5px}
+.r88-icons .r88-button .r88-symbol{display:block;font-size:25px;font-weight:400;line-height:1.1}
+.r88-icons .r88-button .r88-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.r88-icons .r88-button .r88-count:not([hidden]){display:block;color:inherit;font-size:10px;line-height:1.3}
+#r88Drawer.r88-icons .r88-item .r88-button{flex-direction:row;justify-content:flex-start;gap:12px}
+#r88Drawer.r88-icons .r88-item .r88-button .r88-label{position:static;width:auto;height:auto;clip:auto;white-space:normal;margin:0;overflow:visible}
+#r88Drawer.r88-icons .r88-item .r88-button .r88-count{display:none}
+.r88-overlay{position:fixed;inset:0;z-index:100003;display:flex;align-items:center;justify-content:center;padding:16px;background:#000d}
+.r88-drawer-open{overflow:hidden}
+.r88-dialog{display:flex;flex-direction:column;width:min(100%,430px);max-height:calc(100dvh - 32px);overflow-y:auto;border:1px solid #facc15;border-radius:14px;background:#10100a;color:#fff;padding:20px;overscroll-behavior:contain}
+#r88DrawerTitle{font-size:16px;letter-spacing:1.5px;text-align:center;color:#facc15;margin:0 0 12px;font-weight:900}
+#r88DrawerNote{margin-bottom:20px;color:#fff}
+#r88DrawerItems h3,#r88ViewSettings h3{font-size:11px;color:#facc15;letter-spacing:1px;margin:22px 0 12px;line-height:1.4}
+.r88-item{margin:0 0 16px;padding-bottom:16px;border-bottom:1px solid #383322}
+.r88-description{font-weight:400;font-size:13px;line-height:1.6;margin:12px 0 8px;white-space:normal}
+.r88-availability{color:#aaa;font-size:10px;font-weight:400;line-height:1.5;margin:8px 0 0;letter-spacing:.3px}
+.r88-catalogue strong{color:#777;font-size:11px;font-weight:800;line-height:1.5}
+.r88-catalogue .r88-description{color:#999}
+#r88Drawer .r88-danger{color:#ff4b61;border-color:#55252b}
+#r88Drawer .r88-close{margin:10px 0 0;flex-shrink:0;border-color:#806b12}
+#r88ViewSettings{padding-bottom:16px}
+#r88ViewSettings .r88-note{margin:12px 0}
+#r88Drawer #r88ViewSettings button.selected{background:#facc15;color:#0b0b0b;border-color:#facc15}
+#debatePilotPanel #pilotInstructionsRow.r88-frame{padding:0;overflow:hidden}
+#debatePilotPanel #pilotInstructionsBtn{border:0;border-radius:14px;min-height:49px;margin:0}
+#debatePilotPanel #pilotHostGroup.r88-host{margin-top:16px!important}
+@media(max-width:360px){#debatePilotPanel .r88-frame{padding:12px}.r88-button{font-size:10px}.r88-dialog{padding:16px}}
+
+</style><main id="debate" class="screen active"><h1 class="debate-title">ABRIMOS EL DEBATE</h1><div id="debatePilotPanel"><div id="pilotPauseBanner" style="display:none">DEBATE PAUSADO</div><button id="pilotSaveSession" style="display:none">GUARDAR Y VOLVER AL HALL</button><div id="pilotTwist" style="display:none">GIRO</div><div id="pilotVoteStage"><div id="pilotInlineRevote" style="display:none">RE-VOTO</div></div><details id="pilotSharedContext"><summary>CONTEXTO DEL DILEMA</summary><div class="context-content">El contexto aprobado sigue siendo consultable.</div></details><button id="pilotContextRequest">SOLICITAR AÑADIR CONTEXTO</button><div id="pilotActionGrid"><button id="pilotProclamaBtn" disabled>📣 PROCLAMAR · 0/1</button><button id="pilotSecretRevoteAction" disabled>CAMBIAR MI VOTO · 0/1</button><button id="pilotGiroBtn">PEDIR GIRO</button><button id="pilotRevoteRequestBtn">PEDIR RE-VOTO</button><button id="pilotAbsentBtn">AUSENTARME</button><button id="pilotPauseAction">SOLICITAR PAUSA</button><button id="pilotEndBtn">FIN DEBATE</button><button id="pilotAbandonBtn">ABANDONAR</button><button id="pilotLimboAction" disabled>PROPONER LIMBO</button></div><div id="pilotAssistantActions"><button id="pilotAssistantOpen" disabled>ASISTENTE · 0/1</button><button id="pilotAssistantRequest">SOLICITAR AYUDA · 0/3</button><button id="pilotAssistantHistory">MIS AYUDAS GUARDADAS · 1/2</button></div><div id="pilotInstructionsRow"><button id="pilotInstructionsBtn">INSTRUCCIONES</button></div><div id="pilotPresence"><div id="pilotHostGroup"><div id="pilotHostBadge">ERES ANFITRIÓN</div><div id="pilotHostRoomCode">CÓDIGO DE DEBATE · TEST</div><button id="pilotAdmissionAction">AÑADIR DEBATIENTE</button></div></div></div></main><script>window.currentRoomMode='debate';window.currentRoundId=7;window.currentUserId='demo-r88';window.dilemaBoardSnapshot={round:7,data:{cycle:1,phase:'debate',paused:false,secret_revote_mine:null}};window.dilemaAssistantAccess={round:7,user:currentUserId,data:{cycle:1,token:false,approved:false}};window.dilemaLimboSnapshot={round:7,data:{can_propose:true}};window.dilemaPresenceView={my_presence:'present'};window.renderDebate=()=>{};window.pilotRefresh=async()=>{};window.r86ActionLocked=id=>window.locked&&id!=='pilotAbandonBtn'&&id!=='pilotAssistantHistory';window.calls=[];for(const b of document.querySelectorAll('#pilotActionGrid button,#pilotAssistantActions button,#pilotContextRequest,#pilotSaveSession,#pilotInstructionsBtn'))b.onclick=()=>{window.calls.push(b.id);document.getElementById('testLog').textContent=calls.join(', ')};function receiveTools(){const p=document.getElementById('pilotProclamaBtn');p.dataset.owned='true';p.dataset.ownedRound='7';p.dataset.ownedUser=currentUserId;p.disabled=false;p.textContent='📣 PROCLAMAR · 1/1';dilemaBoardSnapshot.data.secret_revote_mine=99;const s=document.getElementById('pilotSecretRevoteAction');s.disabled=false;s.textContent='CAMBIAR MI VOTO · 1/1';dilemaAssistantAccess.data.token=true;const a=document.getElementById('pilotAssistantOpen');a.disabled=false;a.textContent='ASISTENTE · 1/1';document.getElementById('pilotLimboAction').disabled=false;dilemaWorkbenchSync()}function lockTools(){locked=true;for(const id of ['pilotProclamaBtn','pilotSecretRevoteAction','pilotAssistantOpen','pilotContextRequest','pilotGiroBtn','pilotRevoteRequestBtn','pilotLimboAction'])document.getElementById(id).disabled=true;dilemaWorkbenchSync()}function consume(){document.getElementById('pilotProclamaBtn').dataset.owned='false';dilemaWorkbenchSync()}function unlock(){locked=false;for(const id of ['pilotProclamaBtn','pilotSecretRevoteAction','pilotAssistantOpen','pilotContextRequest','pilotGiroBtn','pilotRevoteRequestBtn','pilotLimboAction'])document.getElementById(id).disabled=false;dilemaWorkbenchSync()}</script><script>
+/* R88: one workbench, four drawers, existing server-authorized actions. */
+(function(){
+ 'use strict';
+ const E=id=>document.getElementById(id);
+ const actions=[
+  {id:'pilotProclamaBtn',drawer:'action',icon:'📣',name:'PROCLAMAR',resource:true,description:'Escribe una proclama y elige a quién enviarla.',empty:'No tienes una proclama disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
+  {id:'pilotSecretRevoteAction',drawer:'action',icon:'↔',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
+  {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
+  {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
+  {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
+  {id:'pilotPauseAction',drawer:'escape',icon:'⏸',name:'SOLICITAR PAUSA',description:'Propón pausar o reanudar el debate. Decide la mayoría.'},
+  {id:'pilotSaveSession',drawer:'escape',icon:'▣',name:'GUARDAR Y VOLVER AL HALL',description:'Con el debate pausado, propone guardarlo para retomarlo en esta sala.'},
+  {id:'pilotEndBtn',drawer:'escape',icon:'■',name:'FIN DEBATE',description:'Propón cerrar el debate. Todos deben votar SÍ.'},
+  {id:'pilotAbandonBtn',drawer:'escape',icon:'⇥',name:'ABANDONAR',danger:true,description:'Sales de la sala. Para regresar al debate necesitarás permiso de la mesa.'},
+  {id:'pilotAssistantOpen',drawer:'help',icon:'✦',name:'ASISTENTE',resource:true,description:'Abre una ayuda privada para defender tu postura.',empty:'No tienes una nueva ayuda disponible. Puedes solicitarla a la mesa o consultar las que ya guardaste.'},
+  {id:'pilotAssistantRequest',drawer:'help',icon:'?',name:'SOLICITAR AYUDA',description:'Solicitud secreta. Con mayoría se desbloquea la ayuda para quienes la pidieron.'},
+  {id:'pilotLimboAction',drawer:'action',icon:'⌛',name:'PROPONER LIMBO',board:true,description:'Propón apartar temporalmente a otra persona. Vota el resto de la mesa; requiere tres presentes.'}
+ ];
+ const medicines=[
+  {name:'LIMBO · INDIVIDUAL',type:'PÓCIMA',icon:'⌛',description:'Aparta temporalmente del debate a la persona elegida.'},
+  {name:'ROBO',type:'PÓCIMA',icon:'⚗',description:'Roba una pócima o píldora del inventario de otra persona.'},
+  {name:'SEÑUELO',type:'PÓCIMA',icon:'⚗',description:'Una falsa pócima para provocar que otra persona gaste una defensa.'},
+  {name:'CAMBIO TU VOTO',type:'PÓCIMA',icon:'↔',description:'Cambia la postura de otra persona. Su propio cambio de voto le permite recuperarla.'},
+  {name:'ESPEJO',type:'PÍLDORA',icon:'◇',description:'Devuelve la pócima a quien la lanzó.'},
+  {name:'ANTÍDOTO',type:'PÍLDORA',icon:'💊',description:'Neutraliza el efecto de una pócima.'}
+ ];
+ const drawers=[
+  {key:'medicine',name:'BOTIQUÍN',icon:'⚗',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
+  {key:'escape',name:'HUIDA',icon:'⇥',note:'Ausentarte, pausar, guardar o salir del debate.'},
+  {key:'help',name:'AYUDA',icon:'?',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
+  {key:'action',name:'ACCIÓN',icon:'↪',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu tablero.'}
+ ];
+ let opened=null,returnFocus=null,scheduled=false,fullRefresh=null,preferenceUser=null,compact=false;
+ const setText=(node,value)=>{if(node&&node.textContent!==value)node.textContent=value};
+ const visible=node=>!!node&&getComputedStyle(node).display!=='none'&&getComputedStyle(node).visibility!=='hidden';
+ function preference(){
+  const user=String(currentUserId||'local');
+  if(preferenceUser===user)return;
+  preferenceUser=user;
+  try{compact=localStorage.getItem('dilema_workbench_view:'+user)==='icons'}catch(_){compact=false}
+ }
+ function setView(value){
+  compact=value==='icons';
+  try{localStorage.setItem('dilema_workbench_view:'+preferenceUser,compact?'icons':'text')}catch(_){}
+  sync();
+ }
+ function owned(action){
+  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  if(action.id==='pilotProclamaBtn'){const b=E(action.id);return b?.dataset.owned==='true'&&b.dataset.ownedRound===String(currentRoundId)&&b.dataset.ownedUser===String(currentUserId)}
+  if(action.id==='pilotSecretRevoteAction')return !!state?.secret_revote_mine;
+  if(action.id==='pilotAssistantOpen'){
+   const a=window.dilemaAssistantAccess;
+   if(a?.round!==currentRoundId||a.user!==currentUserId||Number(a.data?.cycle)!==Number(state?.cycle))return false;
+   return !!(a.data?.token||(a.data?.approved&&a.data?.mine_requested&&!a.data?.mine_group_used));
+  }
+  if(action.board)return !!state&&window.dilemaLimboSnapshot?.round===currentRoundId&&!!E(action.id)&&!E(action.id).disabled;
+  return false;
+ }
+ function reason(action){
+  if(action.resource&&!owned(action))return action.empty;
+  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  if(action.id==='pilotSaveSession'&&!state?.paused)return 'Disponible cuando el debate está pausado.';
+  if(action.id==='pilotAbsentBtn'&&window.dilemaLimboReturnBlocked?.())return 'Tu regreso está bloqueado mientras dure el limbo.';
+  if(window.dilemaPresenceView?.my_presence==='absent'&&!['pilotAbsentBtn','pilotAbandonBtn'].includes(action.id))return 'Disponible cuando te reincorpores al debate.';
+  if(state?.paused&&!['pilotPauseAction','pilotEndBtn','pilotSaveSession','pilotAbandonBtn'].includes(action.id))return 'Disponible al reanudar el debate.';
+  if(action.id==='pilotLimboAction'&&!window.dilemaLimboSnapshot?.data?.can_propose)return 'Requiere al menos tres participantes presentes y un destinatario disponible.';
+  if(action.id==='pilotAssistantRequest'){
+   const access=window.dilemaAssistantAccess?.data;
+   if(access?.mine_requested)return 'Tu solicitud ya está registrada. Puedes consultar el recuento.';
+   if(access?.token)return 'Ya tienes una ayuda en tu tablero. Puedes solicitar otra después de consumirla.';
+  }
+  if(typeof r86ActionLocked==='function'&&r86ActionLocked(action.id))return 'La mesa está resolviendo una decisión. Espera a que termine.';
+  return 'No está disponible en este momento.';
+ }
+ function actionLabel(action){return E(action.id)?.textContent.trim()||action.name}
+ function iconLabel(button,icon,label){
+  const symbol=button.querySelector('.r88-symbol'),text=button.querySelector('.r88-label'),count=button.querySelector('.r88-count');
+  setText(symbol,icon);setText(text,label);
+  const number=label.match(/(?:·\s*)(\d+\s*\/\s*\d+)\s*$/);
+  setText(count,number?number[1]:'');count.hidden=!number;
+  button.setAttribute('aria-label',label);button.title=label;
+ }
+ function button(id,icon,label,click){
+  const b=document.createElement('button');b.type='button';b.id=id;b.className='r88-button';
+  b.innerHTML='<span class="r88-symbol" aria-hidden="true"></span><span class="r88-label"></span><span class="r88-count" aria-hidden="true" hidden></span>';
+  iconLabel(b,icon,label);b.onclick=click;return b;
+ }
+ function close(restore=true){
+  const modal=E('r88Drawer');if(!modal)return;
+  modal.hidden=true;opened=null;
+  E('r88Toolbox')?.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded','false'));
+  if(document.body.classList.contains('r88-drawer-open'))document.body.classList.remove('r88-drawer-open');
+  if(restore&&returnFocus?.isConnected)returnFocus.focus();
+ }
+ function dispatch(action){
+  const source=E(action.id);
+  if(!source||source.disabled||(action.resource&&!owned(action))||
+     (typeof r86ActionLocked==='function'&&r86ActionLocked(action.id)))return;
+  close(false);source.click();schedule();
+ }
+ function section(id,title){
+  const box=document.createElement('section');box.id=id;box.className='r88-frame';
+  box.setAttribute('aria-labelledby',id+'Title');
+  const heading=document.createElement('h2');heading.id=id+'Title';heading.className='r88-heading';heading.textContent=title;box.appendChild(heading);return box;
+ }
+ function ensure(){
+  const panel=E('debatePilotPanel'),grid=E('pilotActionGrid'),assistant=E('pilotAssistantActions');
+  if(!panel||!grid||!assistant)return false;
+  if(!E('r88SourceBank')){
+   const bank=document.createElement('div');bank.id='r88SourceBank';bank.hidden=true;panel.appendChild(bank);
+   const resources=section('r88Resources','CONTEXTO Y AYUDAS');
+   const request=button('r88ContextRequest','+','SOLICITAR AÑADIR CONTEXTO',()=>{const b=E('pilotContextRequest');if(b&&!b.disabled){close(false);b.click();schedule()}});
+   const history=button('r88GuideHistory','▤','MIS AYUDAS GUARDADAS · 0/0',()=>{const b=E('pilotAssistantHistory');if(b&&!b.disabled){close(false);b.click()}});
+   request.classList.add('r88-wide');history.classList.add('r88-wide');resources.append(request,history);
+   const work=section('r88Workbench','MI TABLERO');
+   const tools=document.createElement('div');tools.id='r88ActiveTools';tools.className='r88-grid';
+   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Las herramientas que recibas aparecerán aquí. Puedes abrir los cajones para ver el resto.';
+   for(const action of actions.filter(a=>a.resource||a.board)){const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)}
+   work.append(tools,empty);
+   const toolbox=section('r88Toolbox','CAJA DE HERRAMIENTAS');
+   const drawerGrid=document.createElement('div');drawerGrid.className='r88-grid';
+   for(const d of drawers){const b=button('r88Open_'+d.key,d.icon,d.name,()=>open(d.key,b));b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r88Drawer');b.setAttribute('aria-expanded','false');drawerGrid.appendChild(b)}
+   toolbox.appendChild(drawerGrid);
+   grid.insertAdjacentElement('beforebegin',resources);resources.insertAdjacentElement('afterend',work);work.insertAdjacentElement('afterend',toolbox);
+  }
+  const bank=E('r88SourceBank');
+  for(const id of ['pilotActionGrid','pilotAssistantActions','pilotContextRequest','pilotSaveSession']){
+   const node=E(id);if(node&&node.parentElement!==bank)bank.appendChild(node);
+  }
+  const viewer=E('pilotSharedContext');if(viewer&&viewer.parentElement!==E('r88Resources'))E('r88Resources').insertBefore(viewer,E('r88GuideHistory'));
+  const instructions=E('pilotInstructionsRow');if(instructions&&instructions.parentElement!==panel)panel.appendChild(instructions);
+  if(instructions){if(!instructions.classList.contains('r88-frame'))instructions.classList.add('r88-frame');if(instructions.previousElementSibling!==E('r88Toolbox'))E('r88Toolbox').insertAdjacentElement('afterend',instructions)}
+  const host=E('pilotHostGroup');if(host){if(!host.classList.contains('r88-host'))host.classList.add('r88-host');const anchor=instructions||E('r88Toolbox');if(host.previousElementSibling!==anchor)anchor.insertAdjacentElement('afterend',host)}
+  if(!E('r88Drawer')){
+   const modal=document.createElement('div');modal.id='r88Drawer';modal.hidden=true;modal.className='r88-overlay';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','r88DrawerTitle');
+   modal.innerHTML='<div class="r88-dialog"><h2 id="r88DrawerTitle"></h2><p id="r88DrawerNote" class="r88-note"></p><div id="r88DrawerItems"></div><section id="r88ViewSettings"><h3>VISTA DEL TABLERO</h3><div class="r88-grid"><button type="button" id="r88TextView" aria-pressed="true">CON TEXTOS</button><button type="button" id="r88IconView" aria-pressed="false">CON ICONOS</button></div><p class="r88-note">Los iconos conservan el nombre de cada acción para facilitar su identificación.</p><button type="button" id="r88HelpInstructions">INSTRUCCIONES</button></section><button type="button" id="r88DrawerClose" class="r88-close">VOLVER AL TABLERO</button></div>';
+   document.body.appendChild(modal);
+   E('r88DrawerClose').onclick=()=>close();E('r88TextView').onclick=()=>setView('text');E('r88IconView').onclick=()=>setView('icons');
+   E('r88HelpInstructions').onclick=()=>{close(false);E('pilotInstructionsBtn')?.click()};
+   modal.onclick=e=>{if(e.target===modal)close()};
+   modal.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();close();return}
+    if(e.key!=='Tab')return;
+    const focusable=[...modal.querySelectorAll('button:not(:disabled)')].filter(b=>!b.hidden&&b.getClientRects().length);
+    const first=focusable[0],last=focusable.at(-1);
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
+   });
+  }
+  return true;
+ }
+ function open(key,opener){
+  if(!ensure())return;
+  opened=key;returnFocus=opener;E('r88Drawer').hidden=false;document.body.classList.add('r88-drawer-open');
+  const d=drawers.find(d=>d.key===key);setText(E('r88DrawerTitle'),d.name);setText(E('r88DrawerNote'),d.note);
+  const list=E('r88DrawerItems');list.replaceChildren();
+  for(const action of actions.filter(a=>a.drawer===key)){
+   const card=document.createElement('article');card.className='r88-item';card.dataset.source=action.id;
+   const b=button('r88Drawer_'+action.id,action.icon,action.name,()=>dispatch(action));
+   if(action.danger)b.classList.add('r88-danger');
+   const description=document.createElement('p');description.className='r88-description';description.textContent=action.description;
+   const status=document.createElement('p');status.className='r88-availability';status.id='r88Status_'+action.id;
+   b.setAttribute('aria-describedby',status.id);card.append(b,description,status);list.appendChild(card);
+  }
+  if(key==='medicine'){
+   for(const type of ['PÓCIMA','PÍLDORA']){
+    const heading=document.createElement('h3');heading.textContent=type==='PÓCIMA'?'PÓCIMAS SORTEADAS':'PÍLDORAS';list.appendChild(heading);
+    for(const m of medicines.filter(m=>m.type===type)){
+     const card=document.createElement('article');card.className='r88-item r88-catalogue';
+     const title=document.createElement('strong');title.textContent=m.icon+' '+m.name+' · 0/1';
+     const text=document.createElement('p');text.className='r88-description';text.textContent=m.description;
+     const note=document.createElement('p');note.className='r88-availability';note.textContent='EN PREPARACIÓN · AÚN NO SE SORTEA';card.append(title,text,note);list.appendChild(card);
+    }
+   }
+  }
+  E('r88ViewSettings').hidden=key!=='help';sync();
+  opener.setAttribute('aria-expanded','true');E('r88DrawerClose').focus();
+ }
+ function sync(){
+  if(currentRoomMode!=='debate'||!E('debate')?.classList.contains('active')){close(false);return}
+  if(!ensure())return;preference();
+  E('r88Workbench').classList.toggle('r88-icons',compact);E('r88Toolbox').classList.toggle('r88-icons',compact);
+  E('r88Drawer').classList.toggle('r88-icons',compact);
+  let active=0;
+  for(const action of actions.filter(a=>a.resource||a.board)){
+   const b=E('r88Tool_'+action.id),source=E(action.id),have=owned(action);
+   b.hidden=!have;if(have)active++;
+   b.disabled=!source||source.disabled;iconLabel(b,action.icon,actionLabel(action));
+  }
+  E('r88Empty').hidden=active>0;
+  E('r88ActiveTools').classList.toggle('r88-single',active===1);
+  const request=E('pilotContextRequest');E('r88ContextRequest').disabled=!request||request.disabled;
+  // Reading saved help is independent from initiating another decision.
+  const history=E('pilotAssistantHistory');E('r88GuideHistory').disabled=!history||history.disabled;
+  iconLabel(E('r88GuideHistory'),'▤',history?.textContent||'MIS AYUDAS GUARDADAS · 0/0');
+  if(opened){
+   for(const action of actions.filter(a=>a.drawer===opened)){
+    const b=E('r88Drawer_'+action.id),card=b?.closest('.r88-item'),source=E(action.id);if(!b)continue;
+    const have=(action.resource||action.board)&&owned(action);card.hidden=have;
+    b.disabled=!source||source.disabled||(action.resource&&!have)||action.id==='pilotSaveSession'&&!window.dilemaBoardSnapshot?.data?.paused;
+    iconLabel(b,action.icon,actionLabel(action));
+    setText(E('r88Status_'+action.id),b.disabled?reason(action):'DISPONIBLE');
+   }
+  }
+  for(const [id,on] of [['r88TextView',!compact],['r88IconView',compact]]){
+   const b=E(id);b.setAttribute('aria-pressed',String(on));b.classList.toggle('selected',on);
+  }
+ }
+ function schedule(){
+  if(scheduled)return;scheduled=true;
+  requestAnimationFrame(()=>{scheduled=false;if(!fullRefresh&&!(typeof r86FullRefreshPromise!=='undefined'&&r86FullRefreshPromise))sync()});
+ }
+ const previous=window.pilotRefresh;
+ window.pilotRefresh=function(){
+  if(fullRefresh)return fullRefresh;
+  fullRefresh=(async()=>{try{return await previous.apply(this,arguments)}finally{sync()}})();
+  fullRefresh.finally(()=>{fullRefresh=null}).catch(()=>{});return fullRefresh;
+ };
+ const render=window.renderDebate;
+ window.renderDebate=function(){const result=render.apply(this,arguments);sync();return result};
+ window.dilemaWorkbenchSync=sync;
+ document.addEventListener('DOMContentLoaded',()=>{
+  sync();
+  const observer=new MutationObserver(records=>{
+   if(records.every(r=>r.target.nodeType===1&&r.target.closest('#r88Resources,#r88Workbench,#r88Toolbox,#r88Drawer')))return;
+   schedule();
+  });
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','style','class']});
+ });
+})();
+
+</script>
