@@ -19,7 +19,8 @@ begin
  -- Nobody accepts: last non-host ballot draws the replacement in the same transaction.
  execute 'set local role authenticated';perform public.debate_vote_proposal(pid,false);execute 'reset role';
  perform set_config('request.jwt.claim.sub',u2::text,true);execute 'set local role authenticated';perform public.debate_vote_proposal(pid,false);execute 'reset role';
- perform set_config('request.jwt.claim.sub',u3::text,true);execute 'set local role authenticated';perform public.debate_vote_proposal(pid,false);x:=public.debate_proposal_state(rm);execute 'reset role';
+ -- The majority already rejected it; a refresh adopts its replacement.
+ execute 'set local role authenticated';x:=public.debate_proposal_state(rm);execute 'reset role';
  replacement:=(x->>'id')::bigint;
  if replacement is null or replacement=pid or (x->>'dilemma_id')::bigint=did or (select status from public.rooms where id=rm)<>'waiting' then raise exception 'Rejection did not directly draw a different dilemma';end if;
  if x->>'has_voted'<>'false' or x->>'yes'<>'0' or x->>'no'<>'0' then raise exception 'Replacement retained old ballots';end if;

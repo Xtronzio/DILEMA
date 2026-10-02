@@ -7,7 +7,7 @@ const context=document.createElement('details');context.id='proposalContext';E('
 let proposal={id:1,status:'open',question:'FIRST',option_a:'A',option_b:'B',yes:0,no:0,total:3,has_voted:false},room={status:'waiting'},error=null;
 const c={document,console,currentRoomId:7,currentRoomMode:'debate',currentRoomStatus:'waiting',currentRoomHostId:'one',localPlayerId:'one',proposalRefreshRun:0,
  currentDebateSelection:{phase:'random',total:3,voted:3},selectionAudienceChosen:true,
- sb:{rpc:async(name,args)=>{calls.push(name);return {data:proposal,error:name==='debate_vote_proposal_cycle'?error:null}}},
+ sb:{rpc:async(name,args)=>{calls.push(name);if(name==='debate_vote_proposal_cycle')c.lastBallot=args;return {data:proposal,error:name==='debate_vote_proposal_cycle'?error:null}}},
  getRoom:async()=>{calls.push('getRoom');return room},refreshDebateSelection:async()=>{calls.push('selection');return false},
  subscribeToRounds:()=>calls.push('subscribe'),startGameRefresh:()=>calls.push('startRefresh'),refreshGame:async()=>{calls.push('game');c.showScreen('voting')},reloadHall:()=>calls.push('hall'),announceHallChange:()=>calls.push('broadcast'),alert:s=>alerts.push(s),
  renderDilemmaCopy:(e,s)=>e.textContent=s,renderContextText:(e,s)=>e.textContent=s,renderSelectionFilters(){},
@@ -19,10 +19,17 @@ vm.runInContext(html.slice(html.indexOf('function renderDebateSelection(){'),htm
 (async()=>{
  c.renderDebateSelection();assert.equal(E('selectionDraw').style.display,'none');assert.equal(E('selectionRandomWaiting').textContent,'PREPARANDO DILEMA…');assert.equal(E('selectionHostBadge').style.display,'block');
  c.localPlayerId='two';c.renderDebateSelection();assert.equal(E('selectionDraw').style.display,'none');assert.equal(E('selectionRandomWaiting').style.display,'block');assert.equal(E('selectionHostBadge').style.display,'none');
- c.localPlayerId='one';await c.refreshDilemmaProposal();assert.equal(E('proposalQuestion').textContent,'FIRST');assert.equal(E('proposalLaunch').style.display,'none');
+ c.localPlayerId='one';await c.refreshDilemmaProposal();assert.equal(E('proposalQuestion').textContent,'FIRST');assert.equal(E('proposalLaunch').style.display,'none');assert(E('proposalRule').textContent.includes('MAYORÍA'));
  // Replacement goes straight into the same proposal screen; no hall or filters.
  calls.length=0;screens.length=0;proposal={...proposal,id:2,question:'REPLACEMENT'};
  await c.voteDilemmaProposal(false);assert.deepEqual(screens,['dilemmaProposal']);assert(!calls.includes('selection'));assert(!calls.includes('hall'));assert.equal(E('proposalQuestion').textContent,'REPLACEMENT');assert([...document.querySelectorAll('#proposalVote button')].every(b=>!b.disabled&&!b.classList.contains('is-selected')));
+ // The first tie offers fresh buttons and a second cycle, not a hidden discard.
+ proposal={...proposal,vote_cycle:2,yes:0,no:0,has_voted:false};await c.refreshDilemmaProposal();
+ assert(E('proposalRule').textContent.includes('EMPATE'));assert(E('proposalRule').textContent.includes('SORTEO'));
+ assert([...document.querySelectorAll('#proposalVote button')].every(b=>!b.disabled&&!b.classList.contains('is-selected')));
+ await c.voteDilemmaProposal(true);assert.equal(c.lastBallot.p_cycle,2);
+ error={message:'La votación anterior ha empatado. Vota de nuevo.'};await c.voteDilemmaProposal(false);
+ assert.equal(alerts.at(-1),'LA VOTACIÓN HA EMPATADO. LA MESA VOTA DE NUEVO.');error=null;
  // Accepted state is only transitional; no extra host action is displayed.
  proposal={...proposal,status:'accepted',has_voted:true};await c.refreshDilemmaProposal();assert.equal(E('proposalLaunch').style.display,'none');assert.equal(E('proposalPending').textContent,'ABRIENDO VOTACIÓN…');
  // A late ballot informs the user and directly adopts server-side posture voting.
@@ -31,5 +38,5 @@ vm.runInContext(html.slice(html.indexOf('function renderDebateSelection(){'),htm
  // A response for an old room cannot redirect the new room's screen.
  c.currentRoomStatus='waiting';c.currentRoomId=7;screens.length=0;let release;
  c.sb.rpc=()=>new Promise(r=>release=r);const pending=c.refreshDilemmaProposal();c.currentRoomId=8;release({data:{id:3,status:'open',question:'STALE'}});await pending;assert.equal(screens.length,0);
- console.log('R91 UI: automatic random preparation, direct replacement, no intermediate launch, late-vote notice, direct voting and stale response protection passed');
+ console.log('R94 UI: majority label, fresh runoff buttons, cycle-aware votes and stale-round feedback; R91 regressions: automatic random preparation, direct replacement, no intermediate launch, late-vote notice, direct voting and stale response protection passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
