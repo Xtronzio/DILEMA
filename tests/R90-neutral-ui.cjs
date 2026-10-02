@@ -1,0 +1,34 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict');
+const {parseHTML}=require('linkedom');
+const html=fs.readFileSync(process.argv[2]||__dirname+'/../test-v0.1.16.html','utf8');
+const scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]);scripts.forEach(s=>new vm.Script(s));
+const {window}=parseHTML(html),document=window.document,E=id=>document.getElementById(id),callbacks=[];
+const c={document,console,currentRoomMode:'debate',currentRoundId:7,currentRoomHostId:'host',localPlayerId:'host',currentRoundStatus:'reveal',currentUserId:'u1',currentExpectedPlayers:3,localVoteChoice:'N',currentDilemma:{question:'QUESTION',option_a:'OPTION A',option_b:'OPTION B'},assigningRoles:false,setTimeout(){},setInterval(){},sessionStorage:{getItem(){return null},setItem(){}},showScreen(){},renderDebateGroupVote(){},renderDebate(){},announceHallChange(){},r86ActionLocked(){return c.locked},locked:false};c.window=c;
+const originalListen=document.addEventListener.bind(document);document.addEventListener=(name,fn)=>name==='DOMContentLoaded'?callbacks.push(fn):originalListen(name,fn);
+vm.createContext(c);vm.runInContext(html.slice(html.indexOf('function renderVoting('),html.indexOf('async function assignRoles()')),c);
+c.renderVoting({total_votes:2});assert.equal(E('voteNButton').style.display,'block');assert(E('voteNButton').classList.contains('selected'));assert(E('voteStatus').textContent.includes('ESTOY EN DUDA'));
+c.currentRoomMode='game';c.renderVoting({total_votes:0});assert.equal(E('voteNButton').style.display,'none');c.currentRoomMode='debate';
+c.renderResult({total_votes:3,votes_a:1,votes_b:1});assert.equal(E('resultNeutral').textContent,'ESTOY EN DUDA · 1');assert(E('resultNeutral').classList.contains('result-my-vote'));
+let ownChoice='N',priorChoice='N',optional={open:false},calls=[];
+const state={phase:'debate',cycle:1,players:3,total_active:3,votes_a:1,votes_b:1,votes_n:1,mine_choice:'N',request_open:true,context_state:{count:0}};
+c.sb={rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='get_debate_state'?state:name==='get_presence_request'?{my_presence:'present'}:name==='get_optional_debate_revote'?optional:null}},from(table){let cycle;const chain={select(){return chain},eq(k,v){if(k==='cycle_number')cycle=v;return chain},is(){return chain},order(){return chain},gt(){return chain},limit(){return chain},maybeSingle:async()=>({data:table==='debate_vote_cycles'?{choice:cycle===state.cycle?priorChoice:ownChoice}:null}),then(resolve){return Promise.resolve({data:[]}).then(resolve)}};return chain}};
+vm.runInContext(scripts.find(s=>s.includes('function ensurePanel(){')&&s.includes('eventStorageKey')),c);callbacks.splice(0).forEach(f=>f());
+E('debate').classList.add('active');
+(async()=>{
+ await c.pilotRefresh();assert(E('pilotVoteN'));assert.equal(c.dilemaDebateVoteView.votesN,1);
+ optional={open:true,mine_done:false,votes_n:1};await c.pilotRefresh();
+ assert.equal(E('pilotInlineKeep').textContent,'VOTAR A');assert.equal(E('pilotInlineChange').textContent,'VOTAR B');assert.equal(E('pilotInlineNeutral').textContent,'MANTENER · ESTOY EN DUDA');
+ E('pilotInlineNeutral').click();await new Promise(setImmediate);assert(calls.some(([n,a])=>n==='cast_optional_debate_revote'&&a.p_choice==='N'));
+ optional={open:false};state.phase='twist';state.next_votes_n=2;priorChoice='A';ownChoice=null;await c.pilotRefresh();
+ assert.equal(E('pilotInlineKeep').textContent,'MANTENER A');assert.equal(E('pilotInlineChange').textContent,'VOTAR B');assert.equal(E('pilotInlineNeutral').textContent,'ESTOY EN DUDA');assert.equal(c.dilemaDebateVoteView.votesN,2);
+ E('pilotInlineNeutral').click();await new Promise(setImmediate);assert(calls.some(([n,a])=>n==='cast_debate_revote'&&a.p_choice==='N'));
+ // Free first position is in the same decision space and hidden during another process.
+ const stage=document.createElement('div');stage.id='pilotVoteStage';E('debatePilotPanel').prepend(stage);state.phase='debate';state.mine_choice='N';
+ vm.runInContext(scripts.find(s=>s.includes('R90: neutral posture')),c);c.dilemaPresenceView={my_presence:'present'};c.dilemaNeutralPaint();
+ assert.equal(E('r90NeutralPosition').parentElement.id,'pilotVoteStage');assert.equal(E('r90NeutralPosition').style.display,'block');
+ c.locked=true;c.dilemaNeutralPaint();assert.equal(E('r90NeutralPosition').style.display,'none');c.locked=false;c.dilemaNeutralPaint();
+ E('r90NeutralPosition').querySelector('[data-position="A"]').click();await new Promise(setImmediate);assert(calls.some(([n,a])=>n==='cast_debate_neutral_position'&&a.p_choice==='A'));
+ state.mine_choice='A';c.dilemaNeutralPaint();assert.equal(E('r90NeutralPosition').style.display,'none');
+ assert(html.includes("data-admission-choice=\"N\""));assert(html.includes('id="privateVoteN"'));assert(html.includes('TU POSTURA'));
+ console.log('R90 neutral UI: initial/reveal/twist/public votes, free positioning, decision lock, hidden game mode, admission/private controls and instructions passed');
+})().catch(e=>{console.error(e);process.exitCode=1});

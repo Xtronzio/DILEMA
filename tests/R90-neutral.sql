@@ -1,0 +1,70 @@
+begin;
+do $test$
+declare rm bigint;rd bigint;d bigint;x jsonb;pid bigint;n bigint;failed boolean;
+u1 uuid:='00000000-0090-4000-8000-000000000001';u2 uuid:='00000000-0090-4000-8000-000000000002';u3 uuid:='00000000-0090-4000-8000-000000000003';u4 uuid:='00000000-0090-4000-8000-000000000004';
+begin
+ insert into auth.users(id,aud,role,email) values(u1,'authenticated','authenticated','r90-1@example.invalid'),(u2,'authenticated','authenticated','r90-2@example.invalid'),(u3,'authenticated','authenticated','r90-3@example.invalid'),(u4,'authenticated','authenticated','r90-4@example.invalid');
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ insert into public.private_dilemma_sessions(user_id,question,option_a,option_b,choice) values(u1,'PRIVATE TEST','A','B','N');
+ insert into public.rooms(code,host_id,expected_players,mode,status) values('T90N','r90-one',3,'debate','playing') returning id into rm;
+ insert into public.players(room_id,player_id,user_id,name) values(rm,'r90-one',u1,'ONE'),(rm,'r90-two',u2,'TWO'),(rm,'r90-three',u3,'THREE');
+ select min(id) into d from public.dilemmas;
+ insert into public.rounds(room_id,dilemma_id,status,debate_phase) values(rm,d,'reveal','initial_vote') returning id into rd;
+ insert into public.votes(round_id,player_id,user_id,choice) values(rd,'r90-one',u1,'A'),(rd,'r90-two',u2,'B'),(rd,'r90-three',u3,'N');
+ execute 'set local role authenticated';x:=public.start_debate_engine(rd);execute 'reset role';
+ perform public.init_debate_engine(rd);
+ perform set_config('request.jwt.claim.sub',u3::text,true);
+ x:=public.get_debate_state(rd);
+ if x->>'votes_n'<>'1' or x->>'mine_choice'<>'N' or x->>'players'<>'3' then raise exception 'Initial neutral vote lost';end if;
+ if exists(select 1 from public.debate_proclamations where round_id=rd and user_id=u3) or exists(select 1 from public.debate_secret_revotes where round_id=rd and user_id=u3) or exists(select 1 from public.debate_assistant_tokens where round_id=rd and user_id=u3) then raise exception 'Neutral player received tool';end if;
+ failed:=false;begin perform public.propose_debate_twist_vote(rd);exception when others then failed:=true;end;if not failed then raise exception 'Neutral giro allowed';end if;
+ failed:=false;begin perform public.propose_debate_revote(rd);exception when others then failed:=true;end;if not failed then raise exception 'Neutral public revote allowed';end if;
+ failed:=false;begin perform public.request_debate_assistant(rd);exception when others then failed:=true;end;if not failed then raise exception 'Neutral help allowed';end if;
+ failed:=false;begin execute 'set local role authenticated';update public.debate_vote_cycles set choice='A' where round_id=rd and user_id=u3;exception when others then failed:=true;end;execute 'reset role';if not failed then raise exception 'Direct write bypass allowed';end if;
+ select count(*) into n from public.debate_secret_revotes where round_id=rd and used_at is not null;
+ execute 'set local role authenticated';perform public.cast_debate_neutral_position(rd,'A');execute 'reset role';
+ if (select choice from public.debate_vote_cycles where round_id=rd and user_id=u3)<>'A' or (select count(*) from public.debate_secret_revotes where round_id=rd and used_at is not null)<>n then raise exception 'Free position spent resource';end if;
+ failed:=false;begin perform public.cast_debate_neutral_position(rd,'B');exception when others then failed:=true;end;if not failed then raise exception 'Free A/B repeat allowed';end if;
+ -- Collective revote: neutral counts towards completing the cycle.
+ perform set_config('request.jwt.claim.sub',u1::text,true);pid:=public.propose_debate_revote(rd);
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.cast_debate_revote_proposal_vote(rd,'YES');
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.cast_optional_debate_revote(rd,'N');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.cast_optional_debate_revote(rd,'B');
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.cast_optional_debate_revote(rd,'N');
+ if (select vote_cycle from public.rounds where id=rd)<>2 then raise exception 'Neutral does not finish public revote';end if;
+ x:=public.get_debate_state(rd);if x->>'votes_n'<>'2' then raise exception 'Neutral count lost in next cycle';end if;
+ -- A/B owner can spend change-vote on N; neutral can position freely afterwards.
+ perform set_config('request.jwt.claim.sub',u2::text,true);
+ insert into public.debate_secret_revotes(round_id,player_id,user_id,grant_cycle) select rd,'r90-two',u2,2 where not exists(select 1 from public.debate_secret_revotes where round_id=rd and user_id=u2 and used_at is null);
+ perform public.cast_debate_secret_revote(rd,'N');perform public.cast_debate_neutral_position(rd,'B');
+ -- Twist revote accepts neutral and completes; all N is never unanimous A/B.
+ insert into public.debate_twists(round_id,vote_cycle,text,trigger) values(rd,2,'TEST TWIST','requested');
+ update public.rounds set debate_phase='twist' where id=rd;
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.cast_debate_revote(rd,'N');
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.cast_debate_revote(rd,'N');
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.cast_debate_revote(rd,'N');perform public.complete_debate_revote(rd);
+ x:=public.get_debate_state(rd);if x->>'votes_n'<>'3' or x->>'cycle'<>'3' or x->>'phase'<>'debate' then raise exception 'Twist neutral completion failed';end if;
+ failed:=false;begin perform public.cast_debate_unanimity_choice(rd,'FINISH');exception when others then failed:=true;end;if not failed then raise exception 'All neutral treated as A/B consensus';end if;
+ -- Admission and host archive retain neutral.
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.set_debate_admission(rm,true);
+ perform set_config('request.jwt.claim.sub',u4::text,true);pid:=public.request_debate_admission(rm,'r90-new','NEW','⭐','');
+ perform set_config('request.jwt.claim.sub',u1::text,true);perform public.vote_debate_admission(rd,pid,true);
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.vote_debate_admission(rd,pid,true);
+ perform set_config('request.jwt.claim.sub',u4::text,true);perform public.debate_admission_initial_vote(rd,'N');
+ x:=public.get_debate_state(rd);if x->>'votes_n'<>'4' then raise exception 'Admission N failed';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ update public.rounds set paused=true where id=rd;
+ x:=public.debate_session_action(rm,'save');pid:=(x->'proposal'->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_session_action(rm,'vote',null,pid,true);
+ perform set_config('request.jwt.claim.sub',u3::text,true);x:=public.debate_session_action(rm,'vote',null,pid,true);
+ if x->>'room_status'<>'waiting' or not exists(select 1 from public.saved_group_dilemmas where source_round_id=rd and user_id=u1 and choice='N' and session_state='paused') then raise exception 'Neutral paused session lost';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);x:=public.debate_session_action(rm,'resume',(x->'sessions'->0->>'id')::bigint);pid:=(x->'proposal'->>'id')::bigint;
+ perform set_config('request.jwt.claim.sub',u2::text,true);perform public.debate_session_action(rm,'vote',null,pid,true);
+ perform set_config('request.jwt.claim.sub',u3::text,true);perform public.debate_session_action(rm,'vote',null,pid,true);
+ if (select status from public.rounds where id=rd)<>'debate' or (select choice from public.debate_vote_cycles where round_id=rd and cycle_number=3 and user_id=u1)<>'N' then raise exception 'Neutral resume failed';end if;
+ perform set_config('request.jwt.claim.sub',u1::text,true);
+ update public.rounds set status='finished',debate_phase='finished' where id=rd;
+ if not exists(select 1 from public.saved_group_dilemmas where source_round_id=rd and user_id=u1 and choice='N') then raise exception 'Neutral archive lost';end if;
+ raise notice 'R90 neutral initial/public/twist/individual votes, tool gating, authenticated permissions, admission and archive passed';
+end $test$;
+rollback;

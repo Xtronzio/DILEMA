@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R88</div>
+    <div class="version">DILEMA · V0.1.16-010C-R90</div>
   </main>
 
 
@@ -1814,6 +1814,8 @@
       <strong>B</strong>
       <span id="gameOptionB"></span>
     </button>
+
+    <button id="voteNButton" class="vote-option neutral-option" onclick="castVote('N')" style="display:none"><strong>ESTOY EN DUDA</strong><span>Aún no tengo una opinión.</span></button>
 
     <div id="voteStatus" class="vote-status">
       VOTA EN SECRETO
@@ -5116,6 +5118,9 @@ function scheduleRevealIfReady(
 function renderVoting(
   voteCount
 ) {
+  const neutral=document.getElementById('voteNButton');
+  neutral.style.display=currentRoomMode==='debate'?'block':'none';neutral.disabled=false;
+  neutral.classList.toggle('selected',localVoteChoice==='N');neutral.setAttribute('aria-pressed',String(localVoteChoice==='N'));
 
   document
     .getElementById(
@@ -5208,8 +5213,8 @@ function renderVoting(
       localVoteChoice
         ? (
             allVoted
-              ? `HAS VOTADO ${localVoteChoice} · TODOS HAN VOTADO · CERRANDO...`
-              : `HAS VOTADO ${localVoteChoice} · TOCA DE NUEVO PARA DESVOTAR`
+              ? `HAS VOTADO ${localVoteChoice==='N'?'ESTOY EN DUDA':localVoteChoice} · TODOS HAN VOTADO · CERRANDO...`
+              : `HAS VOTADO ${localVoteChoice==='N'?'ESTOY EN DUDA':localVoteChoice} · TOCA DE NUEVO PARA DESVOTAR`
           )
         : "VOTA EN SECRETO";
 
@@ -5223,6 +5228,11 @@ function renderVoting(
 function renderResult(
   voteCount
 ) {
+  let neutral=document.getElementById('resultNeutral');
+  if(!neutral){neutral=document.createElement('div');neutral.id='resultNeutral';neutral.className='neutral-result';document.querySelector('#result .result-box').insertAdjacentElement('afterend',neutral)}
+  neutral.style.display=currentRoomMode==='debate'?'block':'none';
+  neutral.textContent='ESTOY EN DUDA · '+Math.max(0,Number(voteCount?.total_votes||0)-Number(voteCount?.votes_a||0)-Number(voteCount?.votes_b||0));
+  neutral.classList.toggle('result-my-vote',localVoteChoice==='N');
 
   document
     .getElementById(
@@ -5701,6 +5711,7 @@ async function renderDebateGroupVote() {
       votesA=Number(voteCount.votes_a||0);votesB=Number(voteCount.votes_b||0);
     }else{target.textContent="EL GRUPO HA VOTADO";return;}
   }
+  if(votesA===0&&votesB===0&&Number(view?.votesN)>0){target.textContent="LA MESA ESTÁ EN DUDA";return;}
   if(votesA===votesB){target.textContent="EL GRUPO ESTÁ DIVIDIDO";return;}
   target.innerHTML='EL GRUPO HA VOTADO <span class="majority-choice">'+(votesA>votesB?"A":"B")+'</span>';
 }
@@ -5789,6 +5800,7 @@ function renderDebate() {
 async function castVote(
   choice
 ) {
+ if(!['A','B','N'].includes(choice)||(choice==='N'&&currentRoomMode!=='debate'))return;
 
   if (
     !currentRoundId ||
@@ -6896,18 +6908,19 @@ window.addEventListener(
     '<div class="pilot-main-actions"><button id="pilotGiroBtn" class="btn btn-secondary" onclick="pilotRequestTwist()" disabled>PEDIR GIRO</button>'+
     '<button id="pilotRevoteRequestBtn" class="btn btn-secondary" type="button" onclick="pilotRequestRevote()" disabled>PEDIR RE-VOTO</button>'+
     '<button id="pilotEndBtn" class="btn btn-secondary" onclick="pilotProposeClose()" disabled>FIN DEBATE</button></div>'+
-    '<div id="pilotOptionalRevoteHint" class="pilot-twist" style="display:none"></div>'+    '<div id="pilotInlineRevote" class="pilot-inline-revote" style="display:none"><b id="pilotInlineRevoteTitle"></b><p id="pilotInlineRevoteText"></p><div class="pilot-inline-revote-actions"><button type="button" id="pilotInlineKeep"></button><button type="button" id="pilotInlineChange"></button></div></div>'+
+    '<div id="pilotOptionalRevoteHint" class="pilot-twist" style="display:none"></div>'+    '<div id="pilotInlineRevote" class="pilot-inline-revote" style="display:none"><b id="pilotInlineRevoteTitle"></b><p id="pilotInlineRevoteText"></p><div class="pilot-inline-revote-actions"><button type="button" id="pilotInlineKeep"></button><button type="button" id="pilotInlineChange"></button><button id="pilotInlineNeutral" type="button" class="neutral-wide">ESTOY EN DUDA</button></div></div>'+
     '<div id="pilotGiroVoteBox"><p>ALGUIEN HA PROPUESTO DARLE UN GIRO AL DEBATE.<br>¿LE DAMOS UNA VUELTA?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-giro-vote="YES" onclick="pilotGiroVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-giro-vote="NO" onclick="pilotGiroVote(\'NO\')">NO</button></div></div>'+
     '<div id="pilotPauseProposal" class="pilot-proposal-box" style="display:none"><p id="pilotPauseProposalText"></p><div class="pilot-actions"><button type="button" data-pause-vote="YES" onclick="pilotVotePause(\'YES\')">SÍ</button><button type="button" data-pause-vote="NO" onclick="pilotVotePause(\'NO\')">NO</button></div><small id="pilotPauseProgress" class="giro-progress"></small></div>'+
     '<div id="pilotGroupRevoteProposal" class="pilot-proposal-box" style="display:none"><p>ALGUIEN PROPONE ABRIR UN RE-VOTO PARA LA MESA.<br>¿LO ABRIMOS?</p><div class="pilot-actions"><button type="button" data-group-revote="YES" onclick="pilotVoteGroupRevote(\'YES\')">SÍ</button><button type="button" data-group-revote="NO" onclick="pilotVoteGroupRevote(\'NO\')">NO</button></div><small id="pilotGroupRevoteProgress" class="giro-progress"></small></div>'+
     '<button id="pilotSecretRevoteAction" class="btn btn-secondary" type="button" onclick="pilotToggleSecretRevote()" style="display:none" disabled>CAMBIAR MI VOTO · 0/1</button>'+
-    '<div id="pilotSecretRevotePicker" class="pilot-proposal-box" style="display:none"><p>CAMBIAR MI VOTO</p><small>ELIGE TU POSTURA. MANTENER TU VOTO CONSERVA EL RECURSO; SI CAMBIAS, LA MESA VERÁ EL RECUENTO, NO TU NOMBRE.</small><div class="pilot-actions"><button type="button" data-secret-choice="A" onclick="pilotCastSecretRevote(\'A\')">CAMBIAR A A</button><button type="button" data-secret-choice="B" onclick="pilotCastSecretRevote(\'B\')">CAMBIAR A B</button></div></div>'+
+    '<div id="pilotSecretRevotePicker" class="pilot-proposal-box" style="display:none"><p>CAMBIAR MI VOTO</p><small>ELIGE TU POSTURA. MANTENER TU VOTO CONSERVA EL RECURSO; SI CAMBIAS, LA MESA VERÁ EL RECUENTO, NO TU NOMBRE.</small><div class="pilot-actions"><button type="button" data-secret-choice="A" onclick="pilotCastSecretRevote(\'A\')">CAMBIAR A A</button><button type="button" data-secret-choice="B" onclick="pilotCastSecretRevote(\'B\')">CAMBIAR A B</button><button type="button" class="neutral-wide" data-secret-choice="N" onclick="pilotCastSecretRevote(\'N\')">ESTOY EN DUDA</button></div></div>'+
     '<div id="pilotPresenceRequestBox" class="pilot-presence-request-box"></div>'+
     '<div id="pilotCloseBox"><p>ALGUIEN QUIERE PONER FIN AL DEBATE.<br>¿LO DAMOS POR TERMINADO?</p>'+
       '<div class="pilot-actions"><button class="btn btn-secondary" data-close="YES" onclick="pilotCloseVote(\'YES\')">SÍ</button><button class="btn btn-secondary" data-close="NO" onclick="pilotCloseVote(\'NO\')">NO</button></div><small id="pilotCloseProgress" class="giro-progress"></small></div>';
    const note=debate.querySelector(".small-note");
    if(note) note.insertAdjacentElement("afterend",panel); else debate.appendChild(panel);
+   if(!el("pilotVoteN")){const n=document.createElement("div");n.id="pilotVoteN";n.className="neutral-result";n.innerHTML='ESTOY EN DUDA · <span id="pilotCountN">0</span>';debate.querySelector('.debate-options')?.insertAdjacentElement('afterend',n)}
    const oa=debate.querySelector(".debate-option:nth-child(1)"),ob=debate.querySelector(".debate-option:nth-child(2)");
    if(oa){oa.id="pilotVoteA";oa.onclick=null;oa.removeAttribute("role");oa.insertAdjacentHTML("beforeend",'<div id="pilotCountA" class="pilot-vote-count">0</div>');}
    if(ob){ob.id="pilotVoteB";ob.onclick=null;ob.removeAttribute("role");ob.insertAdjacentHTML("beforeend",'<div id="pilotCountB" class="pilot-vote-count">0</div>');}
@@ -7031,7 +7044,7 @@ window.addEventListener(
         });
       }
     }
-    window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen||twistRevote,votesA:s.votes_a,votesB:s.votes_b};
+    window.dilemaDebateVoteView={roundId:currentRoundId,revoteOpen:optionalOpen||twistRevote,votesA:s.votes_a,votesB:s.votes_b,votesN:twistRevote?(s.next_votes_n||0):(optionalOpen?(optionalRevote.votes_n||0):(s.votes_n||0))};
     window.dilemaAssistantState={roundId:currentRoundId,cycle:s.cycle,active:s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen};
     renderDebateGroupVote();
     const ca=el("pilotCountA"),cbn=el("pilotCountB"),va=el("pilotVoteA"),vb=el("pilotVoteB");
@@ -7063,16 +7076,19 @@ window.addEventListener(
             s.resume_new_vote?"RETOMAMOS EL DEBATE CON UNA NUEVA MESA. ELIGE TU POSTURA.":twistRevote?"CON ESTE GIRO, ¿SIGUES PENSANDO LO MISMO?":"¿MANTIENES TU POSTURA?";
           const keep=el("pilotInlineKeep"),change=el("pilotInlineChange");
           const original=before==="B"?"B":"A",opposite=original==="A"?"B":"A";
-          keep.textContent=before?"MANTENER "+original:"VOTAR A";change.textContent=before?"VOTAR "+opposite:"VOTAR B";
+          const positioned=["A","B"].includes(before),neutral=el("pilotInlineNeutral");
+          keep.textContent=positioned?"MANTENER "+original:"VOTAR A";change.textContent=positioned?"VOTAR "+opposite:"VOTAR B";
+          neutral.textContent=before==="N"?"MANTENER · ESTOY EN DUDA":"ESTOY EN DUDA";neutral.disabled=completed;
           keep.disabled=change.disabled=completed;
           const cast=twistRevote?pilotRevoteChoice:pilotOptionalRevote;
-          keep.onclick=()=>{keep.disabled=change.disabled=true;cast(before?original:"A")};
-          change.onclick=()=>{keep.disabled=change.disabled=true;cast(before?opposite:"B")};
+          keep.onclick=()=>{keep.disabled=change.disabled=neutral.disabled=true;cast(positioned?original:"A")};
+          change.onclick=()=>{keep.disabled=change.disabled=neutral.disabled=true;cast(positioned?opposite:"B")};
+          neutral.onclick=()=>{keep.disabled=change.disabled=neutral.disabled=true;cast("N")};
         }
       }
       va.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="A");
       vb.classList.toggle("pilot-my-vote",(!optionalOpen||optionalRevote.mine_done)&&!!my.data&&my.data.choice==="B");
-      const complete=!optionalOpen&&!twistRevote&&(Number(s.votes_a)+Number(s.votes_b))>=Number(s.players)&&Number(s.players)>0;
+      const complete=!optionalOpen&&!twistRevote&&(Number(s.votes_a)+Number(s.votes_b)+Number(s.votes_n||0))>=Number(s.players)&&Number(s.players)>0;
       const split=Number(s.votes_a)!==Number(s.votes_b);
       va.classList.toggle("pilot-win",complete&&split&&Number(s.votes_a)>Number(s.votes_b));
       vb.classList.toggle("pilot-win",complete&&split&&Number(s.votes_b)>Number(s.votes_a));
@@ -7146,7 +7162,7 @@ window.addEventListener(
       secretPicker.dataset.currentChoice=currentChoice||"";
       secretPicker.querySelectorAll("[data-secret-choice]").forEach(button=>{
         const choice=button.dataset.secretChoice;
-        button.textContent=choice===currentChoice?"MANTENER "+choice:"VOTAR "+choice;
+        button.textContent=choice==="N"?"ESTOY EN DUDA":choice===currentChoice?"MANTENER "+choice:"VOTAR "+choice;
         button.disabled=!secretReady||!currentChoice;
       });
     }
@@ -8147,8 +8163,9 @@ document.addEventListener("DOMContentLoaded",()=>{
   groups.push({title:'LIMBO',entries:[['PROPONER LIMBO','Elige otro participante y una duración: 3, 5, 10 minutos o hasta el fin del debate. Decide la mayoría del resto de participantes presentes: el destinatario no vota y quien propone ya vota SÍ. Solo está disponible con tres o más participantes presentes. No puede abrirse mientras haya otra decisión pendiente.'],['ESTÁS EN EL LIMBO','Quedas ausente y Solicitar volver permanece bloqueado durante el plazo. La cuenta atrás continúa aunque pauses o recargues. Al terminar puedes pedir volver: no te reincorporas automáticamente. Si eras anfitrión, el papel pasa a otro participante presente. El limbo termina al finalizar el debate.']]});
   groups.push({title:'DILEMAS POR EL MUNDO',entries:[['DILEMAS POR EL MUNDO','Elige TEENS, intensidad y, si quieres, categoría. Prioriza noticias de España y amplía al exterior cuando no haya suficientes noticias españolas válidas. Si la búsqueda falla, propone noticias guardadas o dilemas del catálogo, identificando su origen. La intensidad orienta la adaptación y no bloquea las propuestas. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
   groups.push({title:'GUARDAR Y RETOMAR',entries:[['GUARDAR Y VOLVER AL HALL','Disponible con el debate pausado. Se propone a la mesa y decide la mayoría. Conserva el dilema, contexto aprobado, giros, votos y herramientas; libera la sala para otro debate. El anfitrión conserva el dilema marcado GRUP · PAUSADO en Mis dilemas.'],['DEBATES PAUSADOS','En el hall de la misma sala se muestran las sesiones guardadas. El anfitrión propone retomar y decide la mayoría. Con los mismos participantes se recupera el estado anterior. Si la mesa ha cambiado, todos vuelven a votar y las herramientas se sortean al completar la votación. Las ayudas y mensajes personales siguen siendo privados.']]});
-  groups.push({title:'ENTRADA A LA MESA',entries:[['AÑADIR DEBATIENTE · CERRAR ENTRADA','El anfitrión abre o cierra la entrada durante el debate. Quien use el código solicita una plaza; la mesa decide por mayoría. Si hay otra decisión en curso, la solicitud espera. El solicitante no vota su propia entrada. Cerrar la entrada impide nuevas solicitudes; las ya enviadas siguen su turno.'],['TU PRIMER VOTO','Al aprobar tu entrada eliges A o B en el espacio amarillo. El resto conserva sus votos y herramientas.'],['DESCARTAR Y BUSCAR OTROS','En Dilemas por el mundo puedes votar por descartar las propuestas. Si gana, se ofrecen otras. En privado descartas directamente. Se recuerda el conflicto de la noticia para evitar repetirlo aunque cambie su redacción.']]});
-  groups.unshift({title:'MI TABLERO Y CAJONES',entries:[['MI TABLERO','Las herramientas personales disponibles aparecen aquí: proclama, cambio de voto y nueva ayuda del asistente. El limbo grupal también aparece aquí cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Huida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN EN PREPARACIÓN','Limbo individual, Robo, Señuelo, Cambio tu voto, Espejo y Antídoto aparecen identificados como en preparación: todavía no se sortean.']]});
+  groups.push({title:'ENTRADA A LA MESA',entries:[['AÑADIR DEBATIENTE · CERRAR ENTRADA','El anfitrión abre o cierra la entrada durante el debate. Quien use el código solicita una plaza; la mesa decide por mayoría. Si hay otra decisión en curso, la solicitud espera. El solicitante no vota su propia entrada. Cerrar la entrada impide nuevas solicitudes; las ya enviadas siguen su turno.'],['TU PRIMER VOTO','Al aprobar tu entrada eliges A, B o ESTOY EN DUDA en el espacio amarillo. El resto conserva sus votos y herramientas.'],['DESCARTAR Y BUSCAR OTROS','En Dilemas por el mundo puedes votar por descartar las propuestas. Si gana, se ofrecen otras. En privado descartas directamente. Se recuerda el conflicto de la noticia para evitar repetirlo aunque cambie su redacción.']]});
+  groups.unshift({title:'TU POSTURA',entries:[['A · B · ESTOY EN DUDA','ESTOY EN DUDA cuenta como voto neutral. Sigues en la mesa y puedes votar sus decisiones. Las herramientas de acción y ayuda se activan al elegir A o B. Si estás en duda, puedes posicionarte gratis cuando no haya otra decisión pendiente. Para volver a cambiar entre A/B, necesitas tu cambio de voto o un re-voto aprobado.']]});
+  groups.unshift({title:'INVENTARIO DISPONIBLE Y CAJONES',entries:[['INVENTARIO DISPONIBLE','Aquí aparecen las herramientas sorteadas o robadas que tienes y las acciones disponibles: proclama, cambio de voto, asistente, giro, re-voto y limbo grupal cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Huida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN EN PREPARACIÓN','Limbo individual, Robo, Señuelo, Cambio tu voto, Espejo y Antídoto aparecen identificados como en preparación: todavía no se sortean.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -8307,6 +8324,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   <button id="privateVoteA" onclick="choosePrivatePosture('A')" aria-pressed="false"><b>A</b><span id="privateOptionA"></span></button>
   <button id="privateVoteB" onclick="choosePrivatePosture('B')" aria-pressed="false"><b>B</b><span id="privateOptionB"></span></button>
  </div>
+ <button id="privateVoteN" class="btn btn-secondary" onclick="choosePrivatePosture('N')" aria-pressed="false">ESTOY EN DUDA</button>
  <p id="privateChoiceNote" class="private-note"></p>
  <button id="privateHelp" class="btn btn-secondary" disabled>AYÚDAME A PENSAR</button>
  <button id="privateHistory" class="btn btn-secondary" onclick="openPrivateHelpHistory()">MIS AYUDAS GUARDADAS</button>
@@ -8339,7 +8357,7 @@ function renderPrivateDilemma(){
  if(contextField&&contextField.dataset.session!==privateDilemma.id){contextField.dataset.session=privateDilemma.id;contextField.value=privateDilemma.context||"";window.syncCharacterCounters?.()}
  document.getElementById("privateOptionA").textContent=privateDilemma.option_a;
  document.getElementById("privateOptionB").textContent=privateDilemma.option_b;
- for(const choice of ["A","B"]){
+ for(const choice of ["A","B","N"]){
   const b=document.getElementById("privateVote"+choice);
   b.classList.toggle("selected",privateDilemma.choice===choice);
   b.setAttribute("aria-pressed",String(privateDilemma.choice===choice));b.disabled=privateBusy;
@@ -8348,10 +8366,10 @@ function renderPrivateDilemma(){
  const historyCounts=guideHistoryCounts(privateGuides,privateDilemma.choice);
  document.getElementById("privateHistory").disabled=privateBusy||!historyCounts.matching;
  document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS · "+historyCounts.matching+"/"+historyCounts.total;
- document.getElementById("privateChoiceNote").textContent=chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
+ document.getElementById("privateChoiceNote").textContent=chosen==="N"?"ESTÁS EN DUDA · ELIGE A O B PARA ABRIR TU GUÍA":chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
  const help=document.getElementById("privateHelp");
  const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide&&g.signature===JSON.stringify([privateDilemma.question,privateDilemma.option_a,privateDilemma.option_b,privateDilemma.context||""]));
- help.disabled=privateBusy||!chosen;
+ help.disabled=privateBusy||!["A","B"].includes(chosen);
  help.textContent=privateBusy?"PREPARANDO…":hasGuide?"SIGO DUDANDO · OTRA PERSPECTIVA":"AYÚDAME A PENSAR";
  help.onclick=()=>openPrivateHelp(hasGuide);
  showScreen("privateBoard");
@@ -8390,7 +8408,7 @@ async function choosePrivatePosture(choice){
  finally{if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}}
 }
 async function openPrivateHelp(newPerspective=false){
- if(privateBusy||!privateDilemma?.choice)return;
+ if(privateBusy||!["A","B"].includes(privateDilemma?.choice))return;
  privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
  document.getElementById("privateBoardError").textContent="";
  try{
@@ -8912,7 +8930,7 @@ function renderSavedDilemmas(){
   const resume=document.createElement('button');resume.type='button';resume.className='btn btn-secondary';resume.textContent=row.origin==='PRIV'?'RETOMAR':'VER DILEMA';resume.onclick=()=>openSavedDilemma(row);
   const discard=document.createElement('button');discard.type='button';discard.className='btn btn-danger';discard.textContent='DESCARTAR';discard.onclick=()=>requestSavedDiscard(row);
   actions.append(resume,discard);card.append(meta,copy);
-  if(['A','B'].includes(row.choice)){const last=document.createElement('p');last.className='saved-last-vote';last.textContent='TU ÚLTIMO VOTO · '+row.choice;card.appendChild(last)}
+  if(['A','B','N'].includes(row.choice)){const last=document.createElement('p');last.className='saved-last-vote';last.textContent='TU ÚLTIMO VOTO · '+(row.choice==='N'?'ESTOY EN DUDA':row.choice);card.appendChild(last)}
   card.appendChild(actions);root.appendChild(card);
  }
 }
@@ -8932,7 +8950,7 @@ async function openSavedDilemma(row){
    renderDilemmaCopy(document.getElementById('savedGroupQuestion'),data.question);
    document.getElementById('savedGroupA').textContent=data.option_a;document.getElementById('savedGroupB').textContent=data.option_b;
    for(const choice of ['A','B']){const option=document.getElementById('savedGroup'+choice).parentElement;option.classList.toggle('saved-last-choice',data.choice===choice);if(data.choice===choice)option.setAttribute('aria-current','true');else option.removeAttribute('aria-current')}
-   document.getElementById('savedGroupLastVote').textContent=['A','B'].includes(data.choice)?'TU ÚLTIMO VOTO · '+data.choice:'SIN VOTO GUARDADO';
+   document.getElementById('savedGroupLastVote').textContent=['A','B','N'].includes(data.choice)?'TU ÚLTIMO VOTO · '+(data.choice==='N'?'ESTOY EN DUDA':data.choice):'SIN VOTO GUARDADO';
    document.getElementById('savedGroupContext').style.display=data.context?'block':'none';document.getElementById('savedGroupContext').open=false;
    document.getElementById('savedGroupContextText').textContent=data.context||'';
    const guides=document.getElementById('savedGroupGuides');guides.textContent='MIS AYUDAS GUARDADAS · '+(data.guides?.length||0);guides.disabled=!data.guides?.length;
@@ -9392,7 +9410,7 @@ async function leaveNewAdmission(){
   const stage=E('pilotVoteStage');if(!stage)return;
   if(!E('pilotAdmissionVoteBox')){const n=document.createElement('div');n.id='pilotAdmissionVoteBox';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ NUEVO DEBATIENTE</h2><p data-admission-question></p><p class="r82-count"></p><div class="limbo-actions"><button type="button" data-admission-vote="yes">SÍ</button><button type="button" data-admission-vote="no">NO</button></div>';stage.appendChild(n);n.querySelectorAll('button').forEach(b=>b.onclick=()=>vote(b.dataset.admissionVote==='yes'))}
   if(!E('pilotAdmissionAwaitingChoice')){const n=document.createElement('div');n.id='pilotAdmissionAwaitingChoice';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ ENTRADA APROBADA</h2><p>Esperando el primer voto del nuevo debatiente.</p>';stage.appendChild(n)}
-  if(!E('pilotAdmissionInitialVote')){const n=document.createElement('div');n.id='pilotAdmissionInitialVote';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ TU PRIMER VOTO</h2><p>Ya estás en la mesa. Elige tu postura para incorporarte al debate.</p><div class="limbo-actions"><button type="button" data-admission-choice="A">VOTAR A</button><button type="button" data-admission-choice="B">VOTAR B</button></div>';stage.appendChild(n);n.querySelectorAll('button').forEach(b=>b.onclick=()=>initialVote(b.dataset.admissionChoice))}
+  if(!E('pilotAdmissionInitialVote')){const n=document.createElement('div');n.id='pilotAdmissionInitialVote';n.className='r82-card';n.style.display='none';n.innerHTML='<h2>⚠ TU PRIMER VOTO</h2><p>Ya estás en la mesa. Elige tu postura para incorporarte al debate.</p><div class="limbo-actions"><button type="button" data-admission-choice="A">VOTAR A</button><button type="button" data-admission-choice="B">VOTAR B</button><button type="button" class="neutral-wide" data-admission-choice="N">ESTOY EN DUDA</button></div>';stage.appendChild(n);n.querySelectorAll('button').forEach(b=>b.onclick=()=>initialVote(b.dataset.admissionChoice))}
  }
  function paint(){
   if(!E('debate')?.classList.contains('active'))return;ensure();const s=snapshot();if(!s)return;
@@ -9401,7 +9419,7 @@ async function leaveNewAdmission(){
   const box=E('pilotAdmissionVoteBox');box.style.display=s.id?'block':'none';
   if(s.id){box.querySelector('[data-admission-question]').textContent=s.name+' HA ENTRADO EN LA SALA Y SOLICITA UNIRSE A LA MESA. ¿LE DAMOS PASO?';box.querySelector('.r82-count').textContent=(s.yes+s.no)+' / '+s.players+' HAN VOTADO · MAYORÍA DECIDE';box.querySelectorAll('button').forEach(b=>{b.disabled=voting||!s.present||s.mine!==null;b.classList.toggle('pilot-selected',s.mine!==null&&s.mine===(b.dataset.admissionVote==='yes'))})}
   E('pilotAdmissionAwaitingChoice').style.display=s.waiting_votes>0&&!s.needs_vote&&!s.id?'block':'none';
-  const initial=E('pilotAdmissionInitialVote');initial.style.display=s.needs_vote&&s.present&&!s.id?'block':'none';initial.querySelectorAll('button').forEach(b=>{b.disabled=voting||!s.present||!s.can_vote;b.textContent='VOTAR '+b.dataset.admissionChoice+' · '+(currentDilemma?.[b.dataset.admissionChoice==='A'?'option_a':'option_b']||'')});
+  const initial=E('pilotAdmissionInitialVote');initial.style.display=s.needs_vote&&s.present&&!s.id?'block':'none';initial.querySelectorAll('button').forEach(b=>{b.disabled=voting||!s.present||!s.can_vote;b.textContent=b.dataset.admissionChoice==='N'?'ESTOY EN DUDA':'VOTAR '+b.dataset.admissionChoice+' · '+(currentDilemma?.[b.dataset.admissionChoice==='A'?'option_a':'option_b']||'')});
   if(s.id||s.waiting_votes>0||(s.needs_vote&&s.present)){
    E('debatePilotPanel')?.classList.add('pilot-process-locked');
    document.querySelectorAll('#pilotActionGrid > button,#pilotAssistantActions > button,#pilotContextRequest').forEach(b=>{if(b.id!=='pilotAbandonBtn'&&!(s.waiting_votes>0&&!s.id&&b.id==='pilotAbsentBtn'))b.disabled=true});
@@ -9450,6 +9468,7 @@ function r86ActionLocked(id){
  if(id==='pilotAbandonBtn'||id==='pilotAssistantHistory')return false;
  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
  const admission=window.dilemaAdmissionSnapshot?.round===currentRoundId?window.dilemaAdmissionSnapshot.data:null;
+ if(state?.mine_choice==='N'&&['pilotGiroBtn','pilotRevoteRequestBtn','pilotSecretRevoteAction','pilotProclamaBtn','pilotAssistantOpen','pilotAssistantRequest','pilotLimboAction'].includes(id))return true;
  if(r86SessionProposal())return true;
  if(admission?.id||admission?.needs_vote)return true;
  if(admission?.waiting_votes>0)return id!=='pilotAbsentBtn';
@@ -9555,10 +9574,23 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* R88: compact workbench, drawers and shared reference space. */
 #r88SourceBank[hidden],#r88Drawer[hidden],.r88-frame [hidden],#r88Drawer [hidden]{display:none!important}
 #debatePilotPanel .r88-frame{border:1px solid #383838;border-radius:14px;padding:15px;margin:16px 0 0;width:100%;background:#0b0b0b;box-shadow:none}
+#debatePilotPanel #r88Workbench{border-color:#ec4899;box-shadow:0 0 0 1px #ec489944}
+#debatePilotPanel #r88Workbench>.r88-heading{color:#f472b6}
 #debatePilotPanel .r88-heading{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#aaa;text-align:center;line-height:1.4;margin:0 0 14px}
+#debatePilotPanel .r88-collapsible{padding:0;overflow:hidden}
+#debatePilotPanel .r88-collapsible>.r88-heading{display:flex;align-items:center;justify-content:center;gap:10px;min-height:45px;margin:0;padding:13px 15px;cursor:pointer;list-style:none}
+#debatePilotPanel .r88-collapsible>.r88-heading::-webkit-details-marker{display:none}
+#debatePilotPanel .r88-collapsible>.r88-heading::after{content:'+';font-size:16px;line-height:1}
+#debatePilotPanel .r88-collapsible[open]>.r88-heading::after{content:'−'}
+#r88ResourcesContent{padding:0 15px 15px}
 .r88-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .r88-button,#r88Drawer button{border:1px solid #555;border-radius:11px;background:#0b0b0b;color:#fff;min-height:49px;min-width:0;width:100%;padding:11px 8px;font:inherit;font-size:11px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere;animation:none!important;transition:none!important;box-shadow:none!important;outline:0}
 .r88-button .r88-symbol{display:none}
+.r88-drawer-medicine,.r88-drawer-action,.r88-drawer-help{display:flex;align-items:center;justify-content:center;gap:8px}
+.r88-drawer-medicine .r88-symbol,.r88-drawer-action .r88-symbol,.r88-drawer-help .r88-symbol{display:inline-block;font-size:18px;line-height:1}
+.r88-drawer-medicine .r88-symbol{color:#ff4b61}
+.r88-drawer-action .r88-symbol{color:#ff9a34}
+.r88-drawer-help .r88-symbol{color:#65c9c5}
 .r88-button .r88-count{display:none}
 .r88-button:disabled,#r88Drawer button:disabled{background:#0b0b0b;color:#666;border-color:#303030;cursor:default;opacity:1;filter:grayscale(1)}
 .r88-button:focus-visible,#r88Drawer button:focus-visible{outline:2px solid #facc15;outline-offset:3px}
@@ -9573,6 +9605,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 .r88-icons .r88-grid{grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:8px}
 .r88-icons .r88-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:49px;padding:6px 5px}
 .r88-icons .r88-button .r88-symbol{display:block;font-size:22px;font-weight:400;line-height:1}
+.r88-icons .r88-drawer-medicine .r88-symbol{color:#ff4b61}
+.r88-icons .r88-drawer-action .r88-symbol{color:#ff9a34}
+.r88-icons .r88-drawer-help .r88-symbol{color:#65c9c5}
 .r88-icons .r88-button .r88-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .r88-icons .r88-button .r88-count:not([hidden]){display:block;color:inherit;font-size:10px;line-height:1.3}
 #r88Drawer.r88-icons .r88-item .r88-button{flex-direction:row;justify-content:flex-start;gap:12px}
@@ -9598,8 +9633,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 #debatePilotPanel #pilotInstructionsBtn{border:0;border-radius:14px;min-height:49px;margin:0}
 #debatePilotPanel #pilotHostGroup.r88-host{margin-top:16px!important}
 @media(max-width:360px){#debatePilotPanel .r88-frame{padding:12px}.r88-button{font-size:10px}.r88-dialog{padding:16px}}
-
-</style>
+@media(max-width:360px){#debatePilotPanel #r88Resources.r88-collapsible{padding:0}#r88ResourcesContent{padding:0 12px 12px}}</style>
 <script>
 /* R88: one workbench, four drawers, existing server-authorized actions. */
 (function(){
@@ -9608,8 +9642,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  const actions=[
   {id:'pilotProclamaBtn',drawer:'action',icon:'📣',name:'PROCLAMAR',resource:true,description:'Escribe una proclama y elige a quién enviarla.',empty:'No tienes una proclama disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
   {id:'pilotSecretRevoteAction',drawer:'action',icon:'↔',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
-  {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
-  {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
+  {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',shortcut:true,description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
+  {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',shortcut:true,description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
   {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
   {id:'pilotPauseAction',drawer:'escape',icon:'⏸',name:'SOLICITAR PAUSA',description:'Propón pausar o reanudar el debate. Decide la mayoría.'},
   {id:'pilotSaveSession',drawer:'escape',icon:'▣',name:'GUARDAR Y VOLVER AL HALL',description:'Con el debate pausado, propone guardarlo para retomarlo en esta sala.'},
@@ -9628,10 +9662,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   {name:'ANTÍDOTO',type:'PÍLDORA',icon:'💊',description:'Neutraliza el efecto de una pócima.'}
  ];
  const drawers=[
-  {key:'medicine',name:'BOTIQUÍN',icon:'🧪',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
+  {key:'medicine',name:'BOTIQUÍN',icon:'✚',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
   {key:'escape',name:'HUIDA',icon:'⇥',note:'Ausentarte, pausar, guardar o salir del debate.'},
-  {key:'help',name:'AYUDA',icon:'?',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
-  {key:'action',name:'ACCIÓN',icon:'↪',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu tablero.'}
+  {key:'help',name:'AYUDA',icon:'🛟',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
+  {key:'action',name:'ACCIÓN',icon:'💥',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu inventario.'}
  ];
  let opened=null,returnFocus=null,scheduled=false,fullRefresh=null,preferenceUser=null,compact=false;
  const setText=(node,value)=>{if(node&&node.textContent!==value)node.textContent=value};
@@ -9660,6 +9694,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   return false;
  }
  function reason(action){
+  if(window.dilemaBoardSnapshot?.round===currentRoundId&&window.dilemaBoardSnapshot.data.mine_choice==='N'&&action.drawer!=='escape')return 'Elige A o B para activar las herramientas del debate.';
   if(action.resource&&!owned(action))return action.empty;
   const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
   if(action.id==='pilotSaveSession'&&!state?.paused)return 'Disponible cuando el debate está pausado.';
@@ -9706,23 +9741,32 @@ document.addEventListener('DOMContentLoaded',()=>{
   box.setAttribute('aria-labelledby',id+'Title');
   const heading=document.createElement('h2');heading.id=id+'Title';heading.className='r88-heading';heading.textContent=title;box.appendChild(heading);return box;
  }
+ function collapsibleSection(id,title){
+  const box=document.createElement('details');box.id=id;box.className='r88-frame r88-collapsible';
+  const summary=document.createElement('summary');summary.id=id+'Title';summary.className='r88-heading';summary.textContent=title;box.appendChild(summary);
+  const content=document.createElement('div');content.id=id+'Content';content.className='r88-frame-content';box.appendChild(content);
+  return {box,content};
+ }
  function ensure(){
   const panel=E('debatePilotPanel'),grid=E('pilotActionGrid'),assistant=E('pilotAssistantActions');
   if(!panel||!grid||!assistant)return false;
   if(!E('r88SourceBank')){
    const bank=document.createElement('div');bank.id='r88SourceBank';bank.hidden=true;panel.appendChild(bank);
-   const resources=section('r88Resources','CONTEXTO Y AYUDAS');
+   const {box:resources,content:resourceContent}=collapsibleSection('r88Resources','CONTEXTO Y AYUDAS');
    const request=button('r88ContextRequest','+','SOLICITAR AÑADIR CONTEXTO',()=>{const b=E('pilotContextRequest');if(b&&!b.disabled){close(false);b.click();schedule()}});
    const history=button('r88GuideHistory','▤','MIS AYUDAS GUARDADAS · 0/0',()=>{const b=E('pilotAssistantHistory');if(b&&!b.disabled){close(false);b.click()}});
-   request.classList.add('r88-wide');history.classList.add('r88-wide');resources.append(request,history);
-   const work=section('r88Workbench','MI TABLERO');
+   request.classList.add('r88-wide');history.classList.add('r88-wide');resourceContent.append(request,history);
+   const work=section('r88Workbench','INVENTARIO DISPONIBLE');
    const tools=document.createElement('div');tools.id='r88ActiveTools';tools.className='r88-grid';
-   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Las herramientas que recibas aparecerán aquí. Puedes abrir los cajones para ver el resto.';
-   for(const action of actions.filter(a=>a.resource||a.board)){const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)}
+   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Aquí aparecen tus herramientas sorteadas o robadas y las acciones disponibles. Puedes usarlas directamente.';
+   for(const action of actions.filter(a=>a.resource||a.board||a.shortcut)){
+    const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));
+    b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)
+   }
    work.append(tools,empty);
    const toolbox=section('r88Toolbox','CAJA DE HERRAMIENTAS');
    const drawerGrid=document.createElement('div');drawerGrid.className='r88-grid';
-   for(const d of drawers){const b=button('r88Open_'+d.key,d.icon,d.name,()=>open(d.key,b));b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r88Drawer');b.setAttribute('aria-expanded','false');drawerGrid.appendChild(b)}
+   for(const d of drawers){const b=button('r88Open_'+d.key,d.icon,d.name,()=>open(d.key,b));b.classList.add('r88-drawer-'+d.key);b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r88Drawer');b.setAttribute('aria-expanded','false');drawerGrid.appendChild(b)}
    toolbox.appendChild(drawerGrid);
    grid.insertAdjacentElement('beforebegin',resources);resources.insertAdjacentElement('afterend',work);work.insertAdjacentElement('afterend',toolbox);
   }
@@ -9730,7 +9774,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   for(const id of ['pilotActionGrid','pilotAssistantActions','pilotContextRequest','pilotSaveSession']){
    const node=E(id);if(node&&node.parentElement!==bank)bank.appendChild(node);
   }
-  const viewer=E('pilotSharedContext');if(viewer&&viewer.parentElement!==E('r88Resources'))E('r88Resources').insertBefore(viewer,E('r88GuideHistory'));
+  const viewer=E('pilotSharedContext');if(viewer&&viewer.parentElement!==E('r88ResourcesContent'))E('r88ResourcesContent').insertBefore(viewer,E('r88GuideHistory'));
   const instructions=E('pilotInstructionsRow');if(instructions&&instructions.parentElement!==panel)panel.appendChild(instructions);
   if(instructions){if(!instructions.classList.contains('r88-frame'))instructions.classList.add('r88-frame');if(instructions.previousElementSibling!==E('r88Toolbox'))E('r88Toolbox').insertAdjacentElement('afterend',instructions)}
   const host=E('pilotHostGroup');if(host){if(!host.classList.contains('r88-host'))host.classList.add('r88-host');const anchor=instructions||E('r88Toolbox');if(host.previousElementSibling!==anchor)anchor.insertAdjacentElement('afterend',host)}
@@ -9785,12 +9829,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   E('r88Workbench').classList.toggle('r88-icons',compact);E('r88Toolbox').classList.toggle('r88-icons',compact);
   E('r88Drawer').classList.toggle('r88-icons',compact);
   let active=0;
-  for(const action of actions.filter(a=>a.resource||a.board)){
+  for(const action of actions.filter(a=>a.resource||a.board||a.shortcut)){
    const b=E('r88Tool_'+action.id),source=E(action.id),have=owned(action);
-   b.hidden=!have;if(have)active++;
+   const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+   const show=state?.mine_choice!=='N'&&(action.shortcut?!!source&&!source.disabled:have);
+   b.hidden=!show;if(show)active++;
    b.disabled=!source||source.disabled;iconLabel(b,action.icon,actionLabel(action));
   }
   E('r88Empty').hidden=active>0;
+  setText(E('r88Empty'),window.dilemaBoardSnapshot?.data?.mine_choice==='N'?'ESTÁS EN DUDA · Elige A o B para activar tus herramientas.':'Aquí aparecen tus herramientas y las acciones disponibles. Puedes usarlas directamente.');
   E('r88ActiveTools').classList.toggle('r88-single',active===1);
   const request=E('pilotContextRequest');E('r88ContextRequest').disabled=!request||request.disabled;
   // Reading saved help is independent from initiating another decision.
@@ -9799,8 +9846,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(opened){
    for(const action of actions.filter(a=>a.drawer===opened)){
     const b=E('r88Drawer_'+action.id),card=b?.closest('.r88-item'),source=E(action.id);if(!b)continue;
-    const have=(action.resource||action.board)&&owned(action);card.hidden=have;
-    b.disabled=!source||source.disabled||(action.resource&&!have)||action.id==='pilotSaveSession'&&!window.dilemaBoardSnapshot?.data?.paused;
+    const have=(action.resource||action.board)&&owned(action);card.hidden=have&&window.dilemaBoardSnapshot?.data?.mine_choice!=='N';
+    b.disabled=window.dilemaBoardSnapshot?.data?.mine_choice==='N'&&action.drawer!=='escape'||!source||source.disabled||(action.resource&&!have)||action.id==='pilotSaveSession'&&!window.dilemaBoardSnapshot?.data?.paused;
     iconLabel(b,action.icon,actionLabel(action));
     setText(E('r88Status_'+action.id),b.disabled?reason(action):'DISPONIBLE');
    }
@@ -9830,10 +9877,62 @@ document.addEventListener('DOMContentLoaded',()=>{
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','style','class']});
  });
+})();</script>
+
+<style>
+.neutral-option strong{font-size:16px!important}.neutral-result{margin:14px 0;padding:12px;border:1px solid #444;border-radius:12px;font-size:12px;color:#aaa;text-align:center}
+.neutral-result.pilot-my-vote,.neutral-result.result-my-vote{border-color:#fff;color:#fff}
+.neutral-wide{grid-column:1/-1}#pilotInlineRevote .neutral-wide{width:100%}
+#privateVoteN{margin:12px 0}#r90NeutralPosition p{font-weight:400;line-height:1.6}
+</style>
+<script>
+/* R90: neutral posture and a free first position, using the shared decision space. */
+(function(){
+ 'use strict';
+ const E=id=>document.getElementById(id);
+ let submitting=false,refreshing=null;
+ function ensure(){
+  const stage=E('pilotVoteStage');if(!stage||E('r90NeutralPosition'))return;
+  const box=document.createElement('section');box.id='r90NeutralPosition';box.className='r86-session-box';box.style.display='none';
+  box.innerHTML='<h2>⚠ ESTOY EN DUDA</h2><p>Aún no has elegido un lado. Puedes posicionarte sin gastar un cambio de voto.</p><div class="saved-actions"><button type="button" data-position="A">VOTAR A</button><button type="button" data-position="B">VOTAR B</button></div><p class="r86-session-error" role="status"></p>';
+  stage.appendChild(box);box.querySelectorAll('button').forEach(b=>b.onclick=()=>position(b.dataset.position));
+ }
+ function paint(){
+  ensure();const s=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  const box=E('r90NeutralPosition');if(!box)return;
+  const neutral=s?.mine_choice==='N';
+  const show=currentRoomMode==='debate'&&E('debate')?.classList.contains('active')&&neutral&&s.phase==='debate'&&!s.paused&&window.dilemaPresenceView?.my_presence!=='absent'&&!r86ActionLocked('r90NeutralPosition');
+  const display=show?'block':'none';if(box.style.display!==display)box.style.display=display;
+  box.querySelectorAll('button').forEach(b=>{
+   b.disabled=submitting||!show;
+   const label='VOTAR '+b.dataset.position+' · '+(currentDilemma?.[b.dataset.position==='A'?'option_a':'option_b']||'');
+   if(b.textContent!==label)b.textContent=label;
+  });
+  const count=E('pilotCountN');if(count){const label=String(window.dilemaDebateVoteView?.votesN??s?.votes_n??0);if(count.textContent!==label)count.textContent=label}
+  const card=E('pilotVoteN');if(card)card.classList.toggle('pilot-my-vote',window.dilemaDebateVoteView?.revoteOpen?window.dilemaAssistantState?.choice==='N':neutral);
+ }
+ async function position(choice){
+  if(submitting||E('r90NeutralPosition')?.style.display!=='block')return;
+  const round=currentRoundId;submitting=true;paint();const errorBox=E('r90NeutralPosition').querySelector('[role="status"]');errorBox.textContent='';
+  try{
+   const {error}=await sb.rpc('cast_debate_neutral_position',{p_round_id:round,p_choice:choice});if(error)throw error;
+   if(round===currentRoundId){announceHallChange('neutral-position');await pilotRefresh()}
+  }catch(error){if(round===currentRoundId){errorBox.textContent='La mesa está resolviendo otra decisión. Podrás posicionarte al terminar.';await pilotRefresh()}}
+  finally{submitting=false;paint()}
+ }
+ const refresh=window.pilotRefresh;
+ window.pilotRefresh=function(){
+  if(refreshing)return refreshing;
+  refreshing=(async()=>{try{return await refresh.apply(this,arguments)}finally{paint();window.dilemaWorkbenchSync?.()}})();
+  refreshing.finally(()=>{refreshing=null}).catch(()=>{});return refreshing;
+ };
+ const render=window.renderDebate;
+ window.renderDebate=function(){const result=render.apply(this,arguments);paint();return result};
+ window.dilemaNeutralPaint=paint;
+ document.addEventListener('DOMContentLoaded',paint);
 })();
 
 </script>
-
 </body>
 </html>
 
