@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R87</div>
+    <div class="version">DILEMA · V0.1.16-010C-R88</div>
   </main>
 
 
@@ -7151,7 +7151,7 @@ window.addEventListener(
       });
     }
     const pr=await ownProclamation(); const pb=el("pilotProclamaBtn");
-    if(pb){pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate"||isAbsent;pb.textContent=(!pr||pr.used_at)?"📣 PROCLAMAR · 0/1":"📣 PROCLAMAR · 1/1";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
+    if(pb){pb.dataset.owned=String(!!pr&&!pr.used_at);pb.dataset.ownedRound=String(currentRoundId);pb.dataset.ownedUser=String(currentUserId);pb.disabled=!pr||!!pr.used_at||!!s.paused||s.phase!=="debate"||isAbsent;pb.textContent=(!pr||pr.used_at)?"📣 PROCLAMAR · 0/1":"📣 PROCLAMAR · 1/1";pb.classList.remove("pilot-selected");pb.classList.toggle("pilot-proclama-off",pb.disabled)}
     window.paintDebateAdmission?.();
     await latestEvent();
    }catch(e){console.error("PILOT",e)}
@@ -8033,6 +8033,7 @@ window.messagePickerSilent=function(){if(messagePickerAllowSilent&&messagePicker
  }
  function paint(){
   const state=window.dilemaAssistantState,btn=E("pilotAssistantOpen"),request=E("pilotAssistantRequest");
+  window.dilemaAssistantAccess={round:state?.roundId,user:currentUserId,data:access};
   if(!btn||!request)return;
   const history=E("pilotAssistantHistory");
   if(history)paintGuideHistory();
@@ -8147,6 +8148,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   groups.push({title:'DILEMAS POR EL MUNDO',entries:[['DILEMAS POR EL MUNDO','Elige TEENS, intensidad y, si quieres, categoría. Prioriza noticias de España y amplía al exterior cuando no haya suficientes noticias españolas válidas. Si la búsqueda falla, propone noticias guardadas o dilemas del catálogo, identificando su origen. La intensidad orienta la adaptación y no bloquea las propuestas. Busca hasta tres noticias recientes y transforma sus conflictos en situaciones hipotéticas. En privado eliges tú; en grupo se vota con el mismo desempate del catálogo.'],['INSPIRADO EN…','Despliega el contexto publicado, la fecha y el enlace a la fuente. Los hechos de la noticia se distinguen de la ficción del dilema. Las propuestas se guardan para reutilizarlas y revisarlas antes de incorporarlas al catálogo.']]});
   groups.push({title:'GUARDAR Y RETOMAR',entries:[['GUARDAR Y VOLVER AL HALL','Disponible con el debate pausado. Se propone a la mesa y decide la mayoría. Conserva el dilema, contexto aprobado, giros, votos y herramientas; libera la sala para otro debate. El anfitrión conserva el dilema marcado GRUP · PAUSADO en Mis dilemas.'],['DEBATES PAUSADOS','En el hall de la misma sala se muestran las sesiones guardadas. El anfitrión propone retomar y decide la mayoría. Con los mismos participantes se recupera el estado anterior. Si la mesa ha cambiado, todos vuelven a votar y las herramientas se sortean al completar la votación. Las ayudas y mensajes personales siguen siendo privados.']]});
   groups.push({title:'ENTRADA A LA MESA',entries:[['AÑADIR DEBATIENTE · CERRAR ENTRADA','El anfitrión abre o cierra la entrada durante el debate. Quien use el código solicita una plaza; la mesa decide por mayoría. Si hay otra decisión en curso, la solicitud espera. El solicitante no vota su propia entrada. Cerrar la entrada impide nuevas solicitudes; las ya enviadas siguen su turno.'],['TU PRIMER VOTO','Al aprobar tu entrada eliges A o B en el espacio amarillo. El resto conserva sus votos y herramientas.'],['DESCARTAR Y BUSCAR OTROS','En Dilemas por el mundo puedes votar por descartar las propuestas. Si gana, se ofrecen otras. En privado descartas directamente. Se recuerda el conflicto de la noticia para evitar repetirlo aunque cambie su redacción.']]});
+  groups.unshift({title:'MI TABLERO Y CAJONES',entries:[['MI TABLERO','Las herramientas personales disponibles aparecen aquí: proclama, cambio de voto y nueva ayuda del asistente. El limbo grupal también aparece aquí cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Huida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN EN PREPARACIÓN','Limbo individual, Robo, Señuelo, Cambio tu voto, Espejo y Antídoto aparecen identificados como en preparación: todavía no se sortean.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -8780,8 +8782,10 @@ function paintGuideHistory(){
  const state=window.dilemaAssistantState;
  const valid=guideHistoryRound===currentRoundId&&guideHistoryUser===currentUserId;
  const counts=guideHistoryCounts(valid?guideHistoryRows:[],state?.choice);
- button.textContent='MIS AYUDAS GUARDADAS · '+counts.matching+'/'+counts.total;
- button.disabled=!state?.active||state.roundId!==currentRoundId||!counts.matching||!!document.querySelector('#debatePilotPanel.pilot-process-locked');
+ const label='MIS AYUDAS GUARDADAS · '+counts.matching+'/'+counts.total;
+ if(button.textContent!==label)button.textContent=label;
+ const disabled=state?.roundId!==currentRoundId||!counts.matching;
+ if(button.disabled!==disabled)button.disabled=disabled;
 }
 async function refreshGuideHistoryCount(force=false){
  const round=currentRoundId,user=currentUserId;
@@ -9443,7 +9447,7 @@ let sessionView=null,sessionRoom=null,sessionBusy=false,sessionRefreshPromise=nu
 const sessionHallButtonStates=new Map();
 function r86SessionProposal(){return sessionRoom===currentRoomId?sessionView?.proposal:null}
 function r86ActionLocked(id){
- if(id==='pilotAbandonBtn')return false;
+ if(id==='pilotAbandonBtn'||id==='pilotAssistantHistory')return false;
  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
  const admission=window.dilemaAdmissionSnapshot?.round===currentRoundId?window.dilemaAdmissionSnapshot.data:null;
  if(r86SessionProposal())return true;
@@ -9547,8 +9551,292 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+<style>
+/* R88: compact workbench, drawers and shared reference space. */
+#r88SourceBank[hidden],#r88Drawer[hidden],.r88-frame [hidden],#r88Drawer [hidden]{display:none!important}
+#debatePilotPanel .r88-frame{border:1px solid #383838;border-radius:14px;padding:15px;margin:16px 0 0;width:100%;background:#0b0b0b;box-shadow:none}
+#debatePilotPanel .r88-heading{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#aaa;text-align:center;line-height:1.4;margin:0 0 14px}
+.r88-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.r88-button,#r88Drawer button{border:1px solid #555;border-radius:11px;background:#0b0b0b;color:#fff;min-height:49px;min-width:0;width:100%;padding:11px 8px;font:inherit;font-size:11px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere;animation:none!important;transition:none!important;box-shadow:none!important;outline:0}
+.r88-button .r88-symbol{display:none}
+.r88-button .r88-count{display:none}
+.r88-button:disabled,#r88Drawer button:disabled{background:#0b0b0b;color:#666;border-color:#303030;cursor:default;opacity:1;filter:grayscale(1)}
+.r88-button:focus-visible,#r88Drawer button:focus-visible{outline:2px solid #facc15;outline-offset:3px}
+.r88-wide+.r88-wide{margin-top:10px}
+#r88Resources .context-details{margin:12px 0;padding:13px;border-color:#444}
+#r88Resources .r88-button{font-size:10px}
+#r88Resources .r88-note,.r88-note{margin:0;color:#aaa;font-size:12px;font-weight:400;line-height:1.6;text-align:center}
+#r88Empty{margin:0}
+#r88Workbench{min-height:90px}
+#r88ActiveTools:has(>button:not([hidden])){margin-bottom:0}
+#r88ActiveTools.r88-single{grid-template-columns:1fr}
+.r88-icons .r88-grid{grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:8px}
+.r88-icons .r88-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:49px;padding:6px 5px}
+.r88-icons .r88-button .r88-symbol{display:block;font-size:22px;font-weight:400;line-height:1}
+.r88-icons .r88-button .r88-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.r88-icons .r88-button .r88-count:not([hidden]){display:block;color:inherit;font-size:10px;line-height:1.3}
+#r88Drawer.r88-icons .r88-item .r88-button{flex-direction:row;justify-content:flex-start;gap:12px}
+#r88Drawer.r88-icons .r88-item .r88-button .r88-label{position:static;width:auto;height:auto;clip:auto;white-space:normal;margin:0;overflow:visible}
+#r88Drawer.r88-icons .r88-item .r88-button .r88-count{display:none}
+.r88-overlay{position:fixed;inset:0;z-index:100003;display:flex;align-items:center;justify-content:center;padding:16px;background:#000d}
+.r88-drawer-open{overflow:hidden}
+.r88-dialog{display:flex;flex-direction:column;width:min(100%,430px);max-height:calc(100dvh - 32px);overflow-y:auto;border:1px solid #facc15;border-radius:14px;background:#10100a;color:#fff;padding:20px;overscroll-behavior:contain}
+#r88DrawerTitle{font-size:16px;letter-spacing:1.5px;text-align:center;color:#facc15;margin:0 0 12px;font-weight:900}
+#r88DrawerNote{margin-bottom:20px;color:#fff}
+#r88DrawerItems h3,#r88ViewSettings h3{font-size:11px;color:#facc15;letter-spacing:1px;margin:22px 0 12px;line-height:1.4}
+.r88-item{margin:0 0 16px;padding-bottom:16px;border-bottom:1px solid #383322}
+.r88-description{font-weight:400;font-size:13px;line-height:1.6;margin:12px 0 8px;white-space:normal}
+.r88-availability{color:#aaa;font-size:10px;font-weight:400;line-height:1.5;margin:8px 0 0;letter-spacing:.3px}
+.r88-catalogue strong{color:#777;font-size:11px;font-weight:800;line-height:1.5}
+.r88-catalogue .r88-description{color:#999}
+#r88Drawer .r88-danger{color:#ff4b61;border-color:#55252b}
+#r88Drawer .r88-close{margin:10px 0 0;flex-shrink:0;border-color:#806b12}
+#r88ViewSettings{padding-bottom:16px}
+#r88ViewSettings .r88-note{margin:12px 0}
+#r88Drawer #r88ViewSettings button.selected{background:#facc15;color:#0b0b0b;border-color:#facc15}
+#debatePilotPanel #pilotInstructionsRow.r88-frame{padding:0;overflow:hidden}
+#debatePilotPanel #pilotInstructionsBtn{border:0;border-radius:14px;min-height:49px;margin:0}
+#debatePilotPanel #pilotHostGroup.r88-host{margin-top:16px!important}
+@media(max-width:360px){#debatePilotPanel .r88-frame{padding:12px}.r88-button{font-size:10px}.r88-dialog{padding:16px}}
+
+</style>
+<script>
+/* R88: one workbench, four drawers, existing server-authorized actions. */
+(function(){
+ 'use strict';
+ const E=id=>document.getElementById(id);
+ const actions=[
+  {id:'pilotProclamaBtn',drawer:'action',icon:'📣',name:'PROCLAMAR',resource:true,description:'Escribe una proclama y elige a quién enviarla.',empty:'No tienes una proclama disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
+  {id:'pilotSecretRevoteAction',drawer:'action',icon:'↔',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
+  {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
+  {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
+  {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
+  {id:'pilotPauseAction',drawer:'escape',icon:'⏸',name:'SOLICITAR PAUSA',description:'Propón pausar o reanudar el debate. Decide la mayoría.'},
+  {id:'pilotSaveSession',drawer:'escape',icon:'▣',name:'GUARDAR Y VOLVER AL HALL',description:'Con el debate pausado, propone guardarlo para retomarlo en esta sala.'},
+  {id:'pilotEndBtn',drawer:'escape',icon:'■',name:'FIN DEBATE',description:'Propón cerrar el debate. Todos deben votar SÍ.'},
+  {id:'pilotAbandonBtn',drawer:'escape',icon:'⇥',name:'ABANDONAR',danger:true,description:'Sales de la sala. Para regresar al debate necesitarás permiso de la mesa.'},
+  {id:'pilotAssistantOpen',drawer:'help',icon:'✦',name:'ASISTENTE',resource:true,description:'Abre una ayuda privada para defender tu postura.',empty:'No tienes una nueva ayuda disponible. Puedes solicitarla a la mesa o consultar las que ya guardaste.'},
+  {id:'pilotAssistantRequest',drawer:'help',icon:'?',name:'SOLICITAR AYUDA',description:'Solicitud secreta. Con mayoría se desbloquea la ayuda para quienes la pidieron.'},
+  {id:'pilotLimboAction',drawer:'action',icon:'⌛',name:'PROPONER LIMBO',board:true,description:'Propón apartar temporalmente a otra persona. Vota el resto de la mesa; requiere tres presentes.'}
+ ];
+ const medicines=[
+  {name:'LIMBO · INDIVIDUAL',type:'PÓCIMA',icon:'⌛',description:'Aparta temporalmente del debate a la persona elegida.'},
+  {name:'ROBO',type:'PÓCIMA',icon:'⚗',description:'Roba una pócima o píldora del inventario de otra persona.'},
+  {name:'SEÑUELO',type:'PÓCIMA',icon:'⚗',description:'Una falsa pócima para provocar que otra persona gaste una defensa.'},
+  {name:'CAMBIO TU VOTO',type:'PÓCIMA',icon:'↔',description:'Cambia la postura de otra persona. Su propio cambio de voto le permite recuperarla.'},
+  {name:'ESPEJO',type:'PÍLDORA',icon:'◇',description:'Devuelve la pócima a quien la lanzó.'},
+  {name:'ANTÍDOTO',type:'PÍLDORA',icon:'💊',description:'Neutraliza el efecto de una pócima.'}
+ ];
+ const drawers=[
+  {key:'medicine',name:'BOTIQUÍN',icon:'🧪',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
+  {key:'escape',name:'HUIDA',icon:'⇥',note:'Ausentarte, pausar, guardar o salir del debate.'},
+  {key:'help',name:'AYUDA',icon:'?',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
+  {key:'action',name:'ACCIÓN',icon:'↪',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu tablero.'}
+ ];
+ let opened=null,returnFocus=null,scheduled=false,fullRefresh=null,preferenceUser=null,compact=false;
+ const setText=(node,value)=>{if(node&&node.textContent!==value)node.textContent=value};
+ const visible=node=>!!node&&getComputedStyle(node).display!=='none'&&getComputedStyle(node).visibility!=='hidden';
+ function preference(){
+  const user=String(currentUserId||'local');
+  if(preferenceUser===user)return;
+  preferenceUser=user;
+  try{compact=localStorage.getItem('dilema_workbench_view:'+user)==='icons'}catch(_){compact=false}
+ }
+ function setView(value){
+  compact=value==='icons';
+  try{localStorage.setItem('dilema_workbench_view:'+preferenceUser,compact?'icons':'text')}catch(_){}
+  sync();
+ }
+ function owned(action){
+  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  if(action.id==='pilotProclamaBtn'){const b=E(action.id);return b?.dataset.owned==='true'&&b.dataset.ownedRound===String(currentRoundId)&&b.dataset.ownedUser===String(currentUserId)}
+  if(action.id==='pilotSecretRevoteAction')return !!state?.secret_revote_mine;
+  if(action.id==='pilotAssistantOpen'){
+   const a=window.dilemaAssistantAccess;
+   if(a?.round!==currentRoundId||a.user!==currentUserId||Number(a.data?.cycle)!==Number(state?.cycle))return false;
+   return !!(a.data?.token||(a.data?.approved&&a.data?.mine_requested&&!a.data?.mine_group_used));
+  }
+  if(action.board)return !!state&&window.dilemaLimboSnapshot?.round===currentRoundId&&!!E(action.id)&&!E(action.id).disabled;
+  return false;
+ }
+ function reason(action){
+  if(action.resource&&!owned(action))return action.empty;
+  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  if(action.id==='pilotSaveSession'&&!state?.paused)return 'Disponible cuando el debate está pausado.';
+  if(action.id==='pilotAbsentBtn'&&window.dilemaLimboReturnBlocked?.())return 'Tu regreso está bloqueado mientras dure el limbo.';
+  if(window.dilemaPresenceView?.my_presence==='absent'&&!['pilotAbsentBtn','pilotAbandonBtn'].includes(action.id))return 'Disponible cuando te reincorpores al debate.';
+  if(state?.paused&&!['pilotPauseAction','pilotEndBtn','pilotSaveSession','pilotAbandonBtn'].includes(action.id))return 'Disponible al reanudar el debate.';
+  if(action.id==='pilotLimboAction'&&!window.dilemaLimboSnapshot?.data?.can_propose)return 'Requiere al menos tres participantes presentes y un destinatario disponible.';
+  if(action.id==='pilotAssistantRequest'){
+   const access=window.dilemaAssistantAccess?.data;
+   if(access?.mine_requested)return 'Tu solicitud ya está registrada. Puedes consultar el recuento.';
+   if(access?.token)return 'Ya tienes una ayuda en tu tablero. Puedes solicitar otra después de consumirla.';
+  }
+  if(typeof r86ActionLocked==='function'&&r86ActionLocked(action.id))return 'La mesa está resolviendo una decisión. Espera a que termine.';
+  return 'No está disponible en este momento.';
+ }
+ function actionLabel(action){return E(action.id)?.textContent.trim()||action.name}
+ function iconLabel(button,icon,label){
+  const symbol=button.querySelector('.r88-symbol'),text=button.querySelector('.r88-label'),count=button.querySelector('.r88-count');
+  setText(symbol,icon);setText(text,label);
+  const number=label.match(/(?:·\s*)(\d+\s*\/\s*\d+)\s*$/);
+  setText(count,number?number[1]:'');count.hidden=!number;
+  button.setAttribute('aria-label',label);button.title=label;
+ }
+ function button(id,icon,label,click){
+  const b=document.createElement('button');b.type='button';b.id=id;b.className='r88-button';
+  b.innerHTML='<span class="r88-symbol" aria-hidden="true"></span><span class="r88-label"></span><span class="r88-count" aria-hidden="true" hidden></span>';
+  iconLabel(b,icon,label);b.onclick=click;return b;
+ }
+ function close(restore=true){
+  const modal=E('r88Drawer');if(!modal)return;
+  modal.hidden=true;opened=null;
+  E('r88Toolbox')?.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded','false'));
+  if(document.body.classList.contains('r88-drawer-open'))document.body.classList.remove('r88-drawer-open');
+  if(restore&&returnFocus?.isConnected)returnFocus.focus();
+ }
+ function dispatch(action){
+  const source=E(action.id);
+  if(!source||source.disabled||(action.resource&&!owned(action))||
+     (typeof r86ActionLocked==='function'&&r86ActionLocked(action.id)))return;
+  close(false);source.click();schedule();
+ }
+ function section(id,title){
+  const box=document.createElement('section');box.id=id;box.className='r88-frame';
+  box.setAttribute('aria-labelledby',id+'Title');
+  const heading=document.createElement('h2');heading.id=id+'Title';heading.className='r88-heading';heading.textContent=title;box.appendChild(heading);return box;
+ }
+ function ensure(){
+  const panel=E('debatePilotPanel'),grid=E('pilotActionGrid'),assistant=E('pilotAssistantActions');
+  if(!panel||!grid||!assistant)return false;
+  if(!E('r88SourceBank')){
+   const bank=document.createElement('div');bank.id='r88SourceBank';bank.hidden=true;panel.appendChild(bank);
+   const resources=section('r88Resources','CONTEXTO Y AYUDAS');
+   const request=button('r88ContextRequest','+','SOLICITAR AÑADIR CONTEXTO',()=>{const b=E('pilotContextRequest');if(b&&!b.disabled){close(false);b.click();schedule()}});
+   const history=button('r88GuideHistory','▤','MIS AYUDAS GUARDADAS · 0/0',()=>{const b=E('pilotAssistantHistory');if(b&&!b.disabled){close(false);b.click()}});
+   request.classList.add('r88-wide');history.classList.add('r88-wide');resources.append(request,history);
+   const work=section('r88Workbench','MI TABLERO');
+   const tools=document.createElement('div');tools.id='r88ActiveTools';tools.className='r88-grid';
+   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Las herramientas que recibas aparecerán aquí. Puedes abrir los cajones para ver el resto.';
+   for(const action of actions.filter(a=>a.resource||a.board)){const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)}
+   work.append(tools,empty);
+   const toolbox=section('r88Toolbox','CAJA DE HERRAMIENTAS');
+   const drawerGrid=document.createElement('div');drawerGrid.className='r88-grid';
+   for(const d of drawers){const b=button('r88Open_'+d.key,d.icon,d.name,()=>open(d.key,b));b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r88Drawer');b.setAttribute('aria-expanded','false');drawerGrid.appendChild(b)}
+   toolbox.appendChild(drawerGrid);
+   grid.insertAdjacentElement('beforebegin',resources);resources.insertAdjacentElement('afterend',work);work.insertAdjacentElement('afterend',toolbox);
+  }
+  const bank=E('r88SourceBank');
+  for(const id of ['pilotActionGrid','pilotAssistantActions','pilotContextRequest','pilotSaveSession']){
+   const node=E(id);if(node&&node.parentElement!==bank)bank.appendChild(node);
+  }
+  const viewer=E('pilotSharedContext');if(viewer&&viewer.parentElement!==E('r88Resources'))E('r88Resources').insertBefore(viewer,E('r88GuideHistory'));
+  const instructions=E('pilotInstructionsRow');if(instructions&&instructions.parentElement!==panel)panel.appendChild(instructions);
+  if(instructions){if(!instructions.classList.contains('r88-frame'))instructions.classList.add('r88-frame');if(instructions.previousElementSibling!==E('r88Toolbox'))E('r88Toolbox').insertAdjacentElement('afterend',instructions)}
+  const host=E('pilotHostGroup');if(host){if(!host.classList.contains('r88-host'))host.classList.add('r88-host');const anchor=instructions||E('r88Toolbox');if(host.previousElementSibling!==anchor)anchor.insertAdjacentElement('afterend',host)}
+  if(!E('r88Drawer')){
+   const modal=document.createElement('div');modal.id='r88Drawer';modal.hidden=true;modal.className='r88-overlay';modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','r88DrawerTitle');
+   modal.innerHTML='<div class="r88-dialog"><h2 id="r88DrawerTitle"></h2><p id="r88DrawerNote" class="r88-note"></p><div id="r88DrawerItems"></div><section id="r88ViewSettings"><h3>VISTA DEL TABLERO</h3><div class="r88-grid"><button type="button" id="r88TextView" aria-pressed="true">CON TEXTOS</button><button type="button" id="r88IconView" aria-pressed="false">CON ICONOS</button></div><p class="r88-note">Los iconos conservan el nombre de cada acción para facilitar su identificación.</p><button type="button" id="r88HelpInstructions">INSTRUCCIONES</button></section><button type="button" id="r88DrawerClose" class="r88-close">VOLVER AL TABLERO</button></div>';
+   document.body.appendChild(modal);
+   E('r88DrawerClose').onclick=()=>close();E('r88TextView').onclick=()=>setView('text');E('r88IconView').onclick=()=>setView('icons');
+   E('r88HelpInstructions').onclick=()=>{close(false);E('pilotInstructionsBtn')?.click()};
+   modal.onclick=e=>{if(e.target===modal)close()};
+   modal.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();close();return}
+    if(e.key!=='Tab')return;
+    const focusable=[...modal.querySelectorAll('button:not(:disabled)')].filter(b=>!b.hidden&&b.getClientRects().length);
+    const first=focusable[0],last=focusable.at(-1);
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}
+    else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
+   });
+  }
+  return true;
+ }
+ function open(key,opener){
+  if(!ensure())return;
+  opened=key;returnFocus=opener;E('r88Drawer').hidden=false;document.body.classList.add('r88-drawer-open');
+  const d=drawers.find(d=>d.key===key);setText(E('r88DrawerTitle'),d.name);setText(E('r88DrawerNote'),d.note);
+  const list=E('r88DrawerItems');list.replaceChildren();
+  for(const action of actions.filter(a=>a.drawer===key)){
+   const card=document.createElement('article');card.className='r88-item';card.dataset.source=action.id;
+   const b=button('r88Drawer_'+action.id,action.icon,action.name,()=>dispatch(action));
+   if(action.danger)b.classList.add('r88-danger');
+   const description=document.createElement('p');description.className='r88-description';description.textContent=action.description;
+   const status=document.createElement('p');status.className='r88-availability';status.id='r88Status_'+action.id;
+   b.setAttribute('aria-describedby',status.id);card.append(b,description,status);list.appendChild(card);
+  }
+  if(key==='medicine'){
+   for(const type of ['PÓCIMA','PÍLDORA']){
+    const heading=document.createElement('h3');heading.textContent=type==='PÓCIMA'?'PÓCIMAS SORTEADAS':'PÍLDORAS';list.appendChild(heading);
+    for(const m of medicines.filter(m=>m.type===type)){
+     const card=document.createElement('article');card.className='r88-item r88-catalogue';
+     const title=document.createElement('strong');title.textContent=m.icon+' '+m.name+' · 0/1';
+     const text=document.createElement('p');text.className='r88-description';text.textContent=m.description;
+     const note=document.createElement('p');note.className='r88-availability';note.textContent='EN PREPARACIÓN · AÚN NO SE SORTEA';card.append(title,text,note);list.appendChild(card);
+    }
+   }
+  }
+  E('r88ViewSettings').hidden=key!=='help';sync();
+  opener.setAttribute('aria-expanded','true');E('r88DrawerClose').focus();
+ }
+ function sync(){
+  if(currentRoomMode!=='debate'||!E('debate')?.classList.contains('active')){close(false);return}
+  if(!ensure())return;preference();
+  E('r88Workbench').classList.toggle('r88-icons',compact);E('r88Toolbox').classList.toggle('r88-icons',compact);
+  E('r88Drawer').classList.toggle('r88-icons',compact);
+  let active=0;
+  for(const action of actions.filter(a=>a.resource||a.board)){
+   const b=E('r88Tool_'+action.id),source=E(action.id),have=owned(action);
+   b.hidden=!have;if(have)active++;
+   b.disabled=!source||source.disabled;iconLabel(b,action.icon,actionLabel(action));
+  }
+  E('r88Empty').hidden=active>0;
+  E('r88ActiveTools').classList.toggle('r88-single',active===1);
+  const request=E('pilotContextRequest');E('r88ContextRequest').disabled=!request||request.disabled;
+  // Reading saved help is independent from initiating another decision.
+  const history=E('pilotAssistantHistory');E('r88GuideHistory').disabled=!history||history.disabled;
+  iconLabel(E('r88GuideHistory'),'▤',history?.textContent||'MIS AYUDAS GUARDADAS · 0/0');
+  if(opened){
+   for(const action of actions.filter(a=>a.drawer===opened)){
+    const b=E('r88Drawer_'+action.id),card=b?.closest('.r88-item'),source=E(action.id);if(!b)continue;
+    const have=(action.resource||action.board)&&owned(action);card.hidden=have;
+    b.disabled=!source||source.disabled||(action.resource&&!have)||action.id==='pilotSaveSession'&&!window.dilemaBoardSnapshot?.data?.paused;
+    iconLabel(b,action.icon,actionLabel(action));
+    setText(E('r88Status_'+action.id),b.disabled?reason(action):'DISPONIBLE');
+   }
+  }
+  for(const [id,on] of [['r88TextView',!compact],['r88IconView',compact]]){
+   const b=E(id);b.setAttribute('aria-pressed',String(on));b.classList.toggle('selected',on);
+  }
+ }
+ function schedule(){
+  if(scheduled)return;scheduled=true;
+  requestAnimationFrame(()=>{scheduled=false;if(!fullRefresh&&!(typeof r86FullRefreshPromise!=='undefined'&&r86FullRefreshPromise))sync()});
+ }
+ const previous=window.pilotRefresh;
+ window.pilotRefresh=function(){
+  if(fullRefresh)return fullRefresh;
+  fullRefresh=(async()=>{try{return await previous.apply(this,arguments)}finally{sync()}})();
+  fullRefresh.finally(()=>{fullRefresh=null}).catch(()=>{});return fullRefresh;
+ };
+ const render=window.renderDebate;
+ window.renderDebate=function(){const result=render.apply(this,arguments);sync();return result};
+ window.dilemaWorkbenchSync=sync;
+ document.addEventListener('DOMContentLoaded',()=>{
+  sync();
+  const observer=new MutationObserver(records=>{
+   if(records.every(r=>r.target.nodeType===1&&r.target.closest('#r88Resources,#r88Workbench,#r88Toolbox,#r88Drawer')))return;
+   schedule();
+  });
+  observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','style','class']});
+ });
+})();
+
+</script>
+
 </body>
 </html>
+
 
 
 
