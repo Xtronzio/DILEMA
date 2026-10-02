@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R91</div>
+    <div class="version">DILEMA · V0.1.16-010C-R92</div>
   </main>
 
 
@@ -9590,6 +9590,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 #debatePilotPanel .r88-collapsible>.r88-heading::after{content:'+';font-size:16px;line-height:1}
 #debatePilotPanel .r88-collapsible[open]>.r88-heading::after{content:'−'}
 #r88ResourcesContent{padding:0 15px 15px}
+#debatePilotPanel #r88Resources.r92-has-content{border-color:#fff}
+#debatePilotPanel #r88Resources.r92-has-content>.r88-heading{color:#fff;background:#171717}
 .r88-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 .r88-button,#r88Drawer button{border:1px solid #555;border-radius:11px;background:#0b0b0b;color:#fff;min-height:49px;min-width:0;width:100%;padding:11px 8px;font:inherit;font-size:11px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere;animation:none!important;transition:none!important;box-shadow:none!important;outline:0}
 .r88-button .r88-symbol{display:none}
@@ -9791,7 +9793,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   for(const id of ['pilotActionGrid','pilotAssistantActions','pilotContextRequest','pilotSaveSession']){
    const node=E(id);if(node&&node.parentElement!==bank)bank.appendChild(node);
   }
-  const viewer=E('pilotSharedContext');if(viewer&&viewer.parentElement!==E('r88ResourcesContent'))E('r88ResourcesContent').insertBefore(viewer,E('r88GuideHistory'));
+  const viewer=E('pilotSharedContext');if(viewer&&(viewer.parentElement!==E('r88ResourcesContent')||viewer.nextElementSibling!==E('r88ContextRequest')))E('r88ResourcesContent').insertBefore(viewer,E('r88ContextRequest'));
   const instructions=E('pilotInstructionsRow');if(instructions&&instructions.parentElement!==panel)panel.appendChild(instructions);
   if(instructions){if(!instructions.classList.contains('r88-frame'))instructions.classList.add('r88-frame');if(instructions.previousElementSibling!==E('r88Toolbox'))E('r88Toolbox').insertAdjacentElement('afterend',instructions)}
   const host=E('pilotHostGroup');if(host){if(!host.classList.contains('r88-host'))host.classList.add('r88-host');const anchor=instructions||E('r88Toolbox');if(host.previousElementSibling!==anchor)anchor.insertAdjacentElement('afterend',host)}
@@ -9860,6 +9862,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Reading saved help is independent from initiating another decision.
   const history=E('pilotAssistantHistory');E('r88GuideHistory').disabled=!history||history.disabled;
   iconLabel(E('r88GuideHistory'),'▤',history?.textContent||'MIS AYUDAS GUARDADAS · 0/0');
+  // Light the collapsed reference space only when it contains usable saved content.
+  const context=E('pilotSharedContext');
+  const hasContext=!!context&&context.style.display!=='none'&&!!context.querySelector('.context-content')?.textContent.trim();
+  const matchingGuides=Number(history?.textContent.match(/·\s*(\d+)\s*\//)?.[1]||0);
+  const hasContent=hasContext||matchingGuides>0;
+  E('r88Resources').classList.toggle('r92-has-content',hasContent);
+  const resourcesLabel=hasContent?'CONTEXTO Y AYUDAS · CONTENIDO DISPONIBLE':'CONTEXTO Y AYUDAS';
+  if(E('r88ResourcesTitle').getAttribute('aria-label')!==resourcesLabel)E('r88ResourcesTitle').setAttribute('aria-label',resourcesLabel);
   if(opened){
    for(const action of actions.filter(a=>a.drawer===opened)){
     const b=E('r88Drawer_'+action.id),card=b?.closest('.r88-item'),source=E(action.id);if(!b)continue;
