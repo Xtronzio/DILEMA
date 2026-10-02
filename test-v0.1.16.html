@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R90</div>
+    <div class="version">DILEMA · V0.1.16-010C-R91</div>
   </main>
 
 
@@ -1717,8 +1717,8 @@
     </div>
     <div id="selectionQuestions" style="display:none"><div id="catalogDilemmas" class="selection-questions"></div></div>
     <div id="selectionRandom" style="display:none">
-      <button id="selectionDraw" type="button" class="btn btn-secondary" onclick="drawRandomDilemma()">SACAR DILEMA ALEATORIO</button>
-      <div id="selectionRandomWaiting" class="small-note" style="display:none">ESPERANDO AL ANFITRIÓN</div>
+      <button id="selectionDraw" type="button" class="btn btn-secondary" onclick="drawRandomDilemma()" style="display:none">SACAR DILEMA ALEATORIO</button>
+      <div id="selectionRandomWaiting" class="small-note" style="display:none">PREPARANDO DILEMA…</div>
     </div>
     <div id="selectionStatus" class="small-note"></div>
     <div id="suggestedError" class="error"></div>
@@ -4222,8 +4222,10 @@ function renderDebateSelection(){
  document.getElementById("selectionHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
  updateSelectionHostControls();
  document.getElementById("selectionStatus").textContent=random?"":s.my_vote?"TU VOTO ESTÁ REGISTRADO · "+s.voted+" / "+s.total+" HAN VOTADO":s.voted+" / "+s.total+" HAN VOTADO";
- document.getElementById("selectionRandomWaiting").style.display=currentRoomHostId===localPlayerId?"none":"block";
- document.getElementById("selectionDraw").style.display=currentRoomHostId===localPlayerId?"block":"none";
+ const preparing=document.getElementById("selectionRandomWaiting");
+ preparing.textContent="PREPARANDO DILEMA…";preparing.classList.remove("host-wait-animated");delete preparing.dataset.waitBase;
+ preparing.style.display=random?"block":"none";
+ document.getElementById("selectionDraw").style.display="none";
  if(filters)renderSelectionFilters(s);
 }
 function chooseSelectionAudience(){
@@ -4347,14 +4349,17 @@ async function refreshDilemmaProposal(){
  const wasProposal=document.getElementById("dilemmaProposal").classList.contains("active");
  currentDilemmaProposal=proposal;
  if(!proposal){
+  // Acceptance already opened voting on the server. Adopt it before rendering selection.
+  const live=await getRoom();
+  if(roomId!==currentRoomId||run!==proposalRefreshRun)return;
+  if(live?.status==="playing"){
+   currentRoomStatus="playing";currentDebateSelection=null;
+   subscribeToRounds();startGameRefresh();await refreshGame();return;
+  }
+  if(live?.status!=="waiting")return;
   if(await refreshDebateSelection())return;
   if(run!==proposalRefreshRun)return;
-  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active")){
-    const live=await getRoom();
-    if(roomId!==currentRoomId||run!==proposalRefreshRun)return;
-    if(live?.status==="playing"){currentRoomStatus="playing";subscribeToRounds();startGameRefresh();await refreshGame()}
-    else if(live?.status==="waiting")reloadHall();
-   }
+  if(wasProposal || document.getElementById("debateSuggested").classList.contains("active"))reloadHall();
   return;
  }
  renderDilemmaCopy(document.getElementById("proposalQuestion"),proposal.question);
@@ -4369,8 +4374,10 @@ async function refreshDilemmaProposal(){
   button.classList.toggle("is-selected",picked);
   button.disabled=!!proposal.has_voted;
  }
- document.getElementById("proposalPending").textContent=open&&proposal.has_voted?"ESPERANDO LA DECISIÓN DE LA MESA":!open&&currentRoomHostId!==localPlayerId?"APROBADO · ESPERANDO AL ANFITRIÓN":"";
- document.getElementById("proposalLaunch").style.display=!open&&currentRoomHostId===localPlayerId?"block":"none";
+ const pending=document.getElementById("proposalPending");
+ pending.textContent=open&&proposal.has_voted?"ESPERANDO LA DECISIÓN DE LA MESA":!open?"ABRIENDO VOTACIÓN…":"";
+ pending.classList.remove("host-wait-animated");delete pending.dataset.waitBase;
+ document.getElementById("proposalLaunch").style.display="none";
  document.getElementById("proposalHostBadge").style.display=currentRoomHostId===localPlayerId?"block":"none";
  updateSelectionHostControls();
  showScreen("dilemmaProposal");
@@ -4414,7 +4421,7 @@ async function voteDilemmaProposal(yes){
  const voteButtons=document.querySelectorAll("#proposalVote [data-proposal-choice]");
  for(const button of voteButtons){button.disabled=true;button.classList.toggle("is-selected",(button.dataset.proposalChoice==="yes")===yes)}
  const {error}=await sb.rpc("debate_vote_proposal",{p_id:currentDilemmaProposal.id,p_yes:yes});
- if(error){console.error("DILEMMA VOTE ERROR:",error);alert("NO SE HA PODIDO REGISTRAR TU DECISIÓN.");}
+ if(error){console.error("DILEMMA VOTE ERROR:",error);alert(/votación cerrada/i.test(error.message||"")?"HAS LLEGADO TARDE. LA MESA YA HA DECIDIDO.":"NO SE HA PODIDO REGISTRAR TU DECISIÓN.");}
  else announceHallChange("proposal-vote");
  await refreshDilemmaProposal();
 }
@@ -9587,7 +9594,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 .r88-button,#r88Drawer button{border:1px solid #555;border-radius:11px;background:#0b0b0b;color:#fff;min-height:49px;min-width:0;width:100%;padding:11px 8px;font:inherit;font-size:11px;font-weight:800;line-height:1.4;cursor:pointer;overflow-wrap:anywhere;animation:none!important;transition:none!important;box-shadow:none!important;outline:0}
 .r88-button .r88-symbol{display:none}
 .r88-drawer-medicine,.r88-drawer-action,.r88-drawer-help{display:flex;align-items:center;justify-content:center;gap:8px}
-.r88-drawer-medicine .r88-symbol,.r88-drawer-action .r88-symbol,.r88-drawer-help .r88-symbol{display:inline-block;font-size:18px;line-height:1}
+.r88-drawer-medicine .r88-symbol,.r88-drawer-action .r88-symbol,.r88-drawer-help .r88-symbol,.r88-drawer-escape .r88-symbol{display:inline-block;font-size:18px;line-height:1}
+.r88-symbol svg{display:block;width:1em;height:1em}
 .r88-drawer-medicine .r88-symbol{color:#ff4b61}
 .r88-drawer-action .r88-symbol{color:#ff9a34}
 .r88-drawer-help .r88-symbol{color:#65c9c5}
@@ -9605,7 +9613,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 .r88-icons .r88-grid{grid-template-columns:repeat(auto-fit,minmax(54px,1fr));gap:8px}
 .r88-icons .r88-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:49px;padding:6px 5px}
 .r88-icons .r88-button .r88-symbol{display:block;font-size:22px;font-weight:400;line-height:1}
-.r88-icons .r88-drawer-medicine .r88-symbol{color:#ff4b61}
+.r88-icons .r88-symbol svg{display:block;width:1em;height:1em}
+.r88-drawer-medicine .r88-symbol{color:#ff4b61}
 .r88-icons .r88-drawer-action .r88-symbol{color:#ff9a34}
 .r88-icons .r88-drawer-help .r88-symbol{color:#65c9c5}
 .r88-icons .r88-button .r88-label{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
@@ -9663,8 +9672,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  ];
  const drawers=[
   {key:'medicine',name:'BOTIQUÍN',icon:'✚',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
-  {key:'escape',name:'HUIDA',icon:'⇥',note:'Ausentarte, pausar, guardar o salir del debate.'},
-  {key:'help',name:'AYUDA',icon:'🛟',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
+  {key:'escape',name:'HUIDA',icon:'exit',note:'Ausentarte, pausar, guardar o salir del debate.'},
+  {key:'help',name:'AYUDA',icon:'lifebuoy',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
   {key:'action',name:'ACCIÓN',icon:'💥',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu inventario.'}
  ];
  let opened=null,returnFocus=null,scheduled=false,fullRefresh=null,preferenceUser=null,compact=false;
@@ -9711,9 +9720,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   return 'No está disponible en este momento.';
  }
  function actionLabel(action){return E(action.id)?.textContent.trim()||action.name}
+ // Vector drawer icons render consistently without depending on emoji fonts.
+ const drawerVectors={
+  exit:'<svg data-drawer-icon="exit" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4H4v16h9M10 12h11m-4-4 4 4-4 4"/></svg>',
+  lifebuoy:'<svg data-drawer-icon="lifebuoy" viewBox="0 0 24 24" aria-hidden="true" fill="none"><circle cx="12" cy="12" r="9" stroke="#f3f3f3" stroke-width="2.2"/><circle cx="12" cy="12" r="4" stroke="#f3f3f3" stroke-width="2.2"/><path d="m5.6 5.6 3.5 3.5m5.8 5.8 3.5 3.5m0-12.8-3.5 3.5m-5.8 5.8-3.5 3.5" stroke="#ff4b61" stroke-width="3.2"/></svg>'
+ };
  function iconLabel(button,icon,label){
   const symbol=button.querySelector('.r88-symbol'),text=button.querySelector('.r88-label'),count=button.querySelector('.r88-count');
-  setText(symbol,icon);setText(text,label);
+  if(drawerVectors[icon]){
+   if(symbol.dataset.drawerIcon!==icon){symbol.innerHTML=drawerVectors[icon];symbol.dataset.drawerIcon=icon}
+  }else{delete symbol.dataset.drawerIcon;setText(symbol,icon)}
+  setText(text,label);
   const number=label.match(/(?:·\s*)(\d+\s*\/\s*\d+)\s*$/);
   setText(count,number?number[1]:'');count.hidden=!number;
   button.setAttribute('aria-label',label);button.title=label;
