@@ -8215,12 +8215,13 @@ document.addEventListener("DOMContentLoaded",()=>{
   if(!stage())return;
   const active=boxes.filter(id=>id!=="pilotSecretRevotePicker").some(id=>visible(E(id)));
   const secret=E("pilotSecretRevotePicker");
-  if(active&&visible(secret))secret.style.display="none";
+  const personalBlocked=boxes.filter(id=>!["pilotSecretRevotePicker","pilotUnanimity"].includes(id)).some(id=>visible(E(id)));
+  if(personalBlocked&&visible(secret))secret.style.display="none";
   const locked=active||visible(secret);
   E("debatePilotPanel")?.classList.toggle("pilot-process-locked",locked);
   if(!locked)return;
   document.querySelectorAll("#pilotActionGrid > button,#pilotAssistantActions > button").forEach(button=>{
-   if(button.id==="pilotAbandonBtn"||button.id==="pilotSecretRevoteAction"&&!active)return;
+   if(button.id==="pilotAbandonBtn"||button.id==="pilotSecretRevoteAction"&&!personalBlocked)return;
    button.disabled=true;
   });
  }
