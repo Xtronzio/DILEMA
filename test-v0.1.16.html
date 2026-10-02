@@ -9883,7 +9883,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 .neutral-option strong{font-size:16px!important}.neutral-result{margin:14px 0;padding:12px;border:1px solid #444;border-radius:12px;font-size:12px;color:#aaa;text-align:center}
 .neutral-result.pilot-my-vote,.neutral-result.result-my-vote{border-color:#fff;color:#fff}
 .neutral-wide{grid-column:1/-1}#pilotInlineRevote .neutral-wide{width:100%}
-#privateVoteN{margin:12px 0}#r90NeutralPosition p{font-weight:400;line-height:1.6}
+#privateVoteN{margin:12px 0}#privateVoteN.selected{border-color:#fff;background:#fff;color:#0b0b0b}#r90NeutralPosition p{font-weight:400;line-height:1.6}
 </style>
 <script>
 /* R90: neutral posture and a free first position, using the shared decision space. */
@@ -9899,6 +9899,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  }
  function paint(){
   ensure();const s=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  const card=E('pilotVoteN');if(card&&card.style.display!==(currentRoomMode==='debate'?'block':'none'))card.style.display=currentRoomMode==='debate'?'block':'none';
   const box=E('r90NeutralPosition');if(!box)return;
   const neutral=s?.mine_choice==='N';
   const show=currentRoomMode==='debate'&&E('debate')?.classList.contains('active')&&neutral&&s.phase==='debate'&&!s.paused&&window.dilemaPresenceView?.my_presence!=='absent'&&!r86ActionLocked('r90NeutralPosition');
@@ -9909,7 +9910,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    if(b.textContent!==label)b.textContent=label;
   });
   const count=E('pilotCountN');if(count){const label=String(window.dilemaDebateVoteView?.votesN??s?.votes_n??0);if(count.textContent!==label)count.textContent=label}
-  const card=E('pilotVoteN');if(card)card.classList.toggle('pilot-my-vote',window.dilemaDebateVoteView?.revoteOpen?window.dilemaAssistantState?.choice==='N':neutral);
+  if(card)card.classList.toggle('pilot-my-vote',window.dilemaDebateVoteView?.revoteOpen?window.dilemaAssistantState?.choice==='N':neutral);
  }
  async function position(choice){
   if(submitting||E('r90NeutralPosition')?.style.display!=='block')return;

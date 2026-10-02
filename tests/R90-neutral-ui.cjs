@@ -29,6 +29,7 @@ E('debate').classList.add('active');
  c.locked=true;c.dilemaNeutralPaint();assert.equal(E('r90NeutralPosition').style.display,'none');c.locked=false;c.dilemaNeutralPaint();
  E('r90NeutralPosition').querySelector('[data-position="A"]').click();await new Promise(setImmediate);assert(calls.some(([n,a])=>n==='cast_debate_neutral_position'&&a.p_choice==='A'));
  state.mine_choice='A';c.dilemaNeutralPaint();assert.equal(E('r90NeutralPosition').style.display,'none');
+ c.currentRoomMode='game';c.dilemaNeutralPaint();assert.equal(E('pilotVoteN').style.display,'none');c.currentRoomMode='debate';c.dilemaNeutralPaint();assert.equal(E('pilotVoteN').style.display,'block');
  assert(html.includes("data-admission-choice=\"N\""));assert(html.includes('id="privateVoteN"'));assert(html.includes('TU POSTURA'));
  console.log('R90 neutral UI: initial/reveal/twist/public votes, free positioning, decision lock, hidden game mode, admission/private controls and instructions passed');
 })().catch(e=>{console.error(e);process.exitCode=1});
