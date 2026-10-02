@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R94</div>
+    <div class="version">DILEMA · V0.1.16-010C-R95</div>
   </main>
 
 
@@ -2388,7 +2388,7 @@ function changeExpected(
     )
     .textContent =
       setupExpectedPlayers;
-  document.querySelector("#expected .subtitle").textContent=setupExpectedPlayers===1?"Hoy estás tú: plantea tu dilema y explora tu elección con la guía.":"La sala tendrá que estar completa para poder iniciar.";
+  document.querySelector("#expected .subtitle").textContent=setupExpectedPlayers===1?"Vas a tratar un tema en privado. Conversa con DILEMA a tu ritmo.":"La sala tendrá que estar completa para poder iniciar.";
 
 }
 
@@ -8174,7 +8174,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   groups.push({title:'GUARDAR Y RETOMAR',entries:[['GUARDAR Y VOLVER AL HALL','Disponible con el debate pausado. Se propone a la mesa y decide la mayoría. Conserva el dilema, contexto aprobado, giros, votos y herramientas; libera la sala para otro debate. El anfitrión conserva el dilema marcado GRUP · PAUSADO en Mis dilemas.'],['DEBATES PAUSADOS','En el hall de la misma sala se muestran las sesiones guardadas. El anfitrión propone retomar y decide la mayoría. Con los mismos participantes se recupera el estado anterior. Si la mesa ha cambiado, todos vuelven a votar y las herramientas se sortean al completar la votación. Las ayudas y mensajes personales siguen siendo privados.']]});
   groups.push({title:'ENTRADA A LA MESA',entries:[['AÑADIR DEBATIENTE · CERRAR ENTRADA','El anfitrión abre o cierra la entrada durante el debate. Quien use el código solicita una plaza; la mesa decide por mayoría. Si hay otra decisión en curso, la solicitud espera. El solicitante no vota su propia entrada. Cerrar la entrada impide nuevas solicitudes; las ya enviadas siguen su turno.'],['TU PRIMER VOTO','Al aprobar tu entrada eliges A, B o ESTOY EN DUDA en el espacio amarillo. El resto conserva sus votos y herramientas.'],['DESCARTAR Y BUSCAR OTROS','En Dilemas por el mundo puedes votar por descartar las propuestas. Si gana, se ofrecen otras. En privado descartas directamente. Se recuerda el conflicto de la noticia para evitar repetirlo aunque cambie su redacción.']]});
   groups.unshift({title:'TU POSTURA',entries:[['A · B · ESTOY EN DUDA','ESTOY EN DUDA cuenta como voto neutral. Sigues en la mesa y puedes votar sus decisiones. Las herramientas de acción y ayuda se activan al elegir A o B. Si estás en duda, puedes posicionarte gratis cuando no haya otra decisión pendiente. Para volver a cambiar entre A/B, necesitas tu cambio de voto o un re-voto aprobado.']]});
-  groups.unshift({title:'INVENTARIO DISPONIBLE Y CAJONES',entries:[['INVENTARIO DISPONIBLE','Aquí aparecen las herramientas sorteadas o robadas que tienes y las acciones disponibles: proclama, cambio de voto, asistente, giro, re-voto y limbo grupal cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Huida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN EN PREPARACIÓN','Limbo individual, Robo, Señuelo, Cambio tu voto, Espejo y Antídoto aparecen identificados como en preparación: todavía no se sortean.']]});
+  groups.unshift({title:'INVENTARIO DISPONIBLE Y CAJONES',entries:[['INVENTARIO DISPONIBLE','Aquí aparecen las herramientas sorteadas o robadas que tienes y las acciones disponibles: proclama, cambio de voto, asistente, giro, re-voto y limbo grupal cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Salida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN','Se sortea una unidad de cada tipo al iniciar y tras cada giro o re-voto. Puedes acumular 1 de cada tipo. Las que tienes aparecen en tu inventario. Las que no tienes se consultan en el cajón.'],['PÓCIMAS','Limbo individual: aparta 3 minutos y necesita tres presentes. Robo: roba una pócima o píldora que aún no tengas. Señuelo: falsa pócima para provocar el gasto de una defensa. Cambio tu voto: cambia A por B o B por A, conservando el cambio de voto personal del destinatario.'],['PÍLDORAS Y DEFENSA','Al recibir una pócima tienes 20 segundos para usar Antídoto (neutraliza), Espejo (devuelve el efecto sin otro rebote) o dejarla actuar. Si no respondes, actúa. Las defensas se consumen incluso ante un Señuelo. Durante la reacción no se puede abrir otro proceso.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -8312,17 +8312,27 @@ document.addEventListener("DOMContentLoaded",()=>{
 <section id="privateForm" class="screen">
  <button class="back" onclick="showScreen('debateChoice')">←</button>
  <div class="small-note">HOY ESTÁS TÚ</div>
- <h1 class="title">TENEMOS UN DILEMA</h1>
- <p class="private-note">Plantea tu pregunta y dos opciones. Elige una postura o empieza en duda y conversa con DILEMA.</p>
+ <h1 class="title">TENGO UN DILEMA</h1>
+ <p class="private-note">Cuenta qué te preocupa. Las opciones y el contexto son opcionales; podemos empezar a hablar sin votar.</p>
+ <div class="small-label">AUDIENCIA</div>
+ <div class="selection-audience-row">
+  <button disabled>KIDS<span>EN CONSTRUCCIÓN</span></button>
+  <button id="privateFormTeens" type="button" onclick="togglePrivateFormAudience()" aria-pressed="false">TEENS</button>
+  <button disabled>ADULTOS<span>EN CONSTRUCCIÓN</span></button>
+ </div>
  <label for="privateQuestion">TU DILEMA</label>
  <textarea id="privateQuestion" class="text-input" maxlength="1000" rows="4" placeholder="¿Qué tienes que decidir?" oninput="privateFormReady()"></textarea>
+ <details id="privateOptionalOptions" class="context-details"><summary>OPCIONES · OPCIONAL</summary>
+ <p class="private-note">Si ya ves dos caminos, escríbelos. Si no, empieza solo con tu dilema.</p>
  <label for="privateA">OPCIÓN A</label>
  <input id="privateA" class="text-input" maxlength="500" placeholder="Una posibilidad…" oninput="privateFormReady()">
  <label for="privateB">OPCIÓN B</label>
  <input id="privateB" class="text-input" maxlength="500" placeholder="La otra posibilidad…" oninput="privateFormReady()">
+ <label class="pd-check"><input id="privateAllowDoubt" type="checkbox" checked> INCLUIR «ESTOY EN DUDA»</label>
+ </details>
  <p class="private-note">Solo tú puedes acceder desde tu sesión. Este dilema no entra en el catálogo.</p>
  <p id="privateFormError" class="private-error" role="status"></p>
- <button id="privateCreate" class="btn btn-secondary" onclick="createPrivateDilemma()" disabled>ELEGIR MI POSTURA</button>
+ <button id="privateCreate" class="btn btn-secondary" onclick="createPrivateDilemma()" disabled>EMPEZAR A CONVERSAR</button>
  <button id="privateResume" class="btn btn-secondary" onclick="openSavedDilemmas()" style="display:none">MIS DILEMAS</button>
 </section>
 <section id="privateBoard" class="screen">
@@ -8361,14 +8371,21 @@ document.addEventListener("DOMContentLoaded",()=>{
 </section>
 <script>
 let privateDilemma=null,privateBusy=false,privateOperation=0,privateGuides=[];
+let privateFormAudience=false;
+function togglePrivateFormAudience(){
+ if(privateBusy)return;privateFormAudience=!privateFormAudience;
+ const b=document.getElementById('privateFormTeens');b.classList.toggle('selected',privateFormAudience);b.setAttribute('aria-pressed',String(privateFormAudience));privateFormReady();
+}
 function privateFormReady(){
- document.getElementById("privateCreate").disabled=privateBusy||!["privateQuestion","privateA","privateB"].every(id=>document.getElementById(id).value.trim());
+ const a=document.getElementById('privateA').value.trim(),b=document.getElementById('privateB').value.trim();
+ document.getElementById('privateCreate').disabled=privateBusy||!privateFormAudience||!document.getElementById('privateQuestion').value.trim()||!!a!==!!b;
 }
 function openPrivateDilemma(){
  privateSelectionMode=true;privateOperation++;privateBusy=false;showScreen("debateChoice");
 }
 function openPrivateDilemmaForm(){
- privateOperation++;privateBusy=false;
+ privateOperation++;privateBusy=false;privateFormAudience=false;
+ document.getElementById("privateFormTeens").classList.remove("selected");document.getElementById("privateFormTeens").setAttribute("aria-pressed","false");document.getElementById("privateOptionalOptions").open=false;document.getElementById("privateAllowDoubt").checked=true;document.getElementById("privateContext")?.closest("details").removeAttribute("open");
  ["privateQuestion","privateA","privateB","privateContext","privateFormError"].forEach(id=>{
   const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
  });
@@ -8380,6 +8397,9 @@ function renderPrivateDilemma(){
  renderDilemmaCopy(document.getElementById("privateBoardQuestion"),privateDilemma.question);
  const contextField=document.getElementById("privateBoardContext");
  if(contextField&&contextField.dataset.session!==privateDilemma.id){contextField.dataset.session=privateDilemma.id;contextField.value=privateDilemma.context||"";window.syncCharacterCounters?.()}
+ const hasOptions=!!privateDilemma.option_a&&!!privateDilemma.option_b;
+ document.querySelector('#privatePlanteamiento .private-options').hidden=!hasOptions;
+ document.getElementById('privateVoteN').hidden=!hasOptions||privateDilemma.allow_doubt===false;
  document.getElementById("privateOptionA").textContent=privateDilemma.option_a;
  document.getElementById("privateOptionB").textContent=privateDilemma.option_b;
  for(const choice of ["A","B","N"]){
@@ -8391,7 +8411,7 @@ function renderPrivateDilemma(){
  const historyCounts=guideHistoryCounts(privateGuides,privateDilemma.choice);
  document.getElementById("privateHistory").disabled=privateBusy||!historyCounts.matching;
  document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS · "+historyCounts.matching+"/"+historyCounts.total;
- document.getElementById("privateChoiceNote").textContent=chosen==="N"?"ESTÁS EN DUDA · PUEDES CONVERSAR SIN POSICIONARTE":chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE UNA POSTURA O EMPIEZA EN DUDA";
+ document.getElementById("privateChoiceNote").textContent=!hasOptions?"PUEDES CONVERSAR SIN DEFINIR OPCIONES":chosen==="N"?"ESTÁS EN DUDA · PUEDES CONVERSAR SIN POSICIONARTE":chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE UNA POSTURA O EMPIEZA EN DUDA";
  const help=document.getElementById("privateHelp");
  const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide&&g.signature===JSON.stringify([privateDilemma.question,privateDilemma.option_a,privateDilemma.option_b,privateDilemma.context||""]));
  help.disabled=privateBusy||!["A","B"].includes(chosen);
@@ -8400,13 +8420,13 @@ function renderPrivateDilemma(){
  showScreen("privateBoard");
 }
 async function createPrivateDilemma(){
- if(privateBusy)return;privateBusy=true;privateFormReady();
+ privateFormReady();if(privateBusy||document.getElementById("privateCreate").disabled)return;privateBusy=true;privateFormReady();
  const op=++privateOperation;document.getElementById("privateFormError").textContent="";
  try{
   await ensureAnonymousAuth();
   const {data,error}=await sb.from("private_dilemma_sessions").insert({
    question:document.getElementById("privateQuestion").value.trim(),context:document.getElementById("privateContext").value.trim(),
-   option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim()
+   option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim(),audience:"teen",allow_doubt:document.getElementById("privateAllowDoubt").checked
   }).select().single();
   if(error)throw error;if(op!==privateOperation)return;
   privateDilemma=data;privateGuides=[];localStorage.setItem("dilema_private_session",data.id);privateBusy=false;renderPrivateDilemma();
@@ -8423,7 +8443,7 @@ async function resumePrivateDilemma(){
  finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
 }
 async function choosePrivatePosture(choice){
- if(privateBusy||!privateDilemma||privateDilemma.choice===choice)return;
+ if(privateBusy||!privateDilemma||!privateDilemma.option_a||!privateDilemma.option_b||(choice==="N"&&privateDilemma.allow_doubt===false)||privateDilemma.choice===choice)return;
  privateBusy=true;renderPrivateDilemma();const op=++privateOperation;
  document.getElementById("privateBoardError").textContent="";
  try{
@@ -8515,6 +8535,8 @@ let privateCatalogue=null,privateCatalogueAudience=false,privateCatalogueIntensi
 function syncDilemmaChoice(){
  const mode=document.getElementById("dilemmaChoiceMode"),exit=document.getElementById("dilemmaChoiceExit");
  mode.textContent=privateSelectionMode?"DILEMA PRIVADO · HOY ESTÁS TÚ":"SALA COMPLETA";
+ const options=document.querySelectorAll('#debateChoice .btn');
+ for(const b of options){if(b.getAttribute('onclick')?.includes('openCustomDebate'))b.textContent=privateSelectionMode?'TENGO UN DILEMA':'TENEMOS UN DILEMA';if(b.getAttribute('onclick')?.includes('openSuggestedDebate'))b.textContent=privateSelectionMode?'PROPONME UN DILEMA':'PROPÓNNOS UN DILEMA';}
  document.getElementById("privateChoiceBack").style.display=privateSelectionMode?"block":"none";
  document.getElementById("privateChoiceResume").style.display=privateSelectionMode?"block":"none";
  exit.textContent=privateSelectionMode?"VOLVER AL HALL":"CERRAR SALA";
@@ -9497,6 +9519,7 @@ function r86ActionLocked(id){
  if(r86SessionProposal())return true;
  if(admission?.id||admission?.needs_vote)return true;
  if(admission?.waiting_votes>0)return id!=='pilotAbsentBtn';
+ if(state?.medicine_state?.busy)return true;
  if(state?.paused)return !['pilotEndBtn','pilotPauseAction'].includes(id);
  if(state?.phase==='closing'||state?.phase==='twist'||state?.context_state?.id||state?.limbo_state?.proposal)return true;
  const visible=n=>n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility!=='hidden';
@@ -9682,17 +9705,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   {id:'pilotAssistantRequest',drawer:'help',icon:'?',name:'SOLICITAR AYUDA',description:'Solicitud secreta. Con mayoría se desbloquea la ayuda para quienes la pidieron.'},
   {id:'pilotLimboAction',drawer:'action',icon:'⌛',name:'PROPONER LIMBO',board:true,description:'Propón apartar temporalmente a otra persona. Vota el resto de la mesa; requiere tres presentes.'}
  ];
- const medicines=[
-  {name:'LIMBO · INDIVIDUAL',type:'PÓCIMA',icon:'⌛',description:'Aparta temporalmente del debate a la persona elegida.'},
-  {name:'ROBO',type:'PÓCIMA',icon:'⚗',description:'Roba una pócima o píldora del inventario de otra persona.'},
-  {name:'SEÑUELO',type:'PÓCIMA',icon:'⚗',description:'Una falsa pócima para provocar que otra persona gaste una defensa.'},
-  {name:'CAMBIO TU VOTO',type:'PÓCIMA',icon:'↔',description:'Cambia la postura de otra persona. Su propio cambio de voto le permite recuperarla.'},
-  {name:'ESPEJO',type:'PÍLDORA',icon:'◇',description:'Devuelve la pócima a quien la lanzó.'},
-  {name:'ANTÍDOTO',type:'PÍLDORA',icon:'💊',description:'Neutraliza el efecto de una pócima.'}
- ];
+ actions.push(...[{"id": "pilotMedicine_limbo", "medicine": "limbo", "drawer": "medicine", "icon": "⌛", "name": "LIMBO · INDIVIDUAL", "resource": true, "description": "Aparta a otra persona durante 3 minutos. Requiere tres presentes.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_robo", "medicine": "robo", "drawer": "medicine", "icon": "⚗", "name": "ROBO", "resource": true, "description": "Roba al azar una pócima o píldora que aún no tengas.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_senuelo", "medicine": "senuelo", "drawer": "medicine", "icon": "⚗", "name": "SEÑUELO", "resource": true, "description": "Falsa pócima para provocar que el destinatario gaste una defensa.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_cambio", "medicine": "cambio", "drawer": "medicine", "icon": "↔", "name": "CAMBIO TU VOTO", "resource": true, "description": "Cambia A por B o B por A. No consume el cambio personal del destinatario.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_espejo", "medicine": "espejo", "drawer": "medicine", "icon": "◇", "name": "ESPEJO", "resource": true, "description": "Devuelve una pócima a quien la lanzó. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_antidoto", "medicine": "antidoto", "drawer": "medicine", "icon": "💊", "name": "ANTÍDOTO", "resource": true, "description": "Neutraliza una pócima. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}]);
  const drawers=[
   {key:'medicine',name:'BOTIQUÍN',icon:'✚',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
-  {key:'escape',name:'HUIDA',icon:'exit',note:'Ausentarte, pausar, guardar o salir del debate.'},
+  {key:'escape',name:'SALIDA',icon:'exit',note:'Ausentarte, pausar, guardar o salir del debate.'},
   {key:'help',name:'AYUDA',icon:'lifebuoy',note:'Solicita una ayuda a la mesa, consulta cómo jugar y elige la vista del tablero.'},
   {key:'action',name:'ACCIÓN',icon:'💥',note:'Propón un giro o un re-voto. Las herramientas personales disponibles aparecen en tu inventario.'}
  ];
@@ -9712,6 +9728,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  }
  function owned(action){
   const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+  if(action.medicine)return !!state?.medicine_state?.inventory?.[action.medicine];
   if(action.id==='pilotProclamaBtn'){const b=E(action.id);return b?.dataset.owned==='true'&&b.dataset.ownedRound===String(currentRoundId)&&b.dataset.ownedUser===String(currentUserId)}
   if(action.id==='pilotSecretRevoteAction')return !!state?.secret_revote_mine;
   if(action.id==='pilotAssistantOpen'){
@@ -9787,6 +9804,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  function ensure(){
   const panel=E('debatePilotPanel'),grid=E('pilotActionGrid'),assistant=E('pilotAssistantActions');
   if(!panel||!grid||!assistant)return false;
+  for(const a of actions.filter(a=>a.medicine)){if(!E(a.id)){const b=document.createElement('button');b.type='button';b.id=a.id;b.hidden=true;b.onclick=()=>window.openDebateMedicine?.(a.medicine);panel.appendChild(b)}}
   if(!E('r88SourceBank')){
    const bank=document.createElement('div');bank.id='r88SourceBank';bank.hidden=true;panel.appendChild(bank);
    const {box:resources,content:resourceContent}=collapsibleSection('r88Resources','CONTEXTO Y AYUDAS');
@@ -9846,17 +9864,6 @@ document.addEventListener('DOMContentLoaded',()=>{
    const status=document.createElement('p');status.className='r88-availability';status.id='r88Status_'+action.id;
    b.setAttribute('aria-describedby',status.id);card.append(b,description,status);list.appendChild(card);
   }
-  if(key==='medicine'){
-   for(const type of ['PÓCIMA','PÍLDORA']){
-    const heading=document.createElement('h3');heading.textContent=type==='PÓCIMA'?'PÓCIMAS SORTEADAS':'PÍLDORAS';list.appendChild(heading);
-    for(const m of medicines.filter(m=>m.type===type)){
-     const card=document.createElement('article');card.className='r88-item r88-catalogue';
-     const title=document.createElement('strong');title.textContent=m.icon+' '+m.name+' · 0/1';
-     const text=document.createElement('p');text.className='r88-description';text.textContent=m.description;
-     const note=document.createElement('p');note.className='r88-availability';note.textContent='EN PREPARACIÓN · AÚN NO SE SORTEA';card.append(title,text,note);list.appendChild(card);
-    }
-   }
-  }
   E('r88ViewSettings').hidden=key!=='help';sync();
   opener.setAttribute('aria-expanded','true');E('r88DrawerClose').focus();
  }
@@ -9866,6 +9873,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   E('r88Workbench').classList.toggle('r88-icons',compact);E('r88Toolbox').classList.toggle('r88-icons',compact);
   E('r88Drawer').classList.toggle('r88-icons',compact);
   let active=0;
+  const medState=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data?.medicine_state:null;
+  for(const a of actions.filter(a=>a.medicine)){const b=E(a.id),have=!!medState?.inventory?.[a.medicine];setText(b,a.name+' · '+(have?1:0)+'/1');const disabled=!have||(['espejo','antidoto'].includes(a.medicine)?window.dilemaPresenceView?.my_presence==='absent':!medState?.can_launch)||r86ActionLocked(a.id);if(b.disabled!==disabled)b.disabled=disabled}
   for(const action of actions.filter(a=>a.resource||a.board||a.shortcut)){
    const b=E('r88Tool_'+action.id),source=E(action.id),have=owned(action);
    const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
@@ -10044,19 +10053,19 @@ function paintPrivateDialogue(){
  pdElement('privateDialogueDoubt').disabled=busy||pending;pdElement('privateDialogueBlindspot').disabled=busy||pending;
  pdElement('privateDialogueOlder').hidden=!privateDialogueHasOlder;pdElement('privateDialogueOlder').disabled=privateDialogueLoading;
  const context=pdElement('privateBoardContext');if(context){context.disabled=busy;const save=context.parentElement.querySelector('button');if(save)save.disabled=busy}
- const posture=pdElement('privatePlanteamientoTitle');posture.textContent='TU DILEMA · '+(['A','B'].includes(privateDilemma.choice)?'POSTURA '+privateDilemma.choice:'ESTOY EN DUDA');
+ const posture=pdElement('privatePlanteamientoTitle');posture.textContent='TU DILEMA'+(!privateDilemma.option_a?'':' · '+(['A','B'].includes(privateDilemma.choice)?'POSTURA '+privateDilemma.choice:'ESTOY EN DUDA'));
  pdElement('privateDialogueLog').querySelectorAll('[data-dialogue-retry]').forEach(button=>button.disabled=busy);
  const stamp=JSON.stringify(privateDialogueRows.map(t=>[t.id,t.turn_number,t.message,t.choice,t.status,t.reflection,t.question,t.mode,t.error_code,t.status==='pending'&&Date.now()-new Date(t.leased_at).getTime()>=60000]));
  if(stamp===privateDialogueStamp)return;privateDialogueStamp=stamp;
  const log=pdElement('privateDialogueLog'),atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<70;
  log.replaceChildren();
  if(!privateDialogueRows.length){
-  const empty=document.createElement('p');empty.className='pd-note';empty.textContent='Cuéntame qué te hace inclinarte por una opción o qué te mantiene en duda. Vamos paso a paso.';log.appendChild(empty);
+  const empty=document.createElement('p');empty.className='pd-note';empty.textContent='Vamos a explorar tu dilema paso a paso. Puedes escribir tus razones o tus dudas.';log.appendChild(empty);
  }
  for(const turn of privateDialogueRows){
   const pair=document.createElement('article');pair.className='pd-turn';pair.dataset.turn=turn.id;
   const mine=document.createElement('div');mine.className='pd-user';const who=document.createElement('strong');who.className='pd-author';who.textContent='TÚ · '+(turn.choice==='N'?'EN DUDA':'POSTURA '+turn.choice);
-  const message=document.createElement('p');message.className='pd-copy';message.textContent=turn.message;mine.append(who,message);pair.appendChild(mine);
+  const message=document.createElement('p');message.className='pd-copy';message.textContent=turn.message;mine.append(who,message);if(turn.id!==privateDilemma.id)pair.appendChild(mine);
   const response=document.createElement('div');response.className='pd-reply';const author=document.createElement('strong');author.className='pd-author';author.textContent='DILEMA';response.appendChild(author);
   if(turn.status==='ready'){
    const reflection=document.createElement('p');reflection.className='pd-copy';reflection.textContent=turn.reflection;
@@ -10084,6 +10093,7 @@ async function loadPrivateDialogue(older=false){
   const log=pdElement('privateDialogueLog'),height=log.scrollHeight,scroll=log.scrollTop;
   privateDialogueMerge(data||[]);if(older||privateDialogueRows.length<31)privateDialogueHasOlder=(data||[]).length===30;
   paintPrivateDialogue();if(older)requestAnimationFrame(()=>log.scrollTop=log.scrollHeight-height+scroll);
+  return true;
  }catch(error){if(key===privateDialogueKey&&key===privateDialogueCurrent())privateDialogueStatus('Le cuesta cargar el diálogo. Tu dilema sigue guardado; vuelve a intentarlo.',true)}
  finally{if(key===privateDialogueKey&&run===privateDialogueRun){privateDialogueLoading=false;paintPrivateDialogue();privateDialogueSchedule()}}
 }
@@ -10094,7 +10104,9 @@ function bindPrivateDialogue(){
   privateDialogueKey=key;privateDialogueRows=[];privateDialogueStamp='';privateDialogueHasOlder=false;
   pdElement('privateDialogueInput').value=privateDialogueDrafts.get(key)||'';privateDialogueStatus('El diálogo se guarda con este dilema.');
   pdElement('privatePlanteamiento').open=!privateDilemma.choice;
-  void loadPrivateDialogue();
+  void loadPrivateDialogue().then(loaded=>{
+   if(loaded&&key===privateDialogueCurrent()&&key===privateDialogueKey&&!privateDialogueRows.length&&!privateBusy)void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message:'Quiero explorar este dilema. Ayúdame a empezar.'});
+  });
  }
  paintPrivateDialogue();privateDialogueSchedule();window.syncCharacterCounters?.();
 }
@@ -10160,6 +10172,120 @@ document.addEventListener('DOMContentLoaded',()=>{
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&pdElement('privateBoard').classList.contains('active'))void loadPrivateDialogue()});
 });
 
+</script>
+<style>
+/* R95: private dialogue uses green; copy stays white. */
+#privateForm .selection-audience-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 24px}
+#privateForm .selection-audience-row button{border:1px solid #444;border-radius:12px;background:#0b0b0b;color:white;padding:13px 8px;font:inherit;font-size:11px;font-weight:800;min-height:54px}
+#privateForm .selection-audience-row button span{display:block;font-size:8px;margin-top:6px;font-weight:400}
+#privateForm .selection-audience-row button:disabled{color:#666;border-color:#292929}
+#privateFormTeens.selected{background:#fff!important;color:#0b0b0b!important;border-color:#fff!important}
+#privateForm .pd-check{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:400;line-height:1.5;margin:15px 0}
+#privateForm .pd-check input{width:18px;height:18px;accent-color:#6ee7a0}
+#privateDialogue{border:1px solid #6ee7a0;background:#0d1510}
+#privateDialogue h2,.pd-reply>.pd-author{color:#6ee7a0}
+.pd-reply{background:#0e1711;border-color:#355e42}
+.pd-question{border-color:#355e42;color:#fff}
+#privateDialogue button:focus-visible{outline-color:#6ee7a0}
+#privateDialogueSend:not(:disabled){border-color:#6ee7a0}
+#privatePlanteamiento [hidden]{display:none!important}
+</style>
+<style>
+#r95MedicineDecision .r95-medicine-choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 0;max-height:42dvh;overflow-y:auto}
+#r95MedicineDecision .r95-medicine-choices .btn{margin:0!important;min-width:0;font-size:11px;padding:12px;min-height:47px;line-height:1.5}
+#r95MedicineDecision .r95-medicine-choices .btn:last-child:nth-child(odd){grid-column:1/-1}
+#r95MedicineCopy{white-space:pre-wrap;font-weight:400;line-height:1.7;margin:12px 0}
+#r95MedicineDecision .session-count{margin:18px 0;font-size:12px;letter-spacing:1px}
+#r95MedicineDecision button:disabled{color:#666!important;border-color:#393326!important;background:#0b0b0b!important}
+</style>
+<script>/* R95: potion targeting and defences occupy the same yellow decision space. */
+(function(){
+ const E=id=>document.getElementById(id);
+ const labels={limbo:'LIMBO · INDIVIDUAL',robo:'ROBO',senuelo:'SEÑUELO',cambio:'CAMBIO TU VOTO',espejo:'ESPEJO',antidoto:'ANTÍDOTO'};
+ const descriptions={limbo:'Envía a otra persona al limbo durante 3 minutos. Requiere al menos tres presentes.',robo:'Roba al azar una pócima o píldora de esa persona que aún no tengas.',senuelo:'Lanza una falsa pócima. La persona no sabrá que es falsa antes de decidir si gasta una defensa.',cambio:'Cambia A por B o B por A sin consumir el cambio de voto personal de esa persona.',espejo:'Al recibir una pócima, puedes gastarlo para devolver el efecto a quien la lanzó. No hay otro rebote.',antidoto:'Al recibir una pócima, puedes gastarlo para neutralizarla.'};
+ let selecting=null,pendingRequest=null,sending=false,timer=null,clockOffset=0,stamp='',lastRound=null,lastServerClock=null;
+ function snapshot(){return window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data?.medicine_state:null}
+ function ackKey(id){return 'dilema_medicine_seen:'+currentUserId+':'+id}
+ function seen(id){try{return localStorage.getItem(ackKey(id))==='1'}catch(_){return false}}
+ function acknowledge(id){try{localStorage.setItem(ackKey(id),'1')}catch(_){}}
+ function ensure(){
+  if(E('r95MedicineDecision')||!E('pilotVoteStage'))return;
+  const box=document.createElement('section');box.id='r95MedicineDecision';box.className='r86-session-box';box.style.display='none';box.innerHTML='<h2>⚠ BOTIQUÍN</h2><p id="r95MedicineCopy"></p><p id="r95MedicineClock" class="session-count"></p><div id="r95MedicineChoices" class="r95-medicine-choices"></div><p id="r95MedicineError" class="r86-session-error" role="status"></p>';
+  E('pilotVoteStage').prepend(box);
+ }
+ function choice(label,fn,disabled=false){const b=document.createElement('button');b.type='button';b.className='btn btn-secondary';b.textContent=label;b.disabled=disabled;b.onclick=fn;E('r95MedicineChoices').appendChild(b)}
+ function countdown(){
+  const s=snapshot(),p=s?.pending;if(!p||!E('r95MedicineClock'))return;
+  const left=Math.max(0,Math.ceil((new Date(p.deadline).getTime()-Date.now()-clockOffset)/1000));
+  const label=left?'DEFENSA · '+left+' S':'EL TIEMPO HA TERMINADO · RESOLVIENDO…';
+  if(E('r95MedicineClock').textContent!==label)E('r95MedicineClock').textContent=label;
+  if(left===0)E('r95MedicineChoices').querySelectorAll('button').forEach(b=>b.disabled=true);
+ }
+ function paint(){
+  ensure();if(!E('r95MedicineDecision'))return;
+  const s=snapshot();if(lastRound!==currentRoundId){lastRound=currentRoundId;selecting=null;pendingRequest=null;stamp='';clearInterval(timer);timer=null}
+  const inDebate=currentRoomMode==='debate'&&E('debate')?.classList.contains('active');
+  if(!inDebate||!s){E('r95MedicineDecision').style.display='none';clearInterval(timer);timer=null;return}
+  if(s.server_now&&s.server_now!==lastServerClock){lastServerClock=s.server_now;clockOffset=new Date(s.server_now).getTime()-Date.now()}
+  const p=s.pending,event=s.event&&!seen(s.event.id)?s.event:null;
+  if(selecting&&!s.can_launch)selecting=null;
+  const signature=JSON.stringify([currentRoundId,selecting,sending,p,event,s.inventory,s.can_launch,s.targets]);
+  if(signature!==stamp){
+   stamp=signature;const box=E('r95MedicineDecision'),copy=E('r95MedicineCopy'),list=E('r95MedicineChoices');list.replaceChildren();E('r95MedicineClock').textContent='';
+   box.style.display=p||selecting||event?'block':'none';
+   if(p){
+    E('r95MedicineDecision').querySelector('h2').textContent='⚠ PÓCIMA EN CURSO';
+    copy.textContent=p.incoming?'Has recibido una pócima. Elige cómo reaccionas. Si no usas una defensa antes de 20 segundos, actuará.':p.outgoing?'Has lanzado '+labels[p.item]+'. Esperando la reacción del destinatario.':'Hay una pócima en curso. Las demás acciones volverán a estar disponibles cuando se resuelva.';
+    if(p.incoming){
+     choice('ESPEJO · '+(s.inventory?.espejo||0)+'/1',()=>defend(p.id,'espejo'),sending||!s.inventory?.espejo);
+     choice('ANTÍDOTO · '+(s.inventory?.antidoto||0)+'/1',()=>defend(p.id,'antidoto'),sending||!s.inventory?.antidoto);
+     choice('DEJAR ACTUAR',()=>defend(p.id,'none'),sending);
+    }
+   }else if(selecting){
+    E('r95MedicineDecision').querySelector('h2').textContent='⚠ '+labels[selecting];copy.textContent=descriptions[selecting]+' Elige a quién lanzarla.';
+    for(const t of s.targets||[])choice(t.name,()=>launch(selecting,t.id),sending||selecting==='limbo'&&!t.limbo||selecting==='cambio'&&!t.positioned);
+    choice('CANCELAR',()=>{selecting=null;pendingRequest=null;E('r95MedicineError').textContent='';paint()},sending);
+   }else if(event){
+    E('r95MedicineDecision').querySelector('h2').textContent='⚠ '+labels[event.item];
+    copy.textContent=(event.status==='reflected'?'ESPEJO: la pócima ha rebotado. ':'')+event.result;
+    choice('ENTENDIDO',()=>{acknowledge(event.id);E('r95MedicineError').textContent='';paint()});
+   }
+  }
+  if(p){if(!timer)timer=setInterval(countdown,1000);countdown()}
+  else{clearInterval(timer);timer=null}
+ }
+ window.openDebateMedicine=function(item){
+  const s=snapshot();if(!s?.inventory?.[item])return;
+  if(['espejo','antidoto'].includes(item)){
+   ensure();const box=E('r95MedicineDecision');box.style.display='block';box.querySelector('h2').textContent='⚠ '+labels[item];E('r95MedicineCopy').textContent=descriptions[item]+' Se usa desde el aviso de una pócima recibida.';E('r95MedicineClock').textContent='';E('r95MedicineChoices').replaceChildren();choice('ENTENDIDO',()=>{stamp='';paint()});return;
+  }
+  if(!s.can_launch||r86ActionLocked('pilotMedicine_'+item))return;
+  selecting=item;pendingRequest=null;E('r95MedicineError').textContent='';paint();E('r95MedicineDecision').scrollIntoView?.({block:'nearest',behavior:'smooth'});
+ };
+ async function launch(item,target){
+  const s=snapshot();if(sending||!s?.can_launch||!s.inventory?.[item])return;
+  const round=currentRoundId;if(!pendingRequest||pendingRequest.item!==item||pendingRequest.target!==target)pendingRequest={id:crypto.randomUUID(),item,target};
+  sending=true;E('r95MedicineError').textContent='';paint();
+  try{
+   const {error}=await sb.rpc('launch_debate_medicine',{p_round:round,p_item:item,p_target:target,p_request:pendingRequest.id});if(error)throw error;
+   if(round!==currentRoundId)return;selecting=null;pendingRequest=null;announceHallChange('medicine');await pilotRefresh();
+  }catch(error){if(round===currentRoundId){E('r95MedicineError').textContent='No se pudo lanzar. La mesa puede estar resolviendo otra decisión; comprueba el inventario antes de reintentar.';await pilotRefresh()}}
+  finally{sending=false;paint();window.dilemaWorkbenchSync?.()}
+ }
+ async function defend(id,defence){
+  if(sending||!snapshot()?.pending?.incoming)return;const round=currentRoundId;sending=true;E('r95MedicineError').textContent='';paint();
+  try{
+   const {error}=await sb.rpc('defend_debate_medicine',{p_round:round,p_use:id,p_defence:defence});if(error)throw error;
+   if(round===currentRoundId){announceHallChange('medicine-defence');await pilotRefresh()}
+  }catch(error){if(round===currentRoundId){E('r95MedicineError').textContent='La defensa no se registró. Puede haber terminado el tiempo; comprobando el resultado…';await pilotRefresh()}}
+  finally{sending=false;paint();window.dilemaWorkbenchSync?.()}
+ }
+ const refresh=window.pilotRefresh;
+ window.pilotRefresh=async function(){try{return await refresh.apply(this,arguments)}finally{paint();window.dilemaStableActionLocks?.();window.dilemaWorkbenchSync?.()}};
+ const render=window.renderDebate;
+ window.renderDebate=function(){const result=render.apply(this,arguments);paint();return result};
+ window.dilemaMedicinePaint=paint;document.addEventListener('DOMContentLoaded',paint);
+})();
 </script>
 </body>
 </html>
