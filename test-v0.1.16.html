@@ -1484,7 +1484,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R92</div>
+    <div class="version">DILEMA · V0.1.16-010C-R93</div>
   </main>
 
 
@@ -8311,7 +8311,7 @@ document.addEventListener("DOMContentLoaded",()=>{
  <button class="back" onclick="showScreen('debateChoice')">←</button>
  <div class="small-note">HOY ESTÁS TÚ</div>
  <h1 class="title">TENEMOS UN DILEMA</h1>
- <p class="private-note">Plantea tu pregunta y dos opciones. Después elige y abre tu guía personal.</p>
+ <p class="private-note">Plantea tu pregunta y dos opciones. Elige una postura o empieza en duda y conversa con DILEMA.</p>
  <label for="privateQuestion">TU DILEMA</label>
  <textarea id="privateQuestion" class="text-input" maxlength="1000" rows="4" placeholder="¿Qué tienes que decidir?" oninput="privateFormReady()"></textarea>
  <label for="privateA">OPCIÓN A</label>
@@ -8325,7 +8325,8 @@ document.addEventListener("DOMContentLoaded",()=>{
 </section>
 <section id="privateBoard" class="screen">
  <div class="small-note">DILEMA PRIVADO · SOLO TÚ</div>
- <h1 class="title">¿QUÉ ELIGES?</h1>
+ <h1 class="title">VAMOS A PENSARLO</h1>
+ <details id="privatePlanteamiento" open><summary id="privatePlanteamientoTitle">TU DILEMA Y TU POSTURA</summary>
  <p id="privateBoardQuestion" class="private-question"></p>
  <div class="private-options">
   <button id="privateVoteA" onclick="choosePrivatePosture('A')" aria-pressed="false"><b>A</b><span id="privateOptionA"></span></button>
@@ -8333,12 +8334,27 @@ document.addEventListener("DOMContentLoaded",()=>{
  </div>
  <button id="privateVoteN" class="btn btn-secondary" onclick="choosePrivatePosture('N')" aria-pressed="false">ESTOY EN DUDA</button>
  <p id="privateChoiceNote" class="private-note"></p>
- <button id="privateHelp" class="btn btn-secondary" disabled>AYÚDAME A PENSAR</button>
+ </details>
+ <section id="privateDialogue" aria-labelledby="privateDialogueTitle">
+  <h2 id="privateDialogueTitle">TU DIÁLOGO CON DILEMA</h2>
+  <p class="pd-note">Escribe tus razones o tus dudas. Una respuesta breve y una pregunta para avanzar.</p>
+  <button id="privateDialogueOlder" type="button" hidden>VER MENSAJES ANTERIORES</button>
+  <div id="privateDialogueLog" role="log" aria-live="polite" aria-relevant="additions"></div>
+  <form id="privateDialogueForm">
+   <label for="privateDialogueInput">¿QUÉ ESTÁS PENSANDO?</label>
+   <textarea id="privateDialogueInput" maxlength="3000" rows="4" placeholder="Esto es lo que pienso, lo que me preocupa o lo que todavía no tengo claro…"></textarea>
+   <p class="pd-note">Puedes escribir o dictar con el micrófono de tu teclado.</p>
+   <div class="pd-actions"><button id="privateDialogueDoubt" type="button">SIGO DUDANDO</button><button id="privateDialogueBlindspot" type="button">¿QUÉ NO ESTOY VIENDO?</button></div>
+   <button id="privateDialogueSend" type="submit" disabled>ENVIAR A DILEMA</button>
+  </form>
+  <p id="privateDialogueStatus" role="status">El diálogo se guarda con este dilema.</p>
+ </section>
+ <button id="privateHelp" style="display:none" class="btn btn-secondary" disabled>AYÚDAME A PENSAR</button>
  <button id="privateHistory" class="btn btn-secondary" onclick="openPrivateHelpHistory()">MIS AYUDAS GUARDADAS</button>
  <p id="privateBoardError" class="private-error" role="status"></p>
  <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
  <div class="saved-actions"><button class="btn btn-secondary" onclick="openPrivateDilemma()">NUEVO DILEMA</button><button class="btn btn-danger" onclick="requestSavedDiscard({id:privateDilemma.id,origin:'PRIV',question:privateDilemma.question})">DESCARTAR DILEMA</button></div>
- <p class="private-note">Nuevo dilema conserva este. Descartar lo borra junto con sus ayudas.</p>
+ <p class="private-note">Nuevo dilema conserva este y su diálogo. Descartar lo borra junto con sus ayudas y conversación.</p>
  <button class="btn btn-secondary" onclick="exitPrivateDilemma()">VOLVER AL HALL</button>
 </section>
 <script>
@@ -8373,7 +8389,7 @@ function renderPrivateDilemma(){
  const historyCounts=guideHistoryCounts(privateGuides,privateDilemma.choice);
  document.getElementById("privateHistory").disabled=privateBusy||!historyCounts.matching;
  document.getElementById("privateHistory").textContent="MIS AYUDAS GUARDADAS · "+historyCounts.matching+"/"+historyCounts.total;
- document.getElementById("privateChoiceNote").textContent=chosen==="N"?"ESTÁS EN DUDA · ELIGE A O B PARA ABRIR TU GUÍA":chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE A O B PARA ABRIR TU GUÍA";
+ document.getElementById("privateChoiceNote").textContent=chosen==="N"?"ESTÁS EN DUDA · PUEDES CONVERSAR SIN POSICIONARTE":chosen?"HAS ELEGIDO "+chosen+" · PUEDES CAMBIAR TU ELECCIÓN":"ELIGE UNA POSTURA O EMPIEZA EN DUDA";
  const help=document.getElementById("privateHelp");
  const hasGuide=privateGuides.some(g=>g.choice===chosen&&g.guide&&g.signature===JSON.stringify([privateDilemma.question,privateDilemma.option_a,privateDilemma.option_b,privateDilemma.context||""]));
  help.disabled=privateBusy||!["A","B"].includes(chosen);
@@ -8709,7 +8725,7 @@ async function savePrivateContext(){
   const {data,error}=await sb.from('private_dilemma_sessions').update({context:text}).eq('id',privateDilemma.id).select().single();
   if(error)throw error;if(op!==privateOperation)return;
   privateDilemma=data;document.getElementById('privateBoardContextDetails').open=false;
-  document.getElementById('privateBoardError').textContent='CONTEXTO GUARDADO · TU PRÓXIMA AYUDA LO TENDRÁ EN CUENTA.';
+  document.getElementById('privateBoardError').textContent='CONTEXTO GUARDADO · TU PRÓXIMA RESPUESTA LO TENDRÁ EN CUENTA.';
  }catch(e){document.getElementById('privateBoardError').textContent='No se ha podido guardar el contexto. Inténtalo de nuevo.'}
  finally{if(op===privateOperation){privateBusy=false;button.disabled=false;renderPrivateDilemma()}}
 }
@@ -9959,6 +9975,188 @@ document.addEventListener('DOMContentLoaded',()=>{
  window.dilemaNeutralPaint=paint;
  document.addEventListener('DOMContentLoaded',paint);
 })();
+
+</script>
+
+<style>
+/* R93: a short, saved dialogue about one private decision. */
+#privatePlanteamiento{border:1px solid #444;border-radius:14px;padding:15px;margin:20px 0}
+#privatePlanteamiento>summary{cursor:pointer;color:#fff;font-size:11px;font-weight:800;letter-spacing:1px;line-height:1.5}
+#privatePlanteamiento #privateBoardQuestion{margin:16px 0;font-size:17px}
+#privatePlanteamiento .private-options button{min-height:90px;font-size:14px}
+#privatePlanteamiento #privateChoiceNote{margin-bottom:0}
+#privateDialogue{border:1px solid #555;border-radius:14px;background:#0c0c0c;padding:15px;margin:18px 0}
+#privateDialogue h2{margin:0 0 9px;font-size:14px;font-weight:800;letter-spacing:1px;color:#fff;text-align:center}
+#privateDialogue .pd-note{font-size:12px;font-weight:400;line-height:1.6;color:#aaa;margin:8px 0 16px;text-align:center}
+#privateDialogueLog{max-height:min(52dvh,470px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.pd-turn{margin:0 0 22px;padding-bottom:8px}
+.pd-turn:last-child{margin-bottom:8px}
+.pd-user,.pd-reply{border:1px solid #3b3b3b;border-radius:12px;padding:14px;margin:0 0 10px}
+.pd-user{background:#151515}
+.pd-reply{background:#10100d;border-color:#685b24}
+.pd-author{display:block;margin-bottom:9px;font-size:10px;font-weight:800;letter-spacing:1px;color:#ddd;line-height:1.5}
+.pd-reply>.pd-author{color:#facc15}
+.pd-copy,.pd-question{margin:0;font-size:14px;font-weight:400;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.pd-question{margin-top:12px;padding-top:12px;border-top:1px solid #383322}
+.pd-source{margin:12px 0 0;color:#999;font-size:10px;font-weight:400;line-height:1.5}
+.pd-source.pd-fallback{color:#facc15}
+.pd-pending{margin:0;color:#aaa;font-size:13px;line-height:1.6}
+#privateDialogue form{margin-top:18px}
+#privateDialogue label{display:block;margin:0 0 8px;font-size:11px;font-weight:800;letter-spacing:1px;color:#fff}
+#privateDialogueInput{display:block;width:100%;min-height:110px;max-height:260px;resize:vertical;border:1px solid #555;border-radius:12px;padding:13px;background:#121212;color:#fff;font:inherit;font-size:15px;font-weight:400;line-height:1.6;text-align:left;letter-spacing:0;outline:0;box-shadow:none}
+#privateDialogueInput:focus-visible{border-color:#fff;outline:1px solid #fff;outline-offset:2px}
+#privateDialogue .pd-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:15px 0 0}
+#privateDialogue button{min-width:0;min-height:43px;border:1px solid #555;border-radius:11px;background:#0c0c0c;color:#fff;font:inherit;font-size:11px;font-weight:800;line-height:1.4;padding:10px;cursor:pointer;animation:none;box-shadow:none}
+#privateDialogue button:disabled{color:#666;border-color:#303030;cursor:default}
+#privateDialogue button:focus-visible{outline:2px solid #facc15;outline-offset:3px}
+#privateDialogueSend{width:100%;margin-top:12px}
+#privateDialogueOlder{width:100%;margin-bottom:15px}
+#privateDialogueStatus{margin:13px 0 0;font-size:12px;color:#aaa;font-weight:400;line-height:1.6}
+#privateDialogueStatus.pd-error{color:#facc15}
+#privateDialogue [hidden]{display:none!important}
+
+</style>
+<script>
+/* R93: private dialogue, independent from the collective debate and its guides. */
+let privateDialogueKey=null,privateDialogueRows=[],privateDialogueRun=0,privateDialogueSending=false,privateDialogueLoading=false,privateDialoguePoll=null,privateDialogueStamp='',privateDialogueHasOlder=false;
+const privateDialogueDrafts=new Map();
+const privateDialogueSelect='id,turn_number,message,choice,status,reflection,question,mode,error_code,created_at,completed_at,leased_at';
+const pdElement=id=>document.getElementById(id);
+function privateDialogueCurrent(){return privateDilemma?.id&&currentUserId?currentUserId+':'+privateDilemma.id:null}
+function privateDialogueMerge(rows){
+ const merged=new Map(privateDialogueRows.map(row=>[row.id,row]));for(const row of rows)merged.set(row.id,row);
+ privateDialogueRows=[...merged.values()].sort((a,b)=>a.turn_number-b.turn_number);
+}
+function privateDialogueStatus(message,error=false){const e=pdElement('privateDialogueStatus');e.textContent=message;e.classList.toggle('pd-error',error)}
+function privateDialoguePending(){return privateDialogueRows.some(t=>t.status==='pending')}
+function privateDialogueSchedule(){
+ clearTimeout(privateDialoguePoll);privateDialoguePoll=null;
+ if(privateDialogueRows.some(t=>t.status==='pending'&&Date.now()-new Date(t.leased_at).getTime()<60000)&&pdElement('privateBoard')?.classList.contains('active'))privateDialoguePoll=setTimeout(()=>loadPrivateDialogue(),2200);
+}
+function paintPrivateDialogue(){
+ if(!privateDilemma||privateDialogueKey!==privateDialogueCurrent())return;
+ const field=pdElement('privateDialogueInput'),busy=privateBusy||privateDialogueSending,pending=privateDialoguePending();
+ field.disabled=busy;
+ pdElement('privateDialogueSend').disabled=busy||pending||!field.value.trim();
+ pdElement('privateDialogueSend').textContent=privateDialogueSending?'PREPARANDO RESPUESTA…':pending?'ESPERANDO RESPUESTA…':'ENVIAR A DILEMA';
+ pdElement('privateDialogueDoubt').disabled=busy||pending;pdElement('privateDialogueBlindspot').disabled=busy||pending;
+ pdElement('privateDialogueOlder').hidden=!privateDialogueHasOlder;pdElement('privateDialogueOlder').disabled=privateDialogueLoading;
+ const context=pdElement('privateBoardContext');if(context){context.disabled=busy;const save=context.parentElement.querySelector('button');if(save)save.disabled=busy}
+ const posture=pdElement('privatePlanteamientoTitle');posture.textContent='TU DILEMA · '+(['A','B'].includes(privateDilemma.choice)?'POSTURA '+privateDilemma.choice:'ESTOY EN DUDA');
+ pdElement('privateDialogueLog').querySelectorAll('[data-dialogue-retry]').forEach(button=>button.disabled=busy);
+ const stamp=JSON.stringify(privateDialogueRows.map(t=>[t.id,t.turn_number,t.message,t.choice,t.status,t.reflection,t.question,t.mode,t.error_code,t.status==='pending'&&Date.now()-new Date(t.leased_at).getTime()>=60000]));
+ if(stamp===privateDialogueStamp)return;privateDialogueStamp=stamp;
+ const log=pdElement('privateDialogueLog'),atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<70;
+ log.replaceChildren();
+ if(!privateDialogueRows.length){
+  const empty=document.createElement('p');empty.className='pd-note';empty.textContent='Cuéntame qué te hace inclinarte por una opción o qué te mantiene en duda. Vamos paso a paso.';log.appendChild(empty);
+ }
+ for(const turn of privateDialogueRows){
+  const pair=document.createElement('article');pair.className='pd-turn';pair.dataset.turn=turn.id;
+  const mine=document.createElement('div');mine.className='pd-user';const who=document.createElement('strong');who.className='pd-author';who.textContent='TÚ · '+(turn.choice==='N'?'EN DUDA':'POSTURA '+turn.choice);
+  const message=document.createElement('p');message.className='pd-copy';message.textContent=turn.message;mine.append(who,message);pair.appendChild(mine);
+  const response=document.createElement('div');response.className='pd-reply';const author=document.createElement('strong');author.className='pd-author';author.textContent='DILEMA';response.appendChild(author);
+  if(turn.status==='ready'){
+   const reflection=document.createElement('p');reflection.className='pd-copy';reflection.textContent=turn.reflection;
+   const question=document.createElement('p');question.className='pd-question';question.textContent=turn.question;
+   const source=document.createElement('p');source.className='pd-source'+(turn.mode==='IA'?'':' pd-fallback');source.textContent=turn.mode==='IA'?'CONTENIDO GENERADO CON IA':'IA NO DISPONIBLE · APOYO BÁSICO. Si persiste, hay que revisar la disponibilidad de la IA.';
+   response.append(reflection,question,source);
+  }else{
+   const note=document.createElement('p');note.className='pd-pending';note.textContent=turn.status==='pending'?(Date.now()-new Date(turn.leased_at).getTime()>=60000?'La respuesta está tardando. Puedes reintentar sin perder tu argumento.':'Estoy preparando la respuesta…'):turn.error_code==='STALE_CONTEXT'?'Tu postura o contexto cambió mientras se preparaba la respuesta. Puedes reintentar con la información actual.':'No se completó la respuesta. Tu argumento sigue aquí.';
+   const retry=document.createElement('button');retry.type='button';retry.dataset.dialogueRetry=turn.id;retry.textContent=turn.status==='pending'&&Date.now()-new Date(turn.leased_at).getTime()<60000?'COMPROBAR RESPUESTA':'REINTENTAR RESPUESTA';retry.disabled=busy;
+   retry.onclick=async()=>{if(turn.status==='pending'&&Date.now()-new Date(turn.leased_at).getTime()<60000)await loadPrivateDialogue();else await sendPrivateDialogue(turn)};
+   response.append(note,retry);
+  }
+  pair.appendChild(response);log.appendChild(pair);
+ }
+ if(atBottom||privateDialogueSending)requestAnimationFrame(()=>{if(privateDialogueKey===privateDialogueCurrent())log.scrollTop=log.scrollHeight});
+}
+async function loadPrivateDialogue(older=false){
+ const key=privateDialogueCurrent(),id=privateDilemma?.id,user=currentUserId;if(!key||key!==privateDialogueKey||privateDialogueLoading)return;
+ privateDialogueLoading=true;const run=++privateDialogueRun;
+ try{
+  let query=sb.from('private_dilemma_dialogue_turns').select(privateDialogueSelect).eq('session_id',id).eq('user_id',user).order('turn_number',{ascending:false}).limit(30);
+  if(older&&privateDialogueRows.length)query=query.lt('turn_number',Math.min(...privateDialogueRows.map(t=>t.turn_number)));
+  const {data,error}=await query;if(error)throw error;
+  if(key!==privateDialogueKey||key!==privateDialogueCurrent()||run!==privateDialogueRun)return;
+  const log=pdElement('privateDialogueLog'),height=log.scrollHeight,scroll=log.scrollTop;
+  privateDialogueMerge(data||[]);if(older||privateDialogueRows.length<31)privateDialogueHasOlder=(data||[]).length===30;
+  paintPrivateDialogue();if(older)requestAnimationFrame(()=>log.scrollTop=log.scrollHeight-height+scroll);
+ }catch(error){if(key===privateDialogueKey&&key===privateDialogueCurrent())privateDialogueStatus('Le cuesta cargar el diálogo. Tu dilema sigue guardado; vuelve a intentarlo.',true)}
+ finally{if(key===privateDialogueKey&&run===privateDialogueRun){privateDialogueLoading=false;paintPrivateDialogue();privateDialogueSchedule()}}
+}
+function bindPrivateDialogue(){
+ const key=privateDialogueCurrent();if(!key)return;
+ if(key!==privateDialogueKey){
+  clearTimeout(privateDialoguePoll);privateDialogueRun++;privateDialogueLoading=false;privateDialogueSending=false;
+  privateDialogueKey=key;privateDialogueRows=[];privateDialogueStamp='';privateDialogueHasOlder=false;
+  pdElement('privateDialogueInput').value=privateDialogueDrafts.get(key)||'';privateDialogueStatus('El diálogo se guarda con este dilema.');
+  pdElement('privatePlanteamiento').open=!privateDilemma.choice;
+  void loadPrivateDialogue();
+ }
+ paintPrivateDialogue();privateDialogueSchedule();window.syncCharacterCounters?.();
+}
+async function privateDialogueError(error,data){
+ if(data?.error)return data.error;
+ try{const body=await error?.context?.clone?.().json();if(body?.error)return body.error}catch(_){}
+ return 'No se ha podido completar la respuesta. Tu texto sigue aquí; comprueba el diálogo antes de reintentar.';
+}
+async function sendPrivateDialogue(retry=null){
+ const key=privateDialogueCurrent(),session=privateDilemma?.id,user=currentUserId,field=pdElement('privateDialogueInput');
+ if(!key||key!==privateDialogueKey||privateDialogueSending||privateBusy||(!retry&&privateDialoguePending()))return;
+ const message=(retry?.message||field.value).trim();if(!message||message.length>3000)return;
+ const requestId=retry?.id||crypto.randomUUID(),op=++privateOperation;
+ privateDialogueSending=true;privateBusy=true;pdElement('privatePlanteamiento').open=false;
+ privateDialogueMerge([{id:requestId,turn_number:retry?.turn_number||Math.max(0,...privateDialogueRows.map(t=>t.turn_number))+1,message,choice:privateDilemma.choice||'N',status:'pending',reflection:'',question:'',leased_at:new Date().toISOString()}]);
+ privateDialogueStatus('Preparando una respuesta breve…');renderPrivateDilemma();
+ try{
+  const {data,error}=await sb.functions.invoke('private-dialogue',{body:{sessionId:session,requestId,message}});
+  if(key!==privateDialogueKey||key!==privateDialogueCurrent()||op!==privateOperation||user!==currentUserId)return;
+  if(error||data?.error)throw {error,data};
+  if(data?.turn)privateDialogueMerge([data.turn]);
+  if(data?.status==='ready'){
+   if(!retry&&field.value.trim()===message){field.value='';privateDialogueDrafts.delete(key);window.syncCharacterCounters?.()}
+   privateDialogueStatus('Respuesta guardada. Continúa cuando quieras.');
+  }else privateDialogueStatus('La respuesta sigue en curso. Se mostrará aquí cuando esté lista.');
+ }catch(result){
+  if(key!==privateDialogueKey||key!==privateDialogueCurrent()||op!==privateOperation)return;
+  const errorText=await privateDialogueError(result.error||result,result.data);
+  if(key!==privateDialogueKey||op!==privateOperation)return;
+  privateDialogueStatus(errorText,true);
+  const local=privateDialogueRows.find(t=>t.id===requestId);if(local)local.status='error';
+  // Read the durable turn: a disconnected response may already have been saved.
+  await loadPrivateDialogue();
+  const recovered=privateDialogueRows.find(t=>t.id===requestId);
+  if(recovered?.status==='ready'){
+   if(!retry&&field.value.trim()===message){field.value='';privateDialogueDrafts.delete(key);window.syncCharacterCounters?.()}
+   privateDialogueStatus('Respuesta recuperada y guardada.');
+  }
+  if(result.data?.code==='STALE_CONTEXT'||errorText.includes('Tu postura o contexto ha cambiado')){
+   const {data:latest}=await sb.from('private_dilemma_sessions').select().eq('id',session).eq('user_id',user).maybeSingle();
+   if(latest&&key===privateDialogueKey&&op===privateOperation){privateDilemma=latest;const context=pdElement('privateBoardContext');if(context)delete context.dataset.session}
+  }
+ }finally{
+  if(key===privateDialogueKey){
+   privateDialogueSending=false;
+   if(key===privateDialogueCurrent()&&op===privateOperation){privateBusy=false;renderPrivateDilemma()}
+   else if(key===privateDialogueCurrent()){paintPrivateDialogue();if(pdElement('privateBoard').classList.contains('active'))void loadPrivateDialogue()}
+   privateDialogueSchedule();
+  }
+ }
+}
+function privateDialoguePrompt(text){
+ const field=pdElement('privateDialogueInput');if(field.disabled)return;field.value=text;privateDialogueDrafts.set(privateDialogueKey,text);paintPrivateDialogue();window.syncCharacterCounters?.();field.focus();
+}
+const r93PrivateRender=renderPrivateDilemma;
+renderPrivateDilemma=function(){r93PrivateRender();if(privateDilemma)bindPrivateDialogue()};
+document.addEventListener('DOMContentLoaded',()=>{
+ pdElement('privateDialogueForm').onsubmit=event=>{event.preventDefault();void sendPrivateDialogue()};
+ pdElement('privateDialogueInput').oninput=()=>{privateDialogueDrafts.set(privateDialogueKey,pdElement('privateDialogueInput').value);paintPrivateDialogue()};
+ pdElement('privateDialogueDoubt').onclick=()=>privateDialoguePrompt('Sigo dudando. Ayúdame a mirar esta decisión desde otra perspectiva.');
+ pdElement('privateDialogueBlindspot').onclick=()=>privateDialoguePrompt('¿Qué aspecto importante de lo que he contado estoy pasando por alto?');
+ pdElement('privateDialogueOlder').onclick=()=>loadPrivateDialogue(true);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&pdElement('privateBoard').classList.contains('active'))void loadPrivateDialogue()});
+});
 
 </script>
 </body>
