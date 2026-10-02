@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R96</div>
+    <div class="version">DILEMA · V0.1.16-010C-R97</div>
   </main>
 
 
@@ -7164,7 +7164,7 @@ window.addEventListener(
     }
     if(cb)cb.querySelectorAll("[data-close]").forEach(b=>b.disabled=isAbsent);
     const secretButton=el("pilotSecretRevoteAction"),secretPicker=el("pilotSecretRevotePicker");
-    const secretReady=!s.context_state?.id&&!presenceView?.id&&!!s.secret_revote_mine&&s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen&&!unanimous&&!giroOpen&&groupRevoteProposal?.status!=="open";
+    const secretReady=!s.context_state?.id&&!presenceView?.id&&!!s.secret_revote_mine&&s.phase==="debate"&&!s.paused&&!isAbsent&&!optionalOpen&&!giroOpen&&groupRevoteProposal?.status!=="open";
     if(secretButton){secretButton.style.display="block";secretButton.disabled=!secretReady;secretButton.textContent=s.secret_revote_mine?"CAMBIAR MI VOTO · 1/1":"CAMBIAR MI VOTO · 0/1";}
     if(secretPicker){
       if(!secretReady)secretPicker.style.display="none";
@@ -9523,7 +9523,7 @@ function r86ActionLocked(id){
  if(state?.paused)return !['pilotEndBtn','pilotPauseAction'].includes(id);
  if(state?.phase==='closing'||state?.phase==='twist'||state?.context_state?.id||state?.limbo_state?.proposal)return true;
  const visible=n=>n&&getComputedStyle(n).display!=='none'&&getComputedStyle(n).visibility!=='hidden';
- return ['pilotUnanimity','pilotGiroVoteBox','pilotCloseBox','pilotGroupRevoteProposal','pilotPauseProposal','pilotPresenceRequestBox','pilotInlineRevote','pilotContextDecision','pilotLimboVoteBox','pilotAdmissionVoteBox','pilotAdmissionInitialVote','r86SessionVote'].some(k=>visible(document.getElementById(k)));
+ return ['pilotUnanimity','pilotGiroVoteBox','pilotCloseBox','pilotGroupRevoteProposal','pilotPauseProposal','pilotPresenceRequestBox','pilotInlineRevote','pilotContextDecision','pilotLimboVoteBox','pilotAdmissionVoteBox','pilotAdmissionInitialVote','r86SessionVote'].some(k=>!(k==='pilotUnanimity'&&id==='pilotSecretRevoteAction')&&visible(document.getElementById(k)));
 }
 function r86GuardButtons(){
  const descriptor=Object.getOwnPropertyDescriptor(HTMLButtonElement.prototype,'disabled');
@@ -9693,7 +9693,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const E=id=>document.getElementById(id);
  const actions=[
   {id:'pilotProclamaBtn',drawer:'action',icon:'📣',name:'PROCLAMAR',resource:true,description:'Escribe una proclama y elige a quién enviarla.',empty:'No tienes una proclama disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
-  {id:'pilotSecretRevoteAction',drawer:'action',icon:'>-<',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
+  {id:'pilotSecretRevoteAction',drawer:'action',icon:'vote-inward',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
   {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',shortcut:true,description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
   {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',shortcut:true,description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
   {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
@@ -9705,7 +9705,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   {id:'pilotAssistantRequest',drawer:'help',icon:'?',name:'SOLICITAR AYUDA',description:'Solicitud secreta. Con mayoría se desbloquea la ayuda para quienes la pidieron.'},
   {id:'pilotLimboAction',drawer:'action',icon:'⌛',name:'PROPONER LIMBO',board:true,description:'Propón apartar temporalmente a otra persona. Vota el resto de la mesa; requiere tres presentes.'}
  ];
- actions.push(...[{"id": "pilotMedicine_limbo", "medicine": "limbo", "drawer": "medicine", "icon": "⌛", "name": "LIMBO · INDIVIDUAL", "resource": true, "description": "Aparta a otra persona durante 3 minutos. Requiere tres presentes.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_robo", "medicine": "robo", "drawer": "medicine", "icon": "steal", "name": "ROBO", "resource": true, "description": "Roba al azar una pócima o píldora que aún no tengas.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_senuelo", "medicine": "senuelo", "drawer": "medicine", "icon": "bait", "name": "SEÑUELO", "resource": true, "description": "Falsa pócima para provocar que el destinatario gaste una defensa.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_cambio", "medicine": "cambio", "drawer": "medicine", "icon": "<->", "name": "CAMBIO TU VOTO", "resource": true, "description": "Cambia A por B o B por A. No consume el cambio personal del destinatario.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_espejo", "medicine": "espejo", "drawer": "medicine", "icon": "mirror", "name": "ESPEJO", "resource": true, "description": "Devuelve una pócima a quien la lanzó. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_antidoto", "medicine": "antidoto", "drawer": "medicine", "icon": "💊", "name": "ANTÍDOTO", "resource": true, "description": "Neutraliza una pócima. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}]);
+ actions.push(...[{"id": "pilotMedicine_limbo", "medicine": "limbo", "drawer": "medicine", "icon": "⌛", "name": "LIMBO · INDIVIDUAL", "resource": true, "description": "Aparta a otra persona durante 3 minutos. Requiere tres presentes.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_robo", "medicine": "robo", "drawer": "medicine", "icon": "steal", "name": "ROBO", "resource": true, "description": "Roba al azar una pócima o píldora que aún no tengas.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_senuelo", "medicine": "senuelo", "drawer": "medicine", "icon": "bait", "name": "SEÑUELO", "resource": true, "description": "Falsa pócima para provocar que el destinatario gaste una defensa.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_cambio", "medicine": "cambio", "drawer": "medicine", "icon": "vote-outward", "name": "CAMBIO TU VOTO", "resource": true, "description": "Cambia A por B o B por A. No consume el cambio personal del destinatario.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_espejo", "medicine": "espejo", "drawer": "medicine", "icon": "mirror", "name": "ESPEJO", "resource": true, "description": "Devuelve una pócima a quien la lanzó. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}, {"id": "pilotMedicine_antidoto", "medicine": "antidoto", "drawer": "medicine", "icon": "💊", "name": "ANTÍDOTO", "resource": true, "description": "Neutraliza una pócima. Se usa desde el aviso recibido.", "empty": "No tienes esta herramienta. Se sortea al inicio y después de cada giro o re-voto; máximo 1 de cada tipo."}]);
  const drawers=[
   {key:'medicine',name:'BOTIQUÍN',icon:'✚',note:'Pócimas y píldoras. Aquí puedes ver sus efectos y su disponibilidad.'},
   {key:'escape',name:'SALIDA',icon:'exit',note:'Ausentarte, pausar, guardar o salir del debate.'},
@@ -9759,6 +9759,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  function actionLabel(action){return E(action.id)?.textContent.trim()||action.name}
  // Vector drawer icons render consistently without depending on emoji fonts.
  const drawerVectors={
+  'vote-outward':'<svg data-drawer-icon="vote-outward" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M6 8l-4 4 4 4m12-8 4 4-4 4"/></svg>',
+  'vote-inward':'<svg data-drawer-icon="vote-inward" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h8m-4-4 4 4-4 4m16-4h-8m4-4-4 4 4 4"/></svg>',
   steal:'<svg data-drawer-icon="steal" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c3-2 5-1 9 0 4-1 6-2 9 0v5c0 3-3 4-5 3l-4-2-4 2c-2 1-5 0-5-3Z"/><ellipse cx="7.5" cy="11.5" rx="2" ry="1.5"/><ellipse cx="16.5" cy="11.5" rx="2" ry="1.5"/></svg>',
   bait:'<svg data-drawer-icon="bait" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="3" r="1.5"/><path d="M15 4.5V15a5.5 5.5 0 0 1-11 0v-4l4 4M4 11v6"/></svg>',
   mirror:'<svg data-drawer-icon="mirror" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="8.5" rx="6.5" ry="7"/><path d="M10.5 15.5v5a1.5 1.5 0 0 0 3 0v-5M9 8l4-4m-2 7 4-4"/></svg>',
