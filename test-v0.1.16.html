@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R97</div>
+    <div class="version">DILEMA · V0.1.16-010C-R98</div>
   </main>
 
 
@@ -9697,7 +9697,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   {id:'pilotSecretRevoteAction',drawer:'action',icon:'vote-inward',name:'CAMBIAR MI VOTO',resource:true,description:'Cambia tu postura una vez, en secreto y sin pedir permiso.',empty:'No tienes un cambio de voto disponible. Se sortea al iniciar y después de cada giro o re-voto.'},
   {id:'pilotGiroBtn',drawer:'action',icon:'↪',name:'PEDIR GIRO',shortcut:true,description:'Propón una nueva circunstancia. La mesa decide por mayoría.'},
   {id:'pilotRevoteRequestBtn',drawer:'action',icon:'♻',name:'PEDIR RE-VOTO',shortcut:true,description:'Propón que todos puedan mantener o cambiar su postura. Decide la mayoría.'},
-  {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
+  {id:'pilotAbsentBtn',drawer:'escape',icon:'◷',name:'AUSENTARME',returnShortcut:true,description:'El debate sigue sin ti. Para volver, la mesa debe aceptar tu solicitud.'},
   {id:'pilotPauseAction',drawer:'escape',icon:'⏸',name:'SOLICITAR PAUSA',description:'Propón pausar o reanudar el debate. Decide la mayoría.'},
   {id:'pilotSaveSession',drawer:'escape',icon:'▣',name:'GUARDAR Y VOLVER AL HALL',description:'Con el debate pausado, propone guardarlo para retomarlo en esta sala.'},
   {id:'pilotEndBtn',drawer:'escape',icon:'■',name:'FIN DEBATE',description:'Propón cerrar el debate. Todos deben votar SÍ.'},
@@ -9762,9 +9762,9 @@ document.addEventListener('DOMContentLoaded',()=>{
  const drawerVectors={
   'vote-outward':'<svg data-drawer-icon="vote-outward" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20M6 8l-4 4 4 4m12-8 4 4-4 4"/></svg>',
   'vote-inward':'<svg data-drawer-icon="vote-inward" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h8m-4-4 4 4-4 4m16-4h-8m4-4-4 4 4 4"/></svg>',
-  steal:'<svg data-drawer-icon="steal" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c3-2 5-1 9 0 4-1 6-2 9 0v5c0 3-3 4-5 3l-4-2-4 2c-2 1-5 0-5-3Z"/><ellipse cx="7.5" cy="11.5" rx="2" ry="1.5"/><ellipse cx="16.5" cy="11.5" rx="2" ry="1.5"/></svg>',
-  bait:'<svg data-drawer-icon="bait" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="3" r="1.5"/><path d="M15 4.5V15a5.5 5.5 0 0 1-11 0v-4l4 4M4 11v6"/></svg>',
-  mirror:'<svg data-drawer-icon="mirror" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="8.5" rx="6.5" ry="7"/><path d="M10.5 15.5v5a1.5 1.5 0 0 0 3 0v-5M9 8l4-4m-2 7 4-4"/></svg>',
+  steal:'<svg data-drawer-icon="steal" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#dfad82" stroke="#9f684d" stroke-width="1.2"/><path d="M4.6 9.5c2.6-2.1 5-2.4 7.4-.8 2.4-1.6 4.8-1.3 7.4.8l-1 5c-1.9 1.8-4.1 2-6.4.4-2.3 1.6-4.5 1.4-6.4-.4Z" fill="#7659ff" stroke="#c9c1ff" stroke-width="1" stroke-linejoin="round"/><ellipse cx="8.6" cy="11.6" rx="1.7" ry="1.05" fill="#101010"/><ellipse cx="15.4" cy="11.6" rx="1.7" ry="1.05" fill="#101010"/><path d="M4.8 9.8 2.7 8.6m16.5 1.2 2.1-1.2" stroke="#c9c1ff" stroke-width="1.2" stroke-linecap="round"/></svg>',
+  bait:'<svg data-drawer-icon="bait" viewBox="0 0 24 24" aria-hidden="true"><circle cx="15" cy="4" r="2.2" fill="#c9d6e4" stroke="#6f8196" stroke-width="1.2"/><path d="M15 6v8.1c0 4.2-2.5 6.4-5.6 6.4-3 0-5-2-5-4.8 0-1 .2-1.9.7-2.8" fill="none" stroke="#aebdcd" stroke-width="2.5" stroke-linecap="round"/><path d="m5.1 12.9.2 4 3.4-2.2" fill="none" stroke="#eef7ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14.2 7.5v5" stroke="#f5fbff" stroke-width="1" stroke-linecap="round"/></svg>',
+  mirror:'<svg data-drawer-icon="mirror" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="8.7" rx="6.7" ry="6.9" fill="#8cddf0" stroke="#d8a84e" stroke-width="2"/><ellipse cx="12" cy="8.7" rx="4.8" ry="5" fill="#c5f1fa" stroke="none"/><path d="m8.5 9.2 4.2-4.2m-1.6 7.2 4.1-4.1" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/><path d="M10.7 15.5v5.2c0 .9.6 1.4 1.3 1.4s1.3-.5 1.3-1.4v-5.2" fill="#d8a84e" stroke="#93681f" stroke-width="1.2"/></svg>',
   exit:'<svg data-drawer-icon="exit" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4H4v16h9M10 12h11m-4-4 4 4-4 4"/></svg>',
   lifebuoy:'<svg data-drawer-icon="lifebuoy" viewBox="0 0 24 24" aria-hidden="true" fill="none"><circle cx="12" cy="12" r="9" stroke="#f3f3f3" stroke-width="2.2"/><circle cx="12" cy="12" r="4" stroke="#f3f3f3" stroke-width="2.2"/><path d="m5.6 5.6 3.5 3.5m5.8 5.8 3.5 3.5m0-12.8-3.5 3.5m-5.8 5.8-3.5 3.5" stroke="#ff4b61" stroke-width="3.2"/></svg>'
  };
@@ -9820,7 +9820,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const work=section('r88Workbench','INVENTARIO DISPONIBLE');
    const tools=document.createElement('div');tools.id='r88ActiveTools';tools.className='r88-grid';
    const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Aquí aparecen tus herramientas sorteadas o robadas y las acciones disponibles. Puedes usarlas directamente.';
-   for(const action of actions.filter(a=>a.resource||a.board||a.shortcut)){
+   for(const action of actions.filter(a=>a.resource||a.board||a.shortcut||a.returnShortcut)){
     const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));
     b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)
    }
@@ -9881,15 +9881,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   let active=0;
   const medState=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data?.medicine_state:null;
   for(const a of actions.filter(a=>a.medicine)){const b=E(a.id),have=!!medState?.inventory?.[a.medicine];setText(b,a.name+' · '+(have?1:0)+'/1');const disabled=!have||(['espejo','antidoto'].includes(a.medicine)?window.dilemaPresenceView?.my_presence==='absent':!medState?.can_launch)||r86ActionLocked(a.id);if(b.disabled!==disabled)b.disabled=disabled}
-  for(const action of actions.filter(a=>a.resource||a.board||a.shortcut)){
+  for(const action of actions.filter(a=>a.resource||a.board||a.shortcut||a.returnShortcut)){
    const b=E('r88Tool_'+action.id),source=E(action.id),have=owned(action);
    const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
-   const show=state?.mine_choice!=='N'&&(action.shortcut?!!source&&!source.disabled:have);
-   b.hidden=!show;if(show)active++;
-   b.disabled=!source||source.disabled;iconLabel(b,action.icon,actionLabel(action));
+   const locked=typeof r86ActionLocked==='function'&&r86ActionLocked(action.id);
+   const available=!!source&&!source.disabled&&!locked&&(action.returnShortcut?window.dilemaPresenceView?.my_presence==='absent':state?.mine_choice!=='N'&&(action.shortcut||have));
+   b.hidden=!available;if(available)active++;
+   b.disabled=!available;iconLabel(b,action.icon,actionLabel(action));
   }
   E('r88Empty').hidden=active>0;
-  setText(E('r88Empty'),window.dilemaBoardSnapshot?.data?.mine_choice==='N'?'ESTÁS EN DUDA · Elige A o B para activar tus herramientas.':'Aquí aparecen tus herramientas y las acciones disponibles. Puedes usarlas directamente.');
+  setText(E('r88Empty'),window.dilemaPresenceView?.my_presence==='absent'?'ESTÁS FUERA DEL DEBATE · Cuando puedas regresar, SOLICITAR VOLVER aparecerá aquí automáticamente.':window.dilemaBoardSnapshot?.data?.mine_choice==='N'?'ESTÁS EN DUDA · Elige A o B para activar tus herramientas.':'Aquí aparecen tus herramientas y las acciones disponibles. Puedes usarlas directamente.');
   E('r88ActiveTools').classList.toggle('r88-single',active===1);
   const request=E('pilotContextRequest');E('r88ContextRequest').disabled=!request||request.disabled;
   // Reading saved help is independent from initiating another decision.
@@ -9906,8 +9907,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(opened){
    for(const action of actions.filter(a=>a.drawer===opened)){
     const b=E('r88Drawer_'+action.id),card=b?.closest('.r88-item'),source=E(action.id);if(!b)continue;
-    const have=(action.resource||action.board)&&owned(action);card.hidden=have&&window.dilemaBoardSnapshot?.data?.mine_choice!=='N';
-    b.disabled=window.dilemaBoardSnapshot?.data?.mine_choice==='N'&&action.drawer!=='escape'||!source||source.disabled||(action.resource&&!have)||action.id==='pilotSaveSession'&&!window.dilemaBoardSnapshot?.data?.paused;
+    const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
+    const have=(action.resource||action.board)&&owned(action);
+    const locked=typeof r86ActionLocked==='function'&&r86ActionLocked(action.id);
+    const inInventory=(action.resource||action.board||action.returnShortcut)&&!!source&&!source.disabled&&!locked&&(action.returnShortcut?window.dilemaPresenceView?.my_presence==='absent':state?.mine_choice!=='N'&&have);
+    card.hidden=inInventory;
+    b.disabled=state?.mine_choice==='N'&&action.drawer!=='escape'||!source||source.disabled||locked||(action.resource&&!have)||action.id==='pilotSaveSession'&&!state?.paused;
     iconLabel(b,action.icon,actionLabel(action));
     setText(E('r88Status_'+action.id),b.disabled?reason(action):'DISPONIBLE');
    }
