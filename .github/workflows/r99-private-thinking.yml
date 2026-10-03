@@ -17,7 +17,7 @@ jobs:
           ref: r99-private-thinking
 
       - name: Apply R99 patch
-        run: python tools/r99_patch.py
+        run: sed -i 's/privateDilema/privateDilemma/g' tools/r99_patch.py && python tools/r99_patch.py
 
       - name: Static checks
         shell: bash
