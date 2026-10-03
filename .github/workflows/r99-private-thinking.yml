@@ -1,0 +1,205 @@
+name: R99 private thinking
+
+on:
+  push:
+    branches: [r99-private-thinking]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: r99-private-thinking
+
+      - name: Apply R99 private thinking UI
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path=Path('test-v0.1.16.html')
+          text=path.read_text(encoding='utf-8')
+
+          def rep(old,new,expected=1):
+              global text
+              found=text.count(old)
+              if found!=expected:
+                  raise SystemExit(f'R99 patch guard failed: {old[:120]!r} found {found}, expected {expected}')
+              text=text.replace(old,new)
+
+          rep('DILEMA · V0.1.16-010C-R98','DILEMA · V0.1.16-010C-R99')
+
+          rep("const posture=pdElement('privatePlanteamientoTitle');posture.textContent='TU DILEMA'+(!privateDilemma.option_a?'':' · '+(['A','B'].includes(privateDilemma.choice)?'POSTURA '+privateDilemma.choice:'ESTOY EN DUDA'));",
+              "const posture=pdElement('privatePlanteamientoTitle');posture.textContent=(privateDilemma.option_a?'TU DILEMA':'EL TEMA')+(!privateDilemma.option_a?'':' · '+(['A','B'].includes(privateDilemma.choice)?'POSTURA '+privateDilemma.choice:'ESTOY EN DUDA'));")
+
+          rep("const mine=document.createElement('div');mine.className='pd-user';const who=document.createElement('strong');who.className='pd-author';who.textContent='TÚ · '+(turn.choice==='N'?'EN DUDA':'POSTURA '+turn.choice);",
+              "const mine=document.createElement('div');mine.className='pd-user';const who=document.createElement('strong');who.className='pd-author';who.textContent=!privateDilemma.option_a?'TÚ':'TÚ · '+(turn.choice==='N'?'EN DUDA':'POSTURA '+turn.choice);")
+
+          rep("if(loaded&&key===privateDialogueCurrent()&&key===privateDialogueKey&&!privateDialogueRows.length&&!privateBusy)void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message:'Quiero explorar este dilema. Ayúdame a empezar.'});",
+              "if(loaded&&key===privateDialogueCurrent()&&key===privateDialogueKey&&!privateDialogueRows.length&&!privateBusy)void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message:privateDilemma.option_a?'Quiero explorar este dilema. Ayúdame a empezar.':'Quiero explorar este tema. Ayúdame a aclarar qué quiero resolver y qué importa de verdad.'});")
+
+          marker='<!-- R99_PRIVATE_THINKING -->'
+          if marker in text:
+              raise SystemExit('R99 marker already present')
+
+          addon=r'''\n<!-- R99_PRIVATE_THINKING -->
+<style>
+/* R99: EL TEMA becomes a guided thinking workspace, without forcing A/B. */
+#privateDialogue.r99-thinking{padding:16px;background:#0c1410;border-color:#6ee7a0}
+#privateDialogue.r99-thinking #privateDialogueTitle{font-size:15px;letter-spacing:1.5px;margin-bottom:5px}
+#r99ThinkingPrinciple{margin:0 0 13px;text-align:center;color:#98a89d;font-size:10px;font-weight:700;letter-spacing:.8px;line-height:1.5}
+#r99ThoughtStage{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 15px;font-size:10px;letter-spacing:1px;color:#7f9587}
+#r99ThoughtStage strong{color:#6ee7a0;font-size:10px;letter-spacing:1.2px}
+#r99ThoughtMap{margin:14px 0 16px;border:1px solid #31523c;border-radius:12px;background:#0a110d;overflow:hidden}
+#r99ThoughtMap>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;list-style:none;padding:12px 13px;color:#d7e8dc;font-size:10px;font-weight:800;letter-spacing:.8px}
+#r99ThoughtMap>summary::-webkit-details-marker{display:none}
+#r99ThoughtMap>summary::after{content:'+';font-size:15px;color:#6ee7a0}
+#r99ThoughtMap[open]>summary::after{content:'−'}
+#r99ThoughtMap .r99-map{padding:0 13px 13px;display:grid;gap:9px}
+#r99ThoughtMap .r99-map-item{border-top:1px solid #21372a;padding-top:9px}
+#r99ThoughtMap .r99-map-item b{display:block;margin-bottom:4px;color:#6ee7a0;font-size:9px;letter-spacing:.8px}
+#r99ThoughtMap .r99-map-item p{margin:0;color:#d5ddd7;font-size:12px;font-weight:400;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+#privateDialogue .pd-actions.r99-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 14px}
+#privateDialogue .pd-actions.r99-actions button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:66px;padding:7px 4px;border-color:#365741;background:#0a110d;color:#dce9df}
+#privateDialogue .pd-actions.r99-actions button:disabled{border-color:#27332b;color:#59655d}
+.r99-thinking-icon{width:22px;height:22px;display:block;color:#6ee7a0}
+.r99-thinking-icon svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.r99-thinking-label{font-size:8px;font-weight:800;letter-spacing:.5px;line-height:1.15;text-align:center}
+#privateDialogueForm.r99-composer{margin-top:15px;padding-top:14px;border-top:1px solid #24362a}
+#privateDialogueForm.r99-composer>label{margin-top:0;text-align:left;color:#cfd9d2}
+#privateDialogueInput{min-height:96px}
+#privateDialogueLog{max-height:min(48dvh,430px)}
+.pd-turn.r99-turn{margin-bottom:11px;padding-bottom:0;border:1px solid #25352b;border-radius:11px;overflow:hidden;background:#0b100d}
+.pd-turn.r99-turn>.r99-turn-toggle{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:9px 10px;border:0;border-bottom:1px solid #24352b;border-radius:0;background:#0b100d;color:#c9d6cd;text-align:left}
+.r99-turn-number{display:flex;align-items:center;justify-content:center;flex:0 0 23px;height:23px;border:1px solid #365741;border-radius:50%;color:#6ee7a0;font-size:9px;font-weight:900}
+.r99-turn-title{flex:1;min-width:0;font-size:10px;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r99-turn-arrow{color:#6ee7a0;font-size:14px}
+.pd-turn.r99-turn>.pd-user,.pd-turn.r99-turn>.pd-reply{margin:10px;border-radius:10px}
+.pd-turn.r99-collapsed>:not(.r99-turn-toggle){display:none!important}
+.pd-turn.r99-collapsed>.r99-turn-toggle{border-bottom:0}
+#privateDialogue.r99-thinking .pd-note.r99-main-note{margin:6px 0 13px;color:#aab8ae}
+@media(max-width:360px){#privateDialogue .pd-actions.r99-actions{gap:6px}.r99-thinking-label{font-size:7px}#privateDialogue .pd-actions.r99-actions button{min-height:62px}}
+</style>
+<script>
+(function(){
+ 'use strict';
+ const E=id=>document.getElementById(id),expanded=new Set();
+ let syncing=false;
+ const svg={
+  reply:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4Z"/><path d="M8 9h8M8 12h5"/></svg>',
+  counter:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13m0 0-3-3m3 3-3 3M20 17H7m0 0 3-3m-3 3 3 3"/></svg>',
+  blind:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-5 9.5-5 9.5 5 9.5 5-3.5 5-9.5 5-9.5-5-9.5-5Z"/><circle cx="12" cy="12" r="2.5"/><path d="m4 4 16 16"/></svg>',
+  view:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4v4m0 8v4M4 12h4m8 0h4M9 9l6 6m0-6-6 6"/></svg>',
+  pressure:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-7 12h6l-1 8 7-12h-6Z"/></svg>',
+  order:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6h14M5 12h10M5 18h7"/><circle cx="3" cy="6" r=".7"/><circle cx="3" cy="12" r=".7"/><circle cx="3" cy="18" r=".7"/></svg>'
+ };
+ const prompts={
+  counter:'Contradíceme. Busca la mejor objeción a lo que estoy diciendo y señala dónde puede fallar mi razonamiento.',
+  blind:'¿Qué punto ciego importante puedo estar pasando por alto en este tema?',
+  view:'Sigo dudando. Dame otra mirada: contempla este tema desde una perspectiva distinta a la que estoy usando ahora.',
+  pressure:'Apriétame más. Hazme la pregunta más incómoda y útil que debería responder para avanzar de verdad.',
+  order:'Ordena lo hablado hasta ahora. Separa hechos, suposiciones, lo que me importa, miedos o costes y preguntas que siguen abiertas. No decidas por mí.'
+ };
+ const defs=[['privateDialogueReply','reply','RESPONDER'],['privateDialogueCounter','counter','CONTRADÍCEME'],['privateDialogueBlindspot','blind','PUNTO CIEGO'],['privateDialogueDoubt','view','OTRA MIRADA'],['privateDialoguePressure','pressure','APRIÉTAME'],['privateDialogueOrder','order','ORDENA ESTO']];
+ function icon(name,label){return '<span class="r99-thinking-icon" aria-hidden="true">'+svg[name]+'</span><span class="r99-thinking-label">'+label+'</span>'}
+ function openTopic(){return !!privateDilemma&&!privateDilemma.option_a&&!privateDilemma.option_b}
+ function busy(){return !!privateBusy||!!privateDialogueSending||privateDialoguePending()}
+ function ensure(){
+  const box=E('privateDialogue'),form=E('privateDialogueForm'),actions=box?.querySelector('.pd-actions');if(!box||!form||!actions)return false;
+  box.classList.add('r99-thinking');form.classList.add('r99-composer');
+  let principle=E('r99ThinkingPrinciple');if(!principle){principle=document.createElement('p');principle.id='r99ThinkingPrinciple';principle.textContent='DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.';E('privateDialogueTitle').insertAdjacentElement('afterend',principle)}
+  let stage=E('r99ThoughtStage');if(!stage){stage=document.createElement('div');stage.id='r99ThoughtStage';stage.innerHTML='<span>AHORA MISMO</span><strong>EXPLORANDO</strong>';principle.insertAdjacentElement('afterend',stage)}
+  let note=box.querySelector(':scope > .pd-note');if(note)note.classList.add('r99-main-note');
+  if(!E('r99ThoughtMap')){
+   const map=document.createElement('details');map.id='r99ThoughtMap';map.innerHTML='<summary><span>LO QUE ESTÁ APARECIENDO</span><span id="r99MapCount">0</span></summary><div class="r99-map"><div class="r99-map-item"><b>TU ÚLTIMA IDEA</b><p id="r99MapUser">Todavía estamos abriendo el tema.</p></div><div class="r99-map-item"><b>DILEMA HA SEÑALADO</b><p id="r99MapReflection">Aún no hay una observación guardada.</p></div><div class="r99-map-item"><b>PREGUNTA ABIERTA</b><p id="r99MapQuestion">Empieza por contar qué quieres aclarar.</p></div></div>';
+   form.insertAdjacentElement('beforebegin',map);
+  }
+  actions.classList.add('r99-actions');
+  if(actions.dataset.r99!=='1'){
+   actions.replaceChildren();
+   for(const [id,name,label] of defs){const b=document.createElement('button');b.type='button';b.id=id;b.dataset.thinkingAction=name;b.innerHTML=icon(name,label);b.setAttribute('aria-label',label);actions.appendChild(b)}
+   actions.dataset.r99='1';form.insertBefore(actions,form.firstChild);
+   E('privateDialogueReply').onclick=()=>{const f=E('privateDialogueInput');if(!f.disabled){f.focus();f.scrollIntoView({block:'center',behavior:'smooth'})}};
+   for(const id of ['privateDialogueCounter','privateDialogueBlindspot','privateDialogueDoubt','privateDialoguePressure','privateDialogueOrder'])E(id).onclick=()=>guided(E(id).dataset.thinkingAction);
+  }
+  return true;
+ }
+ async function guided(mode){
+  if(busy())return;const field=E('privateDialogueInput'),prompt=prompts[mode];if(!field||!prompt||field.disabled)return;
+  if(field.value.trim()){
+   const joined=(field.value.trim()+'\n\n'+prompt).slice(0,3000);field.value=joined;privateDialogueDrafts.set(privateDialogueKey,joined);field.oninput?.();field.focus();sync();return;
+  }
+  field.value=prompt;privateDialogueDrafts.set(privateDialogueKey,prompt);field.oninput?.();sync();await sendPrivateDialogue();
+ }
+ function short(value,n=58){const s=String(value||'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s}
+ function enhanceTurns(){
+  const log=E('privateDialogueLog');if(!log)return;const turns=[...log.querySelectorAll('.pd-turn')];
+  turns.forEach((turn,index)=>{
+   turn.classList.add('r99-turn');const id=turn.dataset.turn||String(index);let toggle=turn.querySelector(':scope > .r99-turn-toggle');
+   if(!toggle){toggle=document.createElement('button');toggle.type='button';toggle.className='r99-turn-toggle';const num=document.createElement('span');num.className='r99-turn-number';const title=document.createElement('span');title.className='r99-turn-title';const arrow=document.createElement('span');arrow.className='r99-turn-arrow';toggle.append(num,title,arrow);turn.prepend(toggle);toggle.onclick=()=>{const collapsed=turn.classList.toggle('r99-collapsed');toggle.setAttribute('aria-expanded',String(!collapsed));arrow.textContent=collapsed?'›':'⌄';if(collapsed)expanded.delete(id);else expanded.add(id)}}
+   const mine=turn.querySelector('.pd-user .pd-copy')?.textContent||turn.querySelector('.pd-question')?.textContent||turn.querySelector('.pd-reply .pd-copy')?.textContent||'Intercambio';
+   toggle.querySelector('.r99-turn-number').textContent=String(index+1);toggle.querySelector('.r99-turn-title').textContent=short(mine);
+   const shouldOpen=index===turns.length-1||expanded.has(id);turn.classList.toggle('r99-collapsed',!shouldOpen);toggle.setAttribute('aria-expanded',String(shouldOpen));toggle.querySelector('.r99-turn-arrow').textContent=shouldOpen?'⌄':'›';
+  });
+ }
+ function stage(){
+  const ready=privateDialogueRows.filter(t=>t.status==='ready'),n=ready.length,last=ready.at(-1)?.message||'';let value='EXPLORANDO';
+  if(/ordena lo hablado|sintetiza|conclusi[oó]n/i.test(last))value='CONCLUYENDO';else if(n>=7)value='CONTRASTANDO';else if(n>=3)value='ACLARANDO';
+  const strong=E('r99ThoughtStage')?.querySelector('strong');if(strong)strong.textContent=value;
+ }
+ function map(){
+  const ready=privateDialogueRows.filter(t=>t.status==='ready'),last=ready.at(-1),own=[...privateDialogueRows].reverse().find(t=>t.message&&!/^Quiero explorar este (dilema|tema)\./.test(t.message));
+  E('r99MapCount').textContent=String(ready.length);E('r99MapUser').textContent=short(own?.message||'Todavía estamos abriendo el tema.',220);E('r99MapReflection').textContent=short(last?.reflection||'Aún no hay una observación guardada.',240);E('r99MapQuestion').textContent=short(last?.question||'Empieza por contar qué quieres aclarar.',220);
+ }
+ function sync(){
+  if(syncing)return;syncing=true;queueMicrotask(()=>{try{
+   if(!privateDilemma||!ensure())return;const isOpen=openTopic(),box=E('privateDialogue'),pending=busy();
+   E('privateDialogueTitle').textContent=isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';
+   const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');if(label)label.textContent='¿QUÉ ESTÁS PENSANDO AHORA?';E('privateDialogueInput').placeholder='Escribe, responde a la pregunta o usa una herramienta de pensamiento…';
+   for(const [id] of defs){const b=E(id);if(b)b.disabled=pending}
+   stage();map();enhanceTurns();
+  }finally{syncing=false}})
+ }
+ const previousPaint=paintPrivateDialogue;paintPrivateDialogue=function(){const result=previousPaint.apply(this,arguments);sync();return result};
+ const previousRender=renderPrivateDilemma;renderPrivateDilemma=function(){const result=previousRender.apply(this,arguments);sync();return result};
+ document.addEventListener('DOMContentLoaded',()=>{ensure();sync();const log=E('privateDialogueLog');if(log)new MutationObserver(sync).observe(log,{childList:true,subtree:true});});
+})();
+</script>
+'''
+          if text.count('</body>')!=1:
+              raise SystemExit('R99 body guard failed')
+          text=text.replace('</body>',addon+'\n</body>')
+          path.write_text(text,encoding='utf-8')
+
+          Path('releases/R99.md').write_text('''# R99 · EL TEMA / máquina de pensar\n\n- El diálogo privado ya no presupone una votación A/B: los temas abiertos se presentan como **EL TEMA**.\n- Seis herramientas visibles: Responder, Contradíceme, Punto ciego, Otra mirada, Apriétame y Ordena esto.\n- Las cinco herramientas guiadas funcionan con el backend existente; no requieren migración ni nuevos permisos.\n- Estado de reflexión: Explorando, Aclarando, Contrastando y Concluyendo.\n- Historial por intercambios colapsables para evitar scroll infinito.\n- Panel **Lo que está apareciendo** con la última idea, la observación de DILEMA y la pregunta abierta.\n- Se mantiene la posibilidad de usar A/B cuando el tema realmente tiene opciones, sin imponerlas en conversaciones abiertas.\n''',encoding='utf-8')
+          PY
+
+      - name: Static checks
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re,subprocess,tempfile
+          html=Path('test-v0.1.16.html').read_text(encoding='utf-8')
+          checks=['V0.1.16-010C-R99','R99_PRIVATE_THINKING','privateDialogueCounter','privateDialoguePressure','privateDialogueOrder',"privateDilemma.option_a?'TU DILEMA':'EL TEMA'",'DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.']
+          for item in checks:
+              if item not in html: raise SystemExit('Missing R99 guard: '+item)
+          scripts=re.findall(r'<script\b[^>]*>([\s\S]*?)</script>',html,re.I)
+          for i,code in enumerate(scripts):
+              p=Path(tempfile.gettempdir())/f'dilema-script-{i}.js';p.write_text(code,encoding='utf-8');subprocess.run(['node','--check',str(p)],check=True,stdout=subprocess.DEVNULL)
+          print('R99 static checks OK ·',len(scripts),'inline scripts parsed')
+          PY
+
+      - name: Commit R99
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add test-v0.1.16.html releases/R99.md
+          git commit -m 'R99: turn private topics into a guided thinking workspace'
+          git push origin HEAD:r99-private-thinking
