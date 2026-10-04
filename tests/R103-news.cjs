@@ -1,0 +1,30 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),{stripTypeScriptTypes}=require('node:module');
+const source=fs.readFileSync(__dirname+'/../supabase/functions/current-dilemmas/index.ts','utf8');
+let handler,requests=[],aiCalls=0;
+const url='https://efe.com/espana/2026-10-04/noticia-prueba/';
+const story={title:'Noticia diferente',summary:'Una noticia de prueba con contexto factual suficiente para comprobar la validación sin hacer ninguna llamada real.',date:'2026-10-04',url,conflict:'Lealtad y privacidad'};
+const facts={output:[{type:'web_search_call',status:'completed',action:{type:'open_page',url}},{type:'message',content:[{type:'output_text',text:JSON.stringify({stories:[story]})}]}]};
+const context=vm.createContext({URL,Response,Request,AbortSignal,Date,console,Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://fixture.supabase.co':'test-key'},serve:f=>handler=f},fetch:async(raw,options={})=>{
+ const path=String(raw);requests.push({path,body:options.body?JSON.parse(options.body):null});let data;
+ if(path.endsWith('/auth/v1/user'))data={id:'test-user'};
+ else if(path.includes('api.openai.com'))data=++aiCalls===1?facts:{output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({dilemmas:[{source_index:0,question:'¿Qué harías?',option_a:'Contarlo',option_b:'Callarlo',twist:'Cambia la responsabilidad.',cost_a:'Confianza',cost_b:'Seguridad',theme:'¿LO CUENTAS?'}]})}]}]};
+ else if(path.endsWith('rpc/claim_current_ai'))data={status:'claimed',lease:'fixture-lease'};
+ else if(path.endsWith('rpc/finish_current_ai'))data=[101];
+ else if(path.endsWith('rpc/fresh_world_candidates'))data={ids:[101]};
+ else if(path.includes('dilemmas?id=in.'))data=[{id:101,news_meta:story}];
+ else data=[];
+ return Response.json(data);
+}});
+vm.runInContext(stripTypeScriptTypes(source),context);
+assert(context.consultedSources(facts).has(url),'Completed page opens must count as consulted sources');
+assert.equal(context.validNews([story],new Date('2026-10-04T09:00:00Z'),context.consultedSources(facts)).length,1);
+assert.equal(context.validNews([story,{...story,url:'https://www.rtve.es/noticias/20261004/otra/123.shtml'}],new Date('2026-10-04T09:00:00Z')).length,1,'Same story from two outlets must collapse');
+assert.equal(context.validNews([{...story,url:'https://efe.com/espana/2026-10-04/inventada/'}],new Date('2026-10-04T09:00:00Z'),context.consultedSources(facts)).length,0,'Unconsulted URL must not be accepted');
+assert.equal(context.validNews([{...story,date:'2026-09-01'}],new Date('2026-10-04T09:00:00Z')).length,0);
+(async()=>{
+ const response=await handler(new Request('https://fixture/current-dilemmas',{method:'POST',headers:{authorization:'Bearer test-token',origin:'https://xtronzio.github.io'},body:JSON.stringify({intensity:3,theme:'ALEATORIO'})}));
+ const body=await response.json();assert.equal(response.status,200);assert.equal(body.status,'ready');assert.equal(aiCalls,2);
+ assert(requests.some(x=>x.path.endsWith('rpc/remember_world_dilemma')&&x.body.p_id===101),'Private proposals must be remembered when displayed');
+ assert(requests.find(x=>x.path.endsWith('rpc/claim_current_ai')).body.p_key.match(/:\d{4}-\d{2}-\d{2}$/));
+ console.log('PASS: page-open sources, title deduplication, unconsulted/stale rejection, daily cache, generation and private display history');
+})().catch(e=>{console.error(e);process.exitCode=1});
