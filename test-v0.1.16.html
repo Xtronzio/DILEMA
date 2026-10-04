@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R100</div>
+    <div class="version">DILEMA · V0.1.16-010C-R101</div>
   </main>
 
 
@@ -10351,8 +10351,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 (function(){
  'use strict';
- const E=id=>document.getElementById(id),expanded=new Set();
- let syncing=false;
+ const E=id=>document.getElementById(id),expanded=new Set(),collapsed=new Set();
+ let syncing=false,logObserver=null;
  const svg={
   reply:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4Z"/><path d="M8 9h8M8 12h5"/></svg>',
   counter:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13m0 0-3-3m3 3-3 3M20 17H7m0 0 3-3m-3 3 3 3"/></svg>',
@@ -10404,10 +10404,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   const log=E('privateDialogueLog');if(!log)return;const turns=[...log.querySelectorAll('.pd-turn')];
   turns.forEach((turn,index)=>{
    turn.classList.add('r99-turn');const id=turn.dataset.turn||String(index);let toggle=turn.querySelector(':scope > .r99-turn-toggle');
-   if(!toggle){toggle=document.createElement('button');toggle.type='button';toggle.className='r99-turn-toggle';const num=document.createElement('span');num.className='r99-turn-number';const title=document.createElement('span');title.className='r99-turn-title';const arrow=document.createElement('span');arrow.className='r99-turn-arrow';toggle.append(num,title,arrow);turn.prepend(toggle);toggle.onclick=()=>{const collapsed=turn.classList.toggle('r99-collapsed');toggle.setAttribute('aria-expanded',String(!collapsed));arrow.textContent=collapsed?'›':'⌄';if(collapsed)expanded.delete(id);else expanded.add(id)}}
+   if(!toggle){toggle=document.createElement('button');toggle.type='button';toggle.className='r99-turn-toggle';const num=document.createElement('span');num.className='r99-turn-number';const title=document.createElement('span');title.className='r99-turn-title';const arrow=document.createElement('span');arrow.className='r99-turn-arrow';toggle.append(num,title,arrow);turn.prepend(toggle);toggle.onclick=()=>{const isCollapsed=turn.classList.toggle('r99-collapsed');toggle.setAttribute('aria-expanded',String(!isCollapsed));arrow.textContent=isCollapsed?'›':'⌄';if(isCollapsed){expanded.delete(id);collapsed.add(id)}else{expanded.add(id);collapsed.delete(id)}}}
    const mine=turn.querySelector('.pd-user .pd-copy')?.textContent||turn.querySelector('.pd-question')?.textContent||turn.querySelector('.pd-reply .pd-copy')?.textContent||'Intercambio';
    toggle.querySelector('.r99-turn-number').textContent=String(index+1);toggle.querySelector('.r99-turn-title').textContent=short(mine);
-   const shouldOpen=index===turns.length-1||expanded.has(id);turn.classList.toggle('r99-collapsed',!shouldOpen);toggle.setAttribute('aria-expanded',String(shouldOpen));toggle.querySelector('.r99-turn-arrow').textContent=shouldOpen?'⌄':'›';
+   const shouldOpen=!collapsed.has(id)&&(index===turns.length-1||expanded.has(id));turn.classList.toggle('r99-collapsed',!shouldOpen);toggle.setAttribute('aria-expanded',String(shouldOpen));toggle.querySelector('.r99-turn-arrow').textContent=shouldOpen?'⌄':'›';
   });
  }
  function stage(){
@@ -10420,17 +10420,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   E('r99MapCount').textContent=String(ready.length);E('r99MapUser').textContent=short(own?.message||'Todavía estamos abriendo el tema.',220);E('r99MapReflection').textContent=short(last?.reflection||'Aún no hay una observación guardada.',240);E('r99MapQuestion').textContent=short(last?.question||'Empieza por contar qué quieres aclarar.',220);
  }
  function sync(){
-  if(syncing)return;syncing=true;queueMicrotask(()=>{try{
+  // Ignore our own log writes: observing them again starves clicks and network callbacks.
+  if(syncing)return;syncing=true;queueMicrotask(()=>{logObserver?.disconnect();try{
    if(!privateDilemma||!ensure())return;const isOpen=openTopic(),box=E('privateDialogue'),pending=busy();
    E('privateDialogueTitle').textContent=isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';
    const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');if(label)label.textContent='¿QUÉ ESTÁS PENSANDO AHORA?';E('privateDialogueInput').placeholder='Escribe, responde a la pregunta o usa una herramienta de pensamiento…';
    for(const [id] of defs){const b=E(id);if(b)b.disabled=pending}
    stage();updateMap();enhanceTurns();
-  }finally{syncing=false}})
+  }finally{const log=E('privateDialogueLog');if(log&&logObserver)logObserver.observe(log,{childList:true,subtree:true});syncing=false}})
  }
  const previousPaint=paintPrivateDialogue;paintPrivateDialogue=function(){const result=previousPaint.apply(this,arguments);sync();return result};
  const previousRender=renderPrivateDilemma;renderPrivateDilemma=function(){const result=previousRender.apply(this,arguments);sync();return result};
- document.addEventListener('DOMContentLoaded',()=>{ensure();sync();const log=E('privateDialogueLog');if(log)new MutationObserver(sync).observe(log,{childList:true,subtree:true});});
+ document.addEventListener('DOMContentLoaded',()=>{ensure();sync();const log=E('privateDialogueLog');if(log){logObserver=new MutationObserver(sync);logObserver.observe(log,{childList:true,subtree:true})}});
 })();
 </script>
 
