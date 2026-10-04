@@ -1,0 +1,49 @@
+name: R100 private dialogue startup
+
+on:
+  push:
+    branches: [r100-private-start-fix]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: r100-private-start-fix
+
+      - name: Apply R100 patch
+        run: python tools/r100_patch.py
+
+      - name: Static checks
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          html=Path('test-v0.1.16.html').read_text(encoding='utf-8')
+          assert 'V0.1.16-010C-R100' in html
+          assert "if(!openTopic&&!hasChosenPosture)return;" in html
+          assert "privateDialogueKickoffTimer=setTimeout(privateDialogueKickoff,180)" in html
+          assert "Quiero explorar este dilema. Ayúdame a empezar." not in html
+          assert "Quiero explorar este tema. Ayúdame a aclarar" not in html
+          # Compile every inline JS block. This catches syntax regressions in the monolithic mobile app.
+          for i,script in enumerate(re.findall(r'<script\\b[^>]*>([\\s\\S]*?)</script>',html,re.I)):
+              p=Path(tempfile.gettempdir())/f'r100-inline-{i}.js'
+              p.write_text(script,encoding='utf-8')
+              subprocess.run(['node','--check',str(p)],check=True,stdout=subprocess.DEVNULL)
+          print('R100 static checks OK')
+          PY
+
+      - name: Commit R100
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add test-v0.1.16.html
+          git commit -m 'R100: fix private topic startup and posture selection'
+          git push origin HEAD:r100-private-start-fix
