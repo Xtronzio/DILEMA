@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R99</div>
+    <div class="version">DILEMA · V0.1.16-010C-R100</div>
   </main>
 
 
@@ -10040,7 +10040,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 </style>
 <script>
 /* R93: private dialogue, independent from the collective debate and its guides. */
-let privateDialogueKey=null,privateDialogueRows=[],privateDialogueRun=0,privateDialogueSending=false,privateDialogueLoading=false,privateDialoguePoll=null,privateDialogueStamp='',privateDialogueHasOlder=false;
+let privateDialogueKey=null,privateDialogueRows=[],privateDialogueRun=0,privateDialogueSending=false,privateDialogueLoading=false,privateDialoguePoll=null,privateDialogueKickoffTimer=null,privateDialogueStamp='',privateDialogueHasOlder=false;
 const privateDialogueDrafts=new Map();
 const privateDialogueSelect='id,turn_number,message,choice,status,reflection,question,mode,error_code,created_at,completed_at,leased_at';
 const pdElement=id=>document.getElementById(id);
@@ -10054,6 +10054,19 @@ function privateDialoguePending(){return privateDialogueRows.some(t=>t.status===
 function privateDialogueSchedule(){
  clearTimeout(privateDialoguePoll);privateDialoguePoll=null;
  if(privateDialogueRows.some(t=>t.status==='pending'&&Date.now()-new Date(t.leased_at).getTime()<60000)&&pdElement('privateBoard')?.classList.contains('active'))privateDialoguePoll=setTimeout(()=>loadPrivateDialogue(),2200);
+}
+function privateDialogueKickoff(){
+ clearTimeout(privateDialogueKickoffTimer);privateDialogueKickoffTimer=null;
+ const key=privateDialogueCurrent();
+ if(!key||key!==privateDialogueKey||!privateDilemma||privateDialogueRows.length||privateDialogueSending||privateDialoguePending())return;
+ const openTopic=!privateDilemma.option_a&&!privateDilemma.option_b;
+ const hasChosenPosture=!!privateDilemma.choice;
+ // An A/B dilemma must never start the assistant before the person has chosen A, B or EN DUDA.
+ if(!openTopic&&!hasChosenPosture)return;
+ // Creation/posture saves use privateBusy. Retry instead of losing the first assistant turn in that small window.
+ if(privateBusy||privateDialogueLoading){privateDialogueKickoffTimer=setTimeout(privateDialogueKickoff,180);return;}
+ const message=String(privateDilemma.question||'').trim();if(!message)return;
+ void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message});
 }
 function paintPrivateDialogue(){
  if(!privateDilemma||privateDialogueKey!==privateDialogueCurrent())return;
@@ -10071,7 +10084,7 @@ function paintPrivateDialogue(){
  const log=pdElement('privateDialogueLog'),atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<70;
  log.replaceChildren();
  if(!privateDialogueRows.length){
-  const empty=document.createElement('p');empty.className='pd-note';empty.textContent='Vamos a explorar tu dilema paso a paso. Puedes escribir tus razones o tus dudas.';log.appendChild(empty);
+  const empty=document.createElement('p');empty.className='pd-note';empty.textContent=(!privateDilemma.option_a&&!privateDilemma.option_b)?'DILEMA va a partir del tema que has planteado. También puedes añadir algo más cuando quieras.':privateDilemma.choice?'DILEMA está abriendo la conversación desde tu postura actual.':'Elige A, B o ESTOY EN DUDA para abrir la conversación con DILEMA.';log.appendChild(empty);
  }
  for(const turn of privateDialogueRows){
   const pair=document.createElement('article');pair.className='pd-turn';pair.dataset.turn=turn.id;
@@ -10111,15 +10124,13 @@ async function loadPrivateDialogue(older=false){
 function bindPrivateDialogue(){
  const key=privateDialogueCurrent();if(!key)return;
  if(key!==privateDialogueKey){
-  clearTimeout(privateDialoguePoll);privateDialogueRun++;privateDialogueLoading=false;privateDialogueSending=false;
+  clearTimeout(privateDialoguePoll);clearTimeout(privateDialogueKickoffTimer);privateDialogueKickoffTimer=null;privateDialogueRun++;privateDialogueLoading=false;privateDialogueSending=false;
   privateDialogueKey=key;privateDialogueRows=[];privateDialogueStamp='';privateDialogueHasOlder=false;
   pdElement('privateDialogueInput').value=privateDialogueDrafts.get(key)||'';privateDialogueStatus('El diálogo se guarda con este dilema.');
   pdElement('privatePlanteamiento').open=!privateDilemma.choice;
-  void loadPrivateDialogue().then(loaded=>{
-   if(loaded&&key===privateDialogueCurrent()&&key===privateDialogueKey&&!privateDialogueRows.length&&!privateBusy)void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message:privateDilemma.option_a?'Quiero explorar este dilema. Ayúdame a empezar.':'Quiero explorar este tema. Ayúdame a aclarar qué quiero resolver y qué importa de verdad.'});
-  });
+  void loadPrivateDialogue().then(loaded=>{if(loaded&&key===privateDialogueCurrent()&&key===privateDialogueKey)privateDialogueKickoff()});
  }
- paintPrivateDialogue();privateDialogueSchedule();window.syncCharacterCounters?.();
+ paintPrivateDialogue();privateDialogueSchedule();privateDialogueKickoff();window.syncCharacterCounters?.();
 }
 async function privateDialogueError(error,data){
  if(data?.error)return data.error;
@@ -10405,7 +10416,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const strong=E('r99ThoughtStage')?.querySelector('strong');if(strong)strong.textContent=value;
  }
  function updateMap(){
-  const ready=privateDialogueRows.filter(t=>t.status==='ready'),last=ready.at(-1),own=[...privateDialogueRows].reverse().find(t=>t.message&&!/^Quiero explorar este (dilema|tema)\./.test(t.message));
+  const ready=privateDialogueRows.filter(t=>t.status==='ready'),last=ready.at(-1),own=[...privateDialogueRows].reverse().find(t=>t.message&&t.id!==privateDilemma?.id);
   E('r99MapCount').textContent=String(ready.length);E('r99MapUser').textContent=short(own?.message||'Todavía estamos abriendo el tema.',220);E('r99MapReflection').textContent=short(last?.reflection||'Aún no hay una observación guardada.',240);E('r99MapQuestion').textContent=short(last?.question||'Empieza por contar qué quieres aclarar.',220);
  }
  function sync(){
