@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R103</div>
+    <div class="version">DILEMA · V0.1.16-010C-R104</div>
   </main>
 
 
@@ -8175,7 +8175,7 @@ document.addEventListener("DOMContentLoaded",()=>{
   groups.push({title:'GUARDAR Y RETOMAR',entries:[['GUARDAR Y VOLVER AL HALL','Disponible con el debate pausado. Se propone a la mesa y decide la mayoría. Conserva el dilema, contexto aprobado, giros, votos y herramientas; libera la sala para otro debate. El anfitrión conserva el dilema marcado GRUP · PAUSADO en Mis dilemas.'],['DEBATES PAUSADOS','En el hall de la misma sala se muestran las sesiones guardadas. El anfitrión propone retomar y decide la mayoría. Con los mismos participantes se recupera el estado anterior. Si la mesa ha cambiado, todos vuelven a votar y las herramientas se sortean al completar la votación. Las ayudas y mensajes personales siguen siendo privados.']]});
   groups.push({title:'ENTRADA A LA MESA',entries:[['AÑADIR DEBATIENTE · CERRAR ENTRADA','El anfitrión abre o cierra la entrada durante el debate. Quien use el código solicita una plaza; la mesa decide por mayoría. Si hay otra decisión en curso, la solicitud espera. El solicitante no vota su propia entrada. Cerrar la entrada impide nuevas solicitudes; las ya enviadas siguen su turno.'],['TU PRIMER VOTO','Al aprobar tu entrada eliges A, B o ESTOY EN DUDA en el espacio amarillo. El resto conserva sus votos y herramientas.'],['DESCARTAR Y BUSCAR OTROS','En Dilemas por el mundo puedes votar por descartar las propuestas. Si gana, se ofrecen otras. En privado descartas directamente. Se recuerda el conflicto de la noticia para evitar repetirlo aunque cambie su redacción.']]});
   groups.unshift({title:'TU POSTURA',entries:[['A · B · ESTOY EN DUDA','ESTOY EN DUDA cuenta como voto neutral. Sigues en la mesa y puedes votar sus decisiones. Recibes herramientas en el reparto como los demás. Se muestran bloqueadas mientras estás en duda y se activan al elegir A o B, conservando tu inventario. Si estás en duda, puedes posicionarte gratis cuando no haya otra decisión pendiente. Para volver a cambiar entre A/B, necesitas tu cambio de voto o un re-voto aprobado.']]});
-  groups.unshift({title:'INVENTARIO DISPONIBLE Y CAJONES',entries:[['INVENTARIO DISPONIBLE','Aquí aparecen las herramientas sorteadas o robadas que tienes y las acciones disponibles: proclama, cambio de voto, asistente, giro, re-voto y limbo grupal cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: solo pócimas y píldoras. Salida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN','Se sortea una unidad de cada tipo al iniciar y tras cada giro o re-voto. Puedes acumular 1 de cada tipo. Las que tienes aparecen en tu inventario. Las que no tienes se consultan en el cajón.'],['PÓCIMAS','Limbo individual: aparta 3 minutos y necesita tres presentes. Robo: roba una pócima o píldora que aún no tengas. Señuelo: falsa pócima para provocar el gasto de una defensa. Cambio tu voto: cambia A por B o B por A, conservando el cambio de voto personal del destinatario.'],['PÍLDORAS Y DEFENSA','Al recibir una pócima tienes 20 segundos para usar Antídoto (neutraliza), Espejo (devuelve el efecto sin otro rebote) o dejarla actuar. Si no respondes, actúa. Las defensas se consumen incluso ante un Señuelo. Durante la reacción no se puede abrir otro proceso.']]});
+  groups.unshift({title:'INVENTARIO DISPONIBLE Y CAJONES',entries:[['INVENTARIO DISPONIBLE','Aquí aparecen las herramientas de debate que tienes y las acciones disponibles: proclama, cambio de voto, asistente, giro, re-voto y limbo grupal cuando puede proponerse. Al consumirlas desaparecen del tablero. Mientras la mesa resuelve una decisión permanecen sombreadas.'],['CAJA DE HERRAMIENTAS','Abre sus cajones para consultar lo que no tienes y usar las acciones disponibles. Botiquín: visible y desactivado en DEBATE; reservado para PARTIDA. Salida: ausentarte, pausar, guardar, finalizar o abandonar. Ayuda: solicitar ayuda, instrucciones y elegir vista con textos o iconos. Acción: pedir giro, pedir re-voto y consultar tus herramientas personales.'],['CONTEXTO Y AYUDAS','El contexto aprobado y tus ayudas guardadas se consultan en su marco propio. Consultar tus ayudas guardadas no consume recursos ni abre una votación.'],['BOTIQUÍN','En DEBATE permanece visible y desactivado. No se sortean ni se usan pócimas o píldoras. PARTIDA sigue en construcción. El limbo grupal, decidido por la mesa, continúa disponible en ACCIÓN.']]});
   const content=groups.map(group=>'<section><h3>'+group.title+'</h3><dl>'+
     group.entries.map(([name,description])=>'<dt>'+name+'</dt><dd>'+description+'</dd>').join('')+
     '</dl></section>').join('');
@@ -9514,6 +9514,7 @@ let sessionView=null,sessionRoom=null,sessionBusy=false,sessionRefreshPromise=nu
 const sessionHallButtonStates=new Map();
 function r86SessionProposal(){return sessionRoom===currentRoomId?sessionView?.proposal:null}
 function r86ActionLocked(id){
+ if(currentRoomMode==='debate'&&id.startsWith('pilotMedicine_'))return true;
  if(id==='pilotAbandonBtn'||id==='pilotAssistantHistory')return false;
  const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
  const admission=window.dilemaAdmissionSnapshot?.round===currentRoundId?window.dilemaAdmissionSnapshot.data:null;
@@ -9730,7 +9731,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  }
  function owned(action){
   const state=window.dilemaBoardSnapshot?.round===currentRoundId?window.dilemaBoardSnapshot.data:null;
-  if(action.medicine)return !!state?.medicine_state?.inventory?.[action.medicine];
+  if(action.medicine)return currentRoomMode!=='debate'&&!!state?.medicine_state?.inventory?.[action.medicine];
   if(action.id==='pilotProclamaBtn'){const b=E(action.id);return b?.dataset.owned==='true'&&b.dataset.ownedRound===String(currentRoundId)&&b.dataset.ownedUser===String(currentUserId)}
   if(action.id==='pilotSecretRevoteAction')return !!state?.secret_revote_mine;
   if(action.id==='pilotAssistantOpen'){
@@ -9820,7 +9821,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    request.classList.add('r88-wide');history.classList.add('r88-wide');resourceContent.append(request,history);
    const work=section('r88Workbench','INVENTARIO DISPONIBLE');
    const tools=document.createElement('div');tools.id='r88ActiveTools';tools.className='r88-grid';
-   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Aquí aparecen tus herramientas sorteadas o robadas y las acciones disponibles. Puedes usarlas directamente.';
+   const empty=document.createElement('p');empty.id='r88Empty';empty.className='r88-note';empty.textContent='Aquí aparecen tus herramientas de debate y las acciones disponibles. Puedes usarlas directamente.';
    for(const action of actions.filter(a=>a.resource||a.board||a.shortcut||a.returnShortcut)){
     const b=button('r88Tool_'+action.id,action.icon,action.name,()=>dispatch(action));
     b.dataset.source=action.id;b.hidden=true;tools.appendChild(b)
@@ -9830,6 +9831,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    const drawerGrid=document.createElement('div');drawerGrid.className='r88-grid';
    for(const d of drawers){const b=button('r88Open_'+d.key,d.icon,d.name,()=>open(d.key,b));b.classList.add('r88-drawer-'+d.key);b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r88Drawer');b.setAttribute('aria-expanded','false');drawerGrid.appendChild(b)}
    toolbox.appendChild(drawerGrid);
+   const medicineNote=document.createElement('p');medicineNote.className='r88-note';medicineNote.textContent='BOTIQUÍN · Disponible en PARTIDA';toolbox.appendChild(medicineNote);
    grid.insertAdjacentElement('beforebegin',resources);resources.insertAdjacentElement('afterend',work);work.insertAdjacentElement('afterend',toolbox);
   }
   const bank=E('r88SourceBank');
@@ -9859,6 +9861,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   return true;
  }
  function open(key,opener){
+  if(currentRoomMode==='debate'&&key==='medicine')return;
   if(!ensure())return;
   opened=key;returnFocus=opener;E('r88Drawer').hidden=false;document.body.classList.add('r88-drawer-open');
   const d=drawers.find(d=>d.key===key);setText(E('r88DrawerTitle'),d.name);setText(E('r88DrawerNote'),d.note);
@@ -9877,6 +9880,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  function sync(){
   if(currentRoomMode!=='debate'||!E('debate')?.classList.contains('active')){close(false);return}
   if(!ensure())return;preference();
+  const medicineDrawer=E('r88Open_medicine');medicineDrawer.disabled=true;medicineDrawer.title='BOTIQUÍN · Disponible en PARTIDA';medicineDrawer.setAttribute('aria-label','BOTIQUÍN · Desactivado en DEBATE');
+  if(opened==='medicine')close(false);
   E('r88Workbench').classList.toggle('r88-icons',compact);E('r88Toolbox').classList.toggle('r88-icons',compact);
   E('r88Drawer').classList.toggle('r88-icons',compact);
   let active=0;
@@ -10248,7 +10253,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   ensure();if(!E('r95MedicineDecision'))return;
   const s=snapshot();if(lastRound!==currentRoundId){lastRound=currentRoundId;selecting=null;pendingRequest=null;stamp='';clearInterval(timer);timer=null}
   const inDebate=currentRoomMode==='debate'&&E('debate')?.classList.contains('active');
-  if(!inDebate||!s){E('r95MedicineDecision').style.display='none';clearInterval(timer);timer=null;return}
+  if(!inDebate||currentRoomMode==='debate'||!s||s.enabled===false){E('r95MedicineDecision').style.display='none';clearInterval(timer);timer=null;return}
   if(s.server_now&&s.server_now!==lastServerClock){lastServerClock=s.server_now;clockOffset=new Date(s.server_now).getTime()-Date.now()}
   const p=s.pending,event=s.event&&!seen(s.event.id)?s.event:null;
   if(selecting&&!s.can_launch)selecting=null;
@@ -10278,6 +10283,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   else{clearInterval(timer);timer=null}
  }
  window.openDebateMedicine=function(item){
+  if(currentRoomMode==='debate')return;
   const s=snapshot();if(!s?.inventory?.[item])return;
   if(['espejo','antidoto'].includes(item)){
    ensure();const box=E('r95MedicineDecision');box.style.display='block';box.querySelector('h2').textContent='⚠ '+labels[item];E('r95MedicineCopy').textContent=descriptions[item]+' Se usa desde el aviso de una pócima recibida.';E('r95MedicineClock').textContent='';E('r95MedicineChoices').replaceChildren();choice('ENTENDIDO',()=>{stamp='';paint()});return;
