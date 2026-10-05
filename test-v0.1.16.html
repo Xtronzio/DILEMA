@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R109</div>
+    <div class="version">DILEMA · V0.1.16-010C-R110</div>
   </main>
 
 
@@ -10473,17 +10473,20 @@ document.addEventListener('DOMContentLoaded',()=>{
 <section id="debateStyleChoice" class="screen center">
  <button class="back" onclick="setupStyleChosen=false;showScreen('expected')">←</button>
  <div class="title">¿CÓMO DEBATIMOS?</div>
- <button class="btn btn-primary" onclick="r105ChooseStyle('free')">DEBATE LIBRE</button>
+ <button id="r110FreeSelect" type="button" class="btn btn-secondary r110-mode" onclick="r105ChooseStyle('free')" aria-pressed="false">DEBATE LIBRE</button>
  <p class="subtitle">Conversación libre, sin turnos ni límite de tiempo.</p>
- <button id="r107ModeratedSelect" class="btn btn-secondary" onclick="r105ChooseStyle('moderated')" aria-expanded="false" aria-controls="r107SetupTime">DEBATE MODERADO</button>
+ <button id="r107ModeratedSelect" type="button" class="btn btn-secondary r110-mode" onclick="r105ChooseStyle('moderated')" aria-pressed="false" aria-expanded="false" aria-controls="r107SetupTime">DEBATE MODERADO</button>
  <p class="subtitle">DILEMA da la palabra, controla el tiempo y recoge las valoraciones.</p>
  <div id="r107SetupTime" hidden><p class="subtitle">TIEMPO POR INTERVENCIÓN</p><div class="r105-duration" aria-label="Tiempo por intervención">
   <button type="button" data-setup-seconds="60" onclick="r105SetupSeconds(60)">60 S</button>
   <button type="button" data-setup-seconds="90" class="selected" onclick="r105SetupSeconds(90)">90 S</button>
   <button type="button" data-setup-seconds="120" onclick="r105SetupSeconds(120)">120 S</button>
- </div><button class="btn btn-primary" type="button" onclick="r107ConfirmModerated()">CONTINUAR CON DEBATE MODERADO</button></div>
+ </div></div>
+ <button id="r110StyleContinue" class="btn btn-secondary" type="button" onclick="r110ConfirmStyle()" disabled>CONTINUAR</button>
 </section>
 <style>
+#debateStyleChoice .r110-mode.selected{background:#fff;color:#0b0b0b;border-color:#fff}
+#r110StyleContinue{margin-top:12px;background:transparent;color:#fff;border-color:#555}
 .r105-duration{display:flex;justify-content:center;gap:10px;margin:16px 0}
 .r105-duration button,.r105-rating button{background:#101010;color:#fff;border:1px solid #424242;border-radius:10px;padding:12px 16px;font-family:inherit;font-weight:800;cursor:pointer}
 .r105-duration button.selected,.r105-rating button.selected{background:#facc15;color:#000;border-color:#facc15}
@@ -10523,8 +10526,17 @@ document.addEventListener('DOMContentLoaded',()=>{
  const E=id=>document.getElementById(id),set=(id,value)=>{const e=E(id);if(e&&e.textContent!==value)e.textContent=value};
  let view=null,viewRound=null,busy=false,polling=null,offset=0,lastClock=null,finishing=null,finishedRound=null,resultsOpen=false,changeSeconds=90,returnFocus=null;
  const styleName=s=>s==='moderated'?'DEBATE MODERADO':'DEBATE LIBRE';
- window.r105SetupSeconds=function(value){setupSpeechSeconds=value;document.querySelectorAll('[data-setup-seconds]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.setupSeconds)===value))};
- window.r105ChooseStyle=function(style){setupDebateStyle=style;if(style==='moderated'){E('r107SetupTime').hidden=false;E('r107ModeratedSelect').setAttribute('aria-expanded','true');E('r107SetupTime').querySelector('[data-setup-seconds].selected')?.focus();return}E('r107SetupTime').hidden=true;E('r107ModeratedSelect').setAttribute('aria-expanded','false');setupStyleChosen=true;openProfileChoice('create')};window.r107ConfirmModerated=function(){setupDebateStyle='moderated';setupStyleChosen=true;openProfileChoice('create')};
+ // R110: choosing a style and continuing are separate actions.
+ let setupSelection=null;
+ window.r105SetupSeconds=function(value){if(![60,90,120].includes(value))return;setupSpeechSeconds=value;document.querySelectorAll('[data-setup-seconds]').forEach(b=>{const selected=Number(b.dataset.setupSeconds)===value;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))})};
+ function paintSetupStyle(){
+  for(const [id,style] of [['r110FreeSelect','free'],['r107ModeratedSelect','moderated']]){const selected=setupSelection===style;E(id).classList.toggle('selected',selected);E(id).setAttribute('aria-pressed',String(selected))}
+  const moderated=setupSelection==='moderated';E('r107SetupTime').hidden=!moderated;E('r107ModeratedSelect').setAttribute('aria-expanded',String(moderated));E('r110StyleContinue').disabled=!setupSelection;
+ }
+ window.r110ResetStyle=function(){setupSelection=null;setupStyleChosen=false;paintSetupStyle();r105SetupSeconds(setupSpeechSeconds)};
+ window.r105ChooseStyle=function(style){if(!['free','moderated'].includes(style))return;setupSelection=style;setupDebateStyle=style;setupStyleChosen=false;paintSetupStyle();if(style==='moderated')E('r107SetupTime').querySelector('[data-setup-seconds].selected')?.focus()};
+ window.r110ConfirmStyle=function(){if(!setupSelection)return;setupDebateStyle=setupSelection;setupStyleChosen=true;openProfileChoice('create')};
+ window.r107ConfirmModerated=function(){if(setupSelection==='moderated')r110ConfirmStyle()};
  function current(){return viewRound===currentRoundId?view:null}
  function adopt(data,round){if(round!==currentRoundId)return;view=data;viewRound=round;if(data?.server_now&&data.server_now!==lastClock){lastClock=data.server_now;offset=new Date(data.server_now).getTime()-Date.now()}if(window.dilemaBoardSnapshot?.round===round)window.dilemaBoardSnapshot.data.moderation_state=data;paint()}
  function available(id){const s=current();if(busy||!s)return false;if(id==='r105SpeechRequest')return !!s.can_request;return !!s.can_end}
@@ -10627,6 +10639,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const refresh=window.pilotRefresh;window.pilotRefresh=async function(){try{return await refresh.apply(this,arguments)}finally{const snapshot=window.dilemaBoardSnapshot;if(snapshot?.round===currentRoundId)adopt(snapshot.data.moderation_state,currentRoundId);window.dilemaWorkbenchSync?.()}};
  const render=window.renderDebate;window.renderDebate=function(){const result=render.apply(this,arguments);paint();return result};
  window.r105ModerationPaint=paint;
+ const r110BeforeScreen=showScreen;showScreen=function(id){if(id==='debateStyleChoice')r110ResetStyle();return r110BeforeScreen.apply(this,arguments)};
  document.addEventListener('DOMContentLoaded',()=>{paint();setInterval(()=>{clock()},250);setInterval(()=>{void poll()},2000)});
 })();
 </script>
