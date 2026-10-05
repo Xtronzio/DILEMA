@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R108</div>
+    <div class="version">DILEMA · V0.1.16-010C-R109</div>
   </main>
 
 
@@ -10461,7 +10461,7 @@ document.addEventListener('DOMContentLoaded',()=>{
    E('privateDialogueTitle').textContent=training?'DEBATIR VS DILEMA':isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=training?'Defiende tus razones. DILEMA responde desde la postura contraria; puedes revisar tu elección y pedir una valoración.':isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';E('r99ThinkingPrinciple').textContent=training?'ENTRENAMIENTO · ARGUMENTOS, NO ATAQUES PERSONALES.':'DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.';const order=E('privateDialogueOrder');if(order){order.innerHTML=icon('order',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO');order.setAttribute('aria-label',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO')}const header=E('privateBoard').querySelector(':scope > .small-note');if(header)header.textContent=training?'ENTRENAMIENTO INDIVIDUAL · SOLO TÚ':'DILEMA PRIVADO · SOLO TÚ';E('privateBoard').querySelector(':scope > .title').textContent=training?'PON A PRUEBA TUS ARGUMENTOS':'VAMOS A PENSARLO';
    const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');if(label)label.textContent='¿QUÉ ESTÁS PENSANDO AHORA?';E('privateDialogueInput').placeholder='Escribe, responde a la pregunta o usa una herramienta de pensamiento…';
    for(const [id] of defs){const b=E(id);if(b)b.disabled=pending}
-   stage();updateMap();enhanceTurns();
+   stage();updateMap();enhanceTurns();window.r109TrainingSync?.();
   }finally{const log=E('privateDialogueLog');if(log&&logObserver)logObserver.observe(log,{childList:true,subtree:true});syncing=false}})
  }
  const previousPaint=paintPrivateDialogue;paintPrivateDialogue=function(){const result=previousPaint.apply(this,arguments);sync();return result};
@@ -10639,6 +10639,166 @@ document.addEventListener('DOMContentLoaded',()=>{
 #r105ModerationStatus,#r106ModeHint{font-family:inherit;font-size:12px;font-weight:400;line-height:1.65;letter-spacing:0}
 #r106TableManagement #r105ModeButton{font-family:inherit;font-size:14px;font-weight:900;letter-spacing:.8px;color:#fff}
 </style>
+<style>
+/* R109: training uses the debate workbench; reflection keeps its own workspace. */
+#privateBoard.r109-training>h1{font-size:27px;margin:14px 0 20px}
+#privateBoard.r109-training #privatePlanteamiento{margin:16px 0;border-color:#555;background:#0b0b0b}
+#privateBoard.r109-training #privateDialogue{background:#0b0b0b;border-color:#444;padding:15px}
+#privateBoard.r109-training #privateDialogueTitle{font-size:12px;letter-spacing:1px;margin-bottom:12px}
+#privateBoard.r109-training #r99ThoughtMap,#privateBoard.r109-training #r99ThoughtStage,#privateBoard.r109-training #r99ThinkingPrinciple,#privateBoard.r109-training .r99-main-note,#privateBoard.r109-training .r109-legacy-management{display:none!important}
+#privateBoard.r109-training #privateDialogueLog{max-height:none;overflow:visible}
+#privateBoard.r109-training .pd-turn.r99-turn{background:#0b0b0b;border-color:#383838}
+#privateBoard.r109-training .r99-turn-toggle{background:#0b0b0b;border-color:#383838}
+#privateBoard.r109-training .r99-turn-number{border-color:#555;color:#ddd}
+#privateBoard.r109-training .r99-turn-arrow{color:#aaa}
+#privateBoard.r109-training .pd-user{background:#151515;border-color:#444}
+#privateBoard.r109-training .pd-reply{background:#0b1510;border-color:#365741}
+#privateBoard.r109-training #privateDialogueForm{margin-top:14px;border-top-color:#383838}
+#privateBoard.r109-training #privateDialogueInput{min-height:105px}
+#privateBoard.r109-training #privateDialogueSend{border-color:#fff;color:#fff;min-height:49px}
+#privateBoard.r109-training #privateDialogueSend:disabled{border-color:#303030;color:#666}
+#privateBoard.r109-training #privateDialogueStatus{margin:12px 0 0;text-align:center}
+#privateBoard.r109-training #privateBoardError:empty{display:none}
+#r109Posture{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:12px 0;font-size:11px;line-height:1.5}
+#r109Posture span{border:1px solid #555;border-radius:9px;padding:8px 12px;color:#ddd}
+#r109Posture button{border:0;background:transparent;color:#aaa;padding:5px;font:inherit;font-size:11px;text-decoration:underline;cursor:pointer}
+#privateBoard .r109-frame{border:1px solid #383838;border-radius:14px;padding:15px;margin:16px 0 0;width:100%;background:#0b0b0b}
+#privateBoard .r109-heading{font-size:10px;font-weight:900;letter-spacing:1.5px;color:#aaa;text-align:center;line-height:1.4;margin:0 0 14px}
+#privateBoard #r109Inventory{border-color:#ec4899;box-shadow:0 0 0 1px #ec489944}
+#privateBoard #r109Inventory>.r109-heading{color:#f472b6}
+#privateBoard.r109-training #r109Inventory .pd-actions{grid-template-columns:repeat(2,minmax(0,1fr));margin:0;gap:9px}
+#privateBoard.r109-training #r109Inventory .pd-actions button{border-color:#555;background:#0b0b0b;color:#fff;min-height:70px;padding:10px 6px;gap:7px}
+#privateBoard.r109-training #r109Inventory .pd-actions button:disabled{border-color:#303030;color:#666}
+#privateBoard.r109-training #privateDialogueReply,#privateBoard.r109-training #privateDialogueCounter{display:none!important}
+#privateBoard.r109-training .r99-thinking-icon{color:inherit}
+#privateBoard.r109-training .r99-thinking-label{font-size:10px;letter-spacing:.3px;line-height:1.35}
+#r109InventoryNote{margin:12px 0 0;font-size:12px;color:#aaa;font-weight:400;line-height:1.6;text-align:center}
+#privateBoard .r109-drawer-button{display:flex;align-items:center;justify-content:center;gap:8px}
+#privateBoard .r109-drawer-button .r88-symbol{display:block;font-size:18px;line-height:1}
+#r109Open_medicine .r88-symbol{color:#ff4b61}
+#r109Open_help .r88-symbol{color:#65c9c5}
+#r109Open_action .r88-symbol{color:#ff9a34}
+#privateBoard #r109Open_medicine:disabled .r88-symbol{color:#666}
+#r109ToolboxNote{margin:12px 0 0;color:#777;font-size:11px;line-height:1.5;text-align:center}
+#r109Management .r88-button+.r88-button{margin-top:9px}
+#r109Management .r109-heading{margin-bottom:12px}
+#r109ManagementNote{margin:12px 0 0;color:#aaa;font-size:12px;font-weight:400;line-height:1.6;text-align:center}
+.r109-dialog{width:min(430px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;margin:auto;border:1px solid #facc15;border-radius:14px;padding:20px;background:#10100a;color:#fff;font-family:Arial,sans-serif;text-align:left}
+.r109-dialog::backdrop{background:#000d}
+.r109-dialog h2{color:#facc15;font-size:16px;letter-spacing:1px;line-height:1.5;text-align:center;margin:0 0 12px}
+.r109-dialog p{font-size:13px;font-weight:400;line-height:1.6;overflow-wrap:anywhere;margin:12px 0}
+.r109-dialog .r88-button{margin:9px 0 0}
+.r109-dialog .r109-entry{margin:16px 0;padding-bottom:16px;border-bottom:1px solid #383322}
+.r109-dialog label{display:block;font-size:12px;line-height:1.6;margin:14px 0 8px}
+.r109-dialog textarea{width:100%;min-height:115px;resize:vertical;background:#121212;border:1px solid #555;border-radius:11px;color:#fff;padding:12px;font:inherit;font-size:14px;line-height:1.6}
+.r109-dialog .r109-error{color:#ff6b6b}
+#privateBoard:not(.r109-training) .r109-only,#privateBoard .r109-only[hidden]{display:none!important}
+@media(max-width:360px){#privateBoard .r109-frame{padding:12px}#privateBoard.r109-training .r99-thinking-label{font-size:9px}}
+</style>
+<script>
+/* R109: existing owner-scoped dialogue and posture actions, shared drawer vocabulary. */
+(function(){
+ 'use strict';
+ const E=id=>document.getElementById(id);
+ let overlay=null,returnFocus=null,modalSession=null,giroBusy=false;
+ const training=()=>privateDilemma?.interaction_mode==='training';
+ const locked=()=>privateBusy||privateDialogueSending||privateDialoguePending()||giroBusy;
+ function button(id,label,action,symbol=''){
+  const b=document.createElement('button');b.type='button';b.id=id;b.className='r88-button';
+  if(symbol){const s=document.createElement('span');s.className='r88-symbol';s.setAttribute('aria-hidden','true');s.innerHTML=symbol;b.append(s)}
+  const text=document.createElement('span');text.className='r88-label';text.textContent=label;b.append(text);b.onclick=action;return b;
+ }
+ function section(id,title){const box=document.createElement('section');box.id=id;box.className='r109-frame r109-only';const h=document.createElement('h2');h.className='r109-heading';h.textContent=title;h.id=id+'Title';box.setAttribute('aria-labelledby',h.id);box.append(h);return box}
+ function close(){const d=overlay;if(!d)return;for(const b of document.querySelectorAll('[data-r109-drawer]'))b.setAttribute('aria-expanded','false');overlay=null;modalSession=null;if(d.open)d.close();d.remove()}
+ function dialog(title){
+  if(!training())return null;close();returnFocus=document.activeElement;modalSession=privateDilemma.id;
+  const d=document.createElement('dialog');d.className='r109-dialog';d.id='r109Drawer';d.setAttribute('aria-labelledby','r109DrawerTitle');
+  const h=document.createElement('h2');h.id='r109DrawerTitle';h.textContent=title;d.append(h);document.body.append(d);overlay=d;
+  const focus=returnFocus;d.addEventListener('close',()=>{if(overlay===d){close();if(focus?.isConnected)focus.focus()}d.remove()},{once:true});
+  d.addEventListener('click',e=>{if(e.target===d&&!giroBusy){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close()}});return d;
+ }
+ function copy(d,text){const p=document.createElement('p');p.textContent=text;d.append(p);return p}
+ function show(d){d.append(button('r109DrawerClose','VOLVER AL TABLERO',close));d.showModal()}
+ function entry(d,label,description,action,disabled=false){const box=document.createElement('div');box.className='r109-entry';copy(box,description);const b=button('',label,()=>{if(locked()||privateDilemma?.id!==modalSession)return;close();action()});b.disabled=disabled;box.append(b);d.append(box);return b}
+ function proxy(id){const b=E(id);if(b&&!b.disabled)b.click()}
+ function revise(){if(!training()||locked())return;close();E('privatePlanteamiento').open=true;E('privateVoteA').focus();E('privatePlanteamiento').scrollIntoView({block:'start',behavior:'smooth'})}
+ function leave(){
+  if(!training()||locked())return;
+  if(E('privateDialogueInput').value.trim()){
+   const d=dialog('ARGUMENTO SIN ENVIAR');copy(d,'Tu conversación y postura ya están guardadas. Este texto todavía no forma parte del diálogo.');
+   entry(d,'VOLVER A MI ARGUMENTO','Continúa escribiendo o envíalo antes de salir.',()=>E('privateDialogueInput').focus());
+   entry(d,'VOLVER AL HALL SIN ENVIAR','Se conserva lo que ya has enviado. El borrador no se guarda para después de recargar.',exitPrivateDilemma);show(d);return;
+  }
+  close();exitPrivateDilemma();
+ }
+ function finish(){if(locked())return;const d=dialog('TERMINAR POR AHORA');if(!d)return;copy(d,'Puedes pedir una valoración antes de salir. El entrenamiento queda guardado y puedes retomarlo desde MIS DILEMAS.');entry(d,'VALORA MIS ARGUMENTOS','Revisa tu razón más sólida, una debilidad y cómo mejorarla.',()=>proxy('privateDialogueOrder'),!privateDialogueRows.some(t=>t.status==='ready'));entry(d,'GUARDAR Y VOLVER AL HALL','Conserva este dilema, tu postura y la conversación.',leave);show(d)}
+ function openDrawer(key){
+  if(!training()||locked())return;
+  if(key==='action'){
+   const d=dialog('ACCIÓN');copy(d,'Entrena otra circunstancia o revisa tu postura. Tú decides cuándo hacerlo.');
+   entry(d,'DARLE UN GIRO · MANUAL','Añade una circunstancia al contexto. Conserva las opciones A/B y los mensajes anteriores.',openGiro);
+   entry(d,'RE-VOTO · REVISAR MI POSTURA','Puedes elegir A, B o seguir en duda. DILEMA se adapta a tu nueva postura.',revise);show(d);
+  }else if(key==='help'){
+   const d=dialog('AYUDA');copy(d,'Estas herramientas están disponibles sin sorteo ni consumo. Si estás escribiendo, la petición se añade a tu borrador para que la revises antes de enviar.');
+   for(const [id,label,description] of [['privateDialogueBlindspot','PUNTO CIEGO','Busca un aspecto importante que estás pasando por alto.'],['privateDialogueDoubt','OTRA MIRADA','Contrasta el dilema desde una perspectiva distinta.'],['privateDialoguePressure','APRIÉTAME','Pide una pregunta más exigente sobre tus razones.'],['privateDialogueOrder','VALORA MIS ARGUMENTOS','Revisa tus argumentos; la valoración no puntúa tu postura.']])entry(d,label,description,()=>proxy(id),E(id).disabled);
+   entry(d,E('privateHistory').textContent,'Consulta las ayudas privadas que hayas guardado para esta postura.',()=>proxy('privateHistory'),E('privateHistory').disabled);show(d);
+  }else if(key==='escape'){
+   const d=dialog('SALIDA');copy(d,'El diálogo se guarda con cada intervención. Puedes parar y retomarlo a tu ritmo.');entry(d,'GUARDAR Y VOLVER AL HALL','Conserva el entrenamiento para continuar después.',leave);entry(d,'MIS DILEMAS','Consulta o retoma tus dilemas guardados.',()=>openSavedDilemmas());entry(d,'TERMINAR POR AHORA','Revisa tus argumentos y cierra esta sesión de entrenamiento.',finish);show(d);
+  }
+  if(overlay?.open)E('r109Open_'+key)?.setAttribute('aria-expanded','true');
+ }
+ function openGiro(){
+  if(locked())return;const d=dialog('DARLE UN GIRO · MANUAL');if(!d)return;const id=privateDilemma.id,user=currentUserId,old=privateDilemma.context||'';
+  copy(d,'Escribe una circunstancia nueva. Se añadirá al contexto guardado; las opciones A/B y las intervenciones anteriores se conservan.');
+  const label=document.createElement('label');label.htmlFor='r109GiroText';label.textContent='NUEVA CIRCUNSTANCIA';const field=document.createElement('textarea');field.id='r109GiroText';field.rows=4;const remaining=3000-old.length-(old?'\n\nGIRO MANUAL: ':'GIRO MANUAL: ').length;field.maxLength=Math.max(1,Math.min(1000,remaining));label.append(field);d.append(label);
+  const error=copy(d,remaining>0?'':'El contexto ya está lleno. Revisa el contexto del dilema antes de añadir otro giro.');error.className='r109-error';error.setAttribute('role','status');
+  const save=button('r109GiroSave','GUARDAR GIRO',async()=>{
+   const value=field.value.trim();if(locked()||!value||id!==privateDilemma?.id||user!==currentUserId)return;
+   const context=old+(old?'\n\n':'')+'GIRO MANUAL: '+value;if(context.length>3000)return;
+   giroBusy=true;privateBusy=true;save.disabled=true;field.disabled=true;d.querySelector('#r109DrawerClose').disabled=true;const op=++privateOperation;r109TrainingSync();
+   try{
+    const {data,error:failure}=await sb.from('private_dilemma_sessions').update({context}).eq('id',id).eq('user_id',user).select().single();if(failure)throw failure;
+    if(op!==privateOperation||id!==privateDilemma?.id||user!==currentUserId)return;
+    privateDilemma=data;const contextField=E('privateBoardContext');if(contextField){delete contextField.dataset.session;contextField.value=context}
+    close();E('privateBoardError').textContent='GIRO GUARDADO · Revisa tu postura o responde teniendo en cuenta la nueva circunstancia.';
+   }catch(e){if(id===privateDilemma?.id&&d.isConnected)error.textContent='No se ha podido guardar el giro. Tu texto sigue aquí; inténtalo de nuevo.'}
+   finally{giroBusy=false;if(op===privateOperation){privateBusy=false;renderPrivateDilemma()}if(d.isConnected){save.disabled=!field.value.trim();field.disabled=false;d.querySelector('#r109DrawerClose').disabled=false}}
+  });save.disabled=true;field.disabled=remaining<=0;field.oninput=()=>save.disabled=!field.value.trim()||locked();d.addEventListener('cancel',e=>{if(giroBusy)e.preventDefault()});d.append(save);show(d);
+ }
+ function ensure(){
+  const board=E('privateBoard'),box=E('privateDialogue'),actions=box?.querySelector('.pd-actions');if(!board||!actions)return false;
+  if(E('r109Inventory'))return true;
+  const posture=document.createElement('div');posture.id='r109Posture';posture.className='r109-only';posture.innerHTML='<span id="r109MinePosture"></span><span id="r109OtherPosture"></span>';posture.append(button('r109RevisePosture','REVISAR MI POSTURA',revise));E('privatePlanteamiento').after(posture);
+  const work=section('r109Inventory','INVENTARIO DISPONIBLE');actions.before(work);work.append(actions);const note=document.createElement('p');note.id='r109InventoryNote';note.textContent='Herramientas de entrenamiento · Sin sorteo ni consumo';work.append(note);
+  const toolbox=section('r109Toolbox','CAJA DE HERRAMIENTAS'),grid=document.createElement('div');grid.className='r88-grid';
+  const exit='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4H4v16h9M10 12h11m-4-4 4 4-4 4"/></svg>';
+  for(const [key,label,symbol] of [['medicine','BOTIQUÍN','✚'],['escape','SALIDA',exit],['help','AYUDA','✦'],['action','ACCIÓN','💥']]){
+   const b=button('r109Open_'+key,label,()=>openDrawer(key),symbol);b.classList.add('r109-drawer-button');b.dataset.r109Drawer=key;
+   if(key==='medicine'){b.disabled=true;b.title='Disponible en PARTIDA';b.setAttribute('aria-label','BOTIQUÍN · Disponible en PARTIDA')}else{b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-controls','r109Drawer');b.setAttribute('aria-expanded','false')}grid.append(b);
+  }
+  toolbox.append(grid);const note2=document.createElement('p');note2.id='r109ToolboxNote';note2.textContent='BOTIQUÍN · Disponible en PARTIDA';toolbox.append(note2);
+  box.append(work,toolbox);
+  const management=section('r109Management','TU ENTRENAMIENTO');management.append(button('r109SaveExit','GUARDAR Y VOLVER AL HALL',leave),button('r109Saved','MIS DILEMAS',()=>{if(!locked())openSavedDilemmas()}),button('r109Finish','TERMINAR POR AHORA',finish));
+  const note3=document.createElement('p');note3.id='r109ManagementNote';note3.textContent='Tu dilema y los mensajes enviados se guardan automáticamente.';management.append(note3);board.append(management);
+  for(const child of [...board.children])if(![E('privatePlanteamiento'),posture,box,E('privateBoardError'),management].includes(child)&&!child.matches('h1,.small-note'))child.classList.add('r109-legacy-management');
+  return true;
+ }
+ window.r109TrainingSync=function(){
+  if(!ensure())return;const on=training(),board=E('privateBoard'),actions=E('privateDialogue').querySelector('.pd-actions');board.classList.toggle('r109-training',on);
+  if(overlay&&(!on||modalSession!==privateDilemma?.id||!board.classList.contains('active')))close();
+  const inventory=E('r109Inventory');if(on&&actions.parentElement!==inventory)inventory.insertBefore(actions,E('r109InventoryNote'));if(!on&&actions.parentElement!==E('privateDialogueForm'))E('privateDialogueForm').prepend(actions);
+  for(const node of document.querySelectorAll('#privateBoard .r109-only'))node.hidden=!on;
+  if(!on)return;
+  const choice=privateDilemma.choice;E('r109MinePosture').textContent=choice==='A'||choice==='B'?'TÚ · POSTURA '+choice:choice==='N'?'TÚ · ESTOY EN DUDA':'ELIGE TU POSTURA';E('r109OtherPosture').textContent=choice==='A'?'DILEMA · POSTURA B':choice==='B'?'DILEMA · POSTURA A':'DILEMA · CONTRASTA A Y B';
+  board.querySelector('h1').textContent='DEBATIR VS DILEMA';E('privateDialogueTitle').textContent='CONVERSACIÓN';const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');label.textContent='TU ARGUMENTO';E('privateDialogueInput').placeholder='Responde a DILEMA y explica tus razones…';
+  if(!privateDialogueSending&&!privateDialoguePending())E('privateDialogueSend').textContent='ENVIAR ARGUMENTO';
+  const disabled=locked();for(const id of ['r109RevisePosture','r109Open_escape','r109Open_help','r109Open_action','r109SaveExit','r109Saved','r109Finish'])E(id).disabled=disabled;
+  const last=E('privateDialogueLog').querySelector('.pd-turn:last-child .r99-turn-title');if(last)last.textContent='ÚLTIMO INTERCAMBIO';
+ };
+ document.addEventListener('DOMContentLoaded',()=>r109TrainingSync());
+})();
+</script>
+
 </body>
 </html>
 
