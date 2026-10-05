@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R106</div>
+    <div class="version">DILEMA · V0.1.16-010C-R107</div>
   </main>
 
 
@@ -1682,7 +1682,7 @@
   </section>
 
   <section id="debateChoice" class="screen center">
-    <button id="privateChoiceBack" class="back" onclick="showScreen('expected')" style="display:none">←</button>
+    <button id="privateChoiceBack" class="back" onclick="showScreen('privateModeChoice')" style="display:none">←</button>
     <div class="game-category" id="dilemmaChoiceMode">SALA COMPLETA</div>
     <div class="title">¿QUÉ DEBATIMOS?</div>
     <div class="subtitle">Ponemos algo sobre la mesa.</div>
@@ -2347,7 +2347,7 @@ function chooseRoomMode(mode) {
   }
 
   currentRoomMode = "debate";
-  setupStyleChosen=false;setupDebateStyle="free";setupSpeechSeconds=90;window.r105SetupSeconds?.(90);
+  setupStyleChosen=false;setupDebateStyle="free";setupSpeechSeconds=90;window.r105SetupSeconds?.(90);document.getElementById("r107SetupTime").hidden=true;document.getElementById("r107ModeratedSelect").setAttribute("aria-expanded","false");
   openExpectedPlayers();
 }
 
@@ -8321,6 +8321,15 @@ document.addEventListener("DOMContentLoaded",()=>{
 .private-note{color:#aaa;font-size:12px;line-height:1.5;text-align:center;margin:12px 0 20px}
 .private-error{color:#ff6b6b;font-size:13px;line-height:1.4;margin:10px 0;min-height:18px}
 </style>
+<section id="privateModeChoice" class="screen center">
+ <button class="back" onclick="showScreen('expected')">←</button>
+ <div class="small-note">DEBATE INDIVIDUAL</div><h1 class="title">¿QUÉ TE APETECE?</h1>
+ <button class="btn btn-primary" onclick="choosePrivateInteraction('reflection')">TRATAR UN DILEMA EN PRIVADO</button>
+ <p class="subtitle">DILEMA te ayuda a explorar una decisión y aclarar tus ideas.</p>
+ <button class="btn btn-secondary" onclick="choosePrivateInteraction('training')">DEBATIR VS DILEMA</button>
+ <p class="subtitle">Entrena tus argumentos frente a la postura contraria. Por escrito y a tu ritmo.</p>
+ <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
+</section>
 <section id="privateForm" class="screen">
  <button class="back" onclick="showScreen('debateChoice')">←</button>
  <div class="small-note">HOY ESTÁS TÚ</div>
@@ -8383,17 +8392,18 @@ document.addEventListener("DOMContentLoaded",()=>{
 </section>
 <script>
 let privateDilemma=null,privateBusy=false,privateOperation=0,privateGuides=[];
-let privateFormAudience=false;
+let privateFormAudience=false,privateInteractionMode="reflection";
+function choosePrivateInteraction(mode){if(!["reflection","training"].includes(mode))return;privateInteractionMode=mode;showScreen("debateChoice")}
 function togglePrivateFormAudience(){
  if(privateBusy)return;privateFormAudience=!privateFormAudience;
  const b=document.getElementById('privateFormTeens');b.classList.toggle('selected',privateFormAudience);b.setAttribute('aria-pressed',String(privateFormAudience));privateFormReady();
 }
 function privateFormReady(){
  const a=document.getElementById('privateA').value.trim(),b=document.getElementById('privateB').value.trim();
- document.getElementById('privateCreate').disabled=privateBusy||!privateFormAudience||!document.getElementById('privateQuestion').value.trim()||!!a!==!!b;
+ document.getElementById('privateCreate').disabled=privateBusy||!privateFormAudience||!document.getElementById('privateQuestion').value.trim()||!!a!==!!b||(privateInteractionMode==="training"&&(!a||!b));
 }
 function openPrivateDilemma(){
- privateSelectionMode=true;privateOperation++;privateBusy=false;showScreen("debateChoice");
+ privateSelectionMode=true;privateOperation++;privateBusy=false;showScreen("privateModeChoice");
 }
 function openPrivateDilemmaForm(){
  privateOperation++;privateBusy=false;privateFormAudience=false;
@@ -8402,7 +8412,7 @@ function openPrivateDilemmaForm(){
   const e=document.getElementById(id);if("value" in e)e.value="";else e.textContent="";
  });
  document.getElementById("privateResume").style.display="block";
- privateFormReady();showScreen("privateForm");
+ const training=privateInteractionMode==="training";document.getElementById("privateOptionalOptions").open=training;document.querySelector("#privateOptionalOptions summary").textContent=training?"OPCIONES · NECESARIAS PARA ENTRENAR":"OPCIONES · OPCIONAL";document.querySelector("#privateOptionalOptions .private-note").textContent=training?"Escribe las dos posturas que vamos a enfrentar.":"Si ya ves dos caminos, escríbelos. Si no, empieza solo con tu dilema.";document.querySelector("#privateForm > .private-note").textContent=training?"Plantea un dilema con dos opciones. Tú defiendes una y DILEMA la contraria.":"Cuenta qué te preocupa. Las opciones y el contexto son opcionales; podemos empezar a hablar sin votar.";document.getElementById("privateCreate").textContent=training?"EMPEZAR ENTRENAMIENTO":"EMPEZAR A CONVERSAR";privateFormReady();showScreen("privateForm");
 }
 function renderPrivateDilemma(){
  if(!privateDilemma)return;
@@ -8437,7 +8447,7 @@ async function createPrivateDilemma(){
  try{
   await ensureAnonymousAuth();
   const {data,error}=await sb.from("private_dilemma_sessions").insert({
-   question:document.getElementById("privateQuestion").value.trim(),context:document.getElementById("privateContext").value.trim(),
+   interaction_mode:privateInteractionMode,question:document.getElementById("privateQuestion").value.trim(),context:document.getElementById("privateContext").value.trim(),
    option_a:document.getElementById("privateA").value.trim(),option_b:document.getElementById("privateB").value.trim(),audience:"teen",allow_doubt:document.getElementById("privateAllowDoubt").checked
   }).select().single();
   if(error)throw error;if(op!==privateOperation)return;
@@ -8450,7 +8460,7 @@ async function resumePrivateDilemma(){
  try{
   await ensureAnonymousAuth();
   const {data,error}=await sb.from("private_dilemma_sessions").select().eq("id",localStorage.getItem("dilema_private_session")).single();
-  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;await loadPrivateGuides();privateBusy=false;renderPrivateDilemma();
+  if(error)throw error;if(op!==privateOperation)return;privateDilemma=data;privateInteractionMode=data.interaction_mode||"reflection";await loadPrivateGuides();privateBusy=false;renderPrivateDilemma();
  }catch(error){if(op===privateOperation)document.getElementById("privateFormError").textContent="Ese dilema ya no está disponible en tu sesión. Puedes crear otro."}
  finally{if(op===privateOperation){privateBusy=false;privateFormReady()}}
 }
@@ -8546,7 +8556,7 @@ function exitPrivateDilemma(){
 let privateCatalogue=null,privateCatalogueAudience=false,privateCatalogueIntensity=null,privateCatalogueTheme=null,privateCatalogueSamples=[];
 function syncDilemmaChoice(){
  const mode=document.getElementById("dilemmaChoiceMode"),exit=document.getElementById("dilemmaChoiceExit");
- mode.textContent=privateSelectionMode?"DILEMA PRIVADO · HOY ESTÁS TÚ":"SALA COMPLETA";
+ mode.textContent=privateSelectionMode?(privateInteractionMode==="training"?"ENTRENAMIENTO · VS DILEMA":"DILEMA PRIVADO · HOY ESTÁS TÚ"):"SALA COMPLETA";
  const options=document.querySelectorAll('#debateChoice .btn');
  for(const b of options){if(b.getAttribute('onclick')?.includes('openCustomDebate'))b.textContent=privateSelectionMode?'TENGO UN DILEMA':'TENEMOS UN DILEMA';if(b.getAttribute('onclick')?.includes('openSuggestedDebate'))b.textContent=privateSelectionMode?'PROPONME UN DILEMA':'PROPÓNNOS UN DILEMA';}
  document.getElementById("privateChoiceBack").style.display=privateSelectionMode?"block":"none";
@@ -8633,7 +8643,7 @@ async function choosePrivateCatalogueDilemma(d){
  try{
   await ensureAnonymousAuth();
   if(privateCurrentAi){const {error}=await sb.rpc('remember_world_dilemma',{p_id:d.id});if(error)throw error;}
-  const {data,error}=await sb.from("private_dilemma_sessions").insert({question:d.question,option_a:d.option_a,option_b:d.option_b,news_meta:d.news_meta||null,context:d.news_meta?("INSPIRADO EN ACTUALIDAD. La situación es hipotética. Hechos publicados: "+d.news_meta.summary+" Fuente: "+d.news_meta.url+" Fecha: "+d.news_meta.date):""}).select().single();
+  const {data,error}=await sb.from("private_dilemma_sessions").insert({interaction_mode:privateInteractionMode,question:d.question,option_a:d.option_a,option_b:d.option_b,news_meta:d.news_meta||null,context:d.news_meta?("INSPIRADO EN ACTUALIDAD. La situación es hipotética. Hechos publicados: "+d.news_meta.summary+" Fuente: "+d.news_meta.url+" Fecha: "+d.news_meta.date):""}).select().single();
   if(error)throw error;if(op!==privateOperation)return;
   privateDilemma=data;privateGuides=[];localStorage.setItem("dilema_private_session",data.id);
   privateBusy=false;renderPrivateDilemma();
@@ -9002,7 +9012,7 @@ async function openSavedDilemma(row){
   const {data,error}=await sb.from(table).select().eq('id',row.id).eq('user_id',currentUserId).single();
   if(error)throw error;if(run!==savedLibraryRun)return;
   if(row.origin==='PRIV'){
-   privateOperation++;privateSelectionMode=true;privateDilemma=data;privateGuides=[];
+   privateOperation++;privateSelectionMode=true;privateInteractionMode=data.interaction_mode||"reflection";privateDilemma=data;privateGuides=[];
    await loadPrivateGuides();if(run!==savedLibraryRun)return;
    localStorage.setItem('dilema_private_session',data.id);renderPrivateDilemma();
   }else{
@@ -10089,7 +10099,7 @@ function privateDialogueKickoff(){
  if(!openTopic&&!hasChosenPosture)return;
  // Creation/posture saves use privateBusy. Retry instead of losing the first assistant turn in that small window.
  if(privateBusy||privateDialogueLoading){privateDialogueKickoffTimer=setTimeout(privateDialogueKickoff,180);return;}
- const message=String(privateDilemma.question||'').trim();if(!message)return;
+ const message=privateDilemma.interaction_mode==="training"?"Abre el entrenamiento con un argumento breve para la postura contraria a la mía. Si estoy en duda, compara los dos costes para que pueda elegir.":String(privateDilemma.question||'').trim();if(!message)return;
  void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message});
 }
 function paintPrivateDialogue(){
@@ -10114,7 +10124,7 @@ function paintPrivateDialogue(){
   const pair=document.createElement('article');pair.className='pd-turn';pair.dataset.turn=turn.id;
   const mine=document.createElement('div');mine.className='pd-user';const who=document.createElement('strong');who.className='pd-author';who.textContent=!privateDilemma.option_a?'TÚ':'TÚ · '+(turn.choice==='N'?'EN DUDA':'POSTURA '+turn.choice);
   const message=document.createElement('p');message.className='pd-copy';message.textContent=turn.message;mine.append(who,message);if(turn.id!==privateDilemma.id)pair.appendChild(mine);
-  const response=document.createElement('div');response.className='pd-reply';const author=document.createElement('strong');author.className='pd-author';author.textContent='DILEMA';response.appendChild(author);
+  const response=document.createElement('div');response.className='pd-reply';const author=document.createElement('strong');author.className='pd-author';author.textContent=privateDilemma.interaction_mode==='training'&&['A','B'].includes(turn.choice)?'DILEMA · POSTURA '+(turn.choice==='A'?'B':'A'):'DILEMA';response.appendChild(author);
   if(turn.status==='ready'){
    const reflection=document.createElement('p');reflection.className='pd-copy';reflection.textContent=turn.reflection;
    const question=document.createElement('p');question.className='pd-question';question.textContent=turn.question;
@@ -10418,7 +10428,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   return true;
  }
  async function guided(mode){
-  if(busy())return;const field=E('privateDialogueInput'),prompt=prompts[mode];if(!field||!prompt||field.disabled)return;
+  if(busy())return;const field=E('privateDialogueInput'),prompt=mode==='order'&&privateDilemma?.interaction_mode==='training'?'Valora mis argumentos del entrenamiento. Señala con un ejemplo mi razón más sólida, una debilidad o contradicción y cómo mejorarla. No puntúes mi postura ni inventes un ganador.':prompts[mode];if(!field||!prompt||field.disabled)return;
   if(field.value.trim()){
    const joined=(field.value.trim()+'\n\n'+prompt).slice(0,3000);field.value=joined;privateDialogueDrafts.set(privateDialogueKey,joined);field.oninput?.();field.focus();sync();return;
   }
@@ -10447,8 +10457,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  function sync(){
   // Ignore our own log writes: observing them again starves clicks and network callbacks.
   if(syncing)return;syncing=true;queueMicrotask(()=>{logObserver?.disconnect();try{
-   if(!privateDilemma||!ensure())return;const isOpen=openTopic(),box=E('privateDialogue'),pending=busy();
-   E('privateDialogueTitle').textContent=isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';
+   if(!privateDilemma||!ensure())return;const isOpen=openTopic(),box=E('privateDialogue'),pending=busy(),training=privateDilemma.interaction_mode==='training';
+   E('privateDialogueTitle').textContent=training?'DEBATIR VS DILEMA':isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=training?'Defiende tus razones. DILEMA responde desde la postura contraria; puedes revisar tu elección y pedir una valoración.':isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';E('r99ThinkingPrinciple').textContent=training?'ENTRENAMIENTO · ARGUMENTOS, NO ATAQUES PERSONALES.':'DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.';const order=E('privateDialogueOrder');if(order){order.innerHTML=icon('order',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO');order.setAttribute('aria-label',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO')}const header=E('privateBoard').querySelector(':scope > .small-note');if(header)header.textContent=training?'ENTRENAMIENTO INDIVIDUAL · SOLO TÚ':'DILEMA PRIVADO · SOLO TÚ';E('privateBoard').querySelector(':scope > .title').textContent=training?'PON A PRUEBA TUS ARGUMENTOS':'VAMOS A PENSARLO';
    const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');if(label)label.textContent='¿QUÉ ESTÁS PENSANDO AHORA?';E('privateDialogueInput').placeholder='Escribe, responde a la pregunta o usa una herramienta de pensamiento…';
    for(const [id] of defs){const b=E(id);if(b)b.disabled=pending}
    stage();updateMap();enhanceTurns();
@@ -10465,13 +10475,13 @@ document.addEventListener('DOMContentLoaded',()=>{
  <div class="title">¿CÓMO DEBATIMOS?</div>
  <button class="btn btn-primary" onclick="r105ChooseStyle('free')">DEBATE LIBRE</button>
  <p class="subtitle">Conversación libre, sin turnos ni límite de tiempo.</p>
- <button class="btn btn-secondary" onclick="r105ChooseStyle('moderated')">DEBATE MODERADO</button>
+ <button id="r107ModeratedSelect" class="btn btn-secondary" onclick="r105ChooseStyle('moderated')" aria-expanded="false" aria-controls="r107SetupTime">DEBATE MODERADO</button>
  <p class="subtitle">DILEMA da la palabra, controla el tiempo y recoge las valoraciones.</p>
- <div class="r105-duration" aria-label="Tiempo por intervención">
+ <div id="r107SetupTime" hidden><p class="subtitle">TIEMPO POR INTERVENCIÓN</p><div class="r105-duration" aria-label="Tiempo por intervención">
   <button type="button" data-setup-seconds="60" onclick="r105SetupSeconds(60)">60 S</button>
   <button type="button" data-setup-seconds="90" class="selected" onclick="r105SetupSeconds(90)">90 S</button>
   <button type="button" data-setup-seconds="120" onclick="r105SetupSeconds(120)">120 S</button>
- </div>
+ </div><button class="btn btn-primary" type="button" onclick="r107ConfirmModerated()">CONTINUAR CON DEBATE MODERADO</button></div>
 </section>
 <style>
 .r105-duration{display:flex;justify-content:center;gap:10px;margin:16px 0}
@@ -10514,7 +10524,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  let view=null,viewRound=null,busy=false,polling=null,offset=0,lastClock=null,finishing=null,finishedRound=null,resultsOpen=false,changeSeconds=90,returnFocus=null;
  const styleName=s=>s==='moderated'?'DEBATE MODERADO':'DEBATE LIBRE';
  window.r105SetupSeconds=function(value){setupSpeechSeconds=value;document.querySelectorAll('[data-setup-seconds]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.setupSeconds)===value))};
- window.r105ChooseStyle=function(style){setupDebateStyle=style;setupStyleChosen=true;openProfileChoice('create')};
+ window.r105ChooseStyle=function(style){setupDebateStyle=style;if(style==='moderated'){E('r107SetupTime').hidden=false;E('r107ModeratedSelect').setAttribute('aria-expanded','true');E('r107SetupTime').querySelector('[data-setup-seconds].selected')?.focus();return}E('r107SetupTime').hidden=true;E('r107ModeratedSelect').setAttribute('aria-expanded','false');setupStyleChosen=true;openProfileChoice('create')};window.r107ConfirmModerated=function(){setupDebateStyle='moderated';setupStyleChosen=true;openProfileChoice('create')};
  function current(){return viewRound===currentRoundId?view:null}
  function adopt(data,round){if(round!==currentRoundId)return;view=data;viewRound=round;if(data?.server_now&&data.server_now!==lastClock){lastClock=data.server_now;offset=new Date(data.server_now).getTime()-Date.now()}if(window.dilemaBoardSnapshot?.round===round)window.dilemaBoardSnapshot.data.moderation_state=data;paint()}
  function available(id){const s=current();if(busy||!s)return false;if(id==='r105SpeechRequest')return !!s.can_request;return !!s.can_end}
@@ -10570,12 +10580,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!current()?.can_propose||!E('r105ModeButton')||E('r105ModeButton').hidden||E('r105ModeButton').disabled)return;returnFocus=document.activeElement;
   if(!E('r105StyleDialog')){
    const modal=document.createElement('div');modal.id='r105StyleDialog';modal.className='r105-overlay';modal.hidden=true;modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-labelledby','r105StyleTitle');
-   modal.innerHTML='<div class="r105-dialog"><h2 id="r105StyleTitle">PROPONER MODALIDAD</h2><p>La mesa decide por mayoría. El dilema, votos, contexto y herramientas se conservan.</p><div class="r105-duration"><button data-change-seconds="60">60 S</button><button data-change-seconds="90">90 S</button><button data-change-seconds="120">120 S</button></div><button class="btn btn-secondary" id="r105ProposeFree">DEBATE LIBRE</button><button class="btn btn-secondary" id="r105ProposeModerated">DEBATE MODERADO</button><button class="btn btn-secondary" id="r105StyleCancel">VOLVER AL TABLERO</button></div>';
-   document.body.appendChild(modal);modal.querySelectorAll('[data-change-seconds]').forEach(b=>b.onclick=()=>{changeSeconds=Number(b.dataset.changeSeconds);modal.querySelectorAll('[data-change-seconds]').forEach(x=>x.classList.toggle('selected',Number(x.dataset.changeSeconds)===changeSeconds));E('r105ProposeModerated').disabled=current()?.style==='moderated'&&current()?.seconds===changeSeconds});
-   for(const [id,style] of [['r105ProposeFree','free'],['r105ProposeModerated','moderated']])E(id).onclick=()=>{closeStyle();action('propose',{p_style:style,p_seconds:changeSeconds})};E('r105StyleCancel').onclick=closeStyle;
+   modal.innerHTML='<div class="r105-dialog"><h2 id="r105StyleTitle">PROPONER MODALIDAD</h2><p>La mesa decide por mayoría. El dilema, votos, contexto y herramientas se conservan.</p><div id="r107ChangeTime" hidden><p>TIEMPO POR INTERVENCIÓN</p><div class="r105-duration"><button data-change-seconds="60">60 S</button><button data-change-seconds="90">90 S</button><button data-change-seconds="120">120 S</button></div><button class="btn btn-primary" id="r107ProposeTimed">PROPONER DEBATE MODERADO</button></div><button class="btn btn-secondary" id="r105ProposeFree">DEBATE LIBRE</button><button class="btn btn-secondary" id="r105ProposeModerated">DEBATE MODERADO</button><button class="btn btn-secondary" id="r105StyleCancel">VOLVER AL TABLERO</button></div>';
+   document.body.appendChild(modal);modal.querySelectorAll('[data-change-seconds]').forEach(b=>b.onclick=()=>{changeSeconds=Number(b.dataset.changeSeconds);modal.querySelectorAll('[data-change-seconds]').forEach(x=>x.classList.toggle('selected',Number(x.dataset.changeSeconds)===changeSeconds));E('r107ProposeTimed').disabled=current()?.style==='moderated'&&current()?.seconds===changeSeconds});
+   E('r105ProposeFree').onclick=()=>{closeStyle();action('propose',{p_style:'free',p_seconds:changeSeconds})};E('r105ProposeModerated').onclick=()=>{E('r107ChangeTime').hidden=false;E('r105ProposeModerated').setAttribute('aria-expanded','true');E('r107ProposeTimed').disabled=current()?.style==='moderated'&&current()?.seconds===changeSeconds};E('r107ProposeTimed').onclick=()=>{closeStyle();action('propose',{p_style:'moderated',p_seconds:changeSeconds})};E('r105StyleCancel').onclick=closeStyle;
    modal.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closeStyle()}if(e.key==='Tab'){const nodes=[...modal.querySelectorAll('button:not(:disabled)')],first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
   }
-  changeSeconds=current().seconds;E('r105StyleDialog').hidden=false;E('r105ProposeFree').disabled=current().style==='free';E('r105ProposeModerated').disabled=current().style==='moderated'&&current().seconds===changeSeconds;
+  changeSeconds=current().seconds;E('r105StyleDialog').hidden=false;E('r105ProposeFree').disabled=current().style==='free';E('r105ProposeModerated').disabled=false;E('r107ChangeTime').hidden=true;E('r105ProposeModerated').setAttribute('aria-expanded','false');
   E('r105StyleDialog').querySelectorAll('[data-change-seconds]').forEach(b=>b.classList.toggle('selected',Number(b.dataset.changeSeconds)===changeSeconds));E('r105StyleCancel').focus();
  }
  function closeStyle(){if(E('r105StyleDialog'))E('r105StyleDialog').hidden=true;if(returnFocus?.isConnected)returnFocus.focus()}
@@ -10621,6 +10631,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 
+<style>
+/* R107: consistent text and a private green mark for the person's own vote. */
+#r107ChangeTime[hidden],#r107SetupTime[hidden]{display:none!important}
+#catalogDilemmas .selection-question.selected,#voting .vote-option.selected,#result .result-item.result-my-vote,#resultNeutral.result-my-vote,#privateBoard .private-options button.selected,#privateVoteN.selected{border:2px solid #4ade80!important;box-shadow:none!important;outline:0!important}
+#catalogDilemmas .selection-question.selected:disabled{opacity:1}
+#r105ModerationStatus,#r106ModeHint{font-family:inherit;font-size:12px;font-weight:400;line-height:1.65;letter-spacing:0}
+#r106TableManagement #r105ModeButton{font-family:inherit;font-size:14px;font-weight:900;letter-spacing:.8px;color:#fff}
+</style>
 </body>
 </html>
 
