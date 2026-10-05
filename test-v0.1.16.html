@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R110</div>
+    <div class="version">DILEMA · V0.1.16-010C-R111</div>
   </main>
 
 
@@ -10647,7 +10647,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <style>
 /* R107: consistent text and a private green mark for the person's own vote. */
 #r107ChangeTime[hidden],#r107SetupTime[hidden]{display:none!important}
-#catalogDilemmas .selection-question.selected,#voting .vote-option.selected,#result .result-item.result-my-vote,#resultNeutral.result-my-vote{border:2px solid #4ade80!important;box-shadow:none!important;outline:0!important}
+/* R111: own unfilled vote stays green on the active debate board too. */
+#catalogDilemmas .selection-question.selected,#voting .vote-option.selected,#result .result-item.result-my-vote,#resultNeutral.result-my-vote,#debate .debate-option.pilot-my-vote,#debate #pilotVoteN.pilot-my-vote{border:2px solid #4ade80!important;box-shadow:none!important;outline:0!important}
 #catalogDilemmas .selection-question.selected:disabled{opacity:1}
 #r105ModerationStatus,#r106ModeHint{font-family:inherit;font-size:12px;font-weight:400;line-height:1.65;letter-spacing:0}
 #r106TableManagement #r105ModeButton{font-family:inherit;font-size:14px;font-weight:900;letter-spacing:.8px;color:#fff}
