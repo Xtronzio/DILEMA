@@ -10642,6 +10642,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <style>
 /* R109: training uses the debate workbench; reflection keeps its own workspace. */
 #privateBoard.r109-training>h1{font-size:27px;margin:14px 0 20px}
+#privateBoard.r109-training>#privateBoardQuestion{font-size:18px;line-height:1.65;text-align:center;margin:0 0 16px}
 #privateBoard.r109-training #privatePlanteamiento{margin:16px 0;border-color:#555;background:#0b0b0b}
 #privateBoard.r109-training #privateDialogue{background:#0b0b0b;border-color:#444;padding:15px}
 #privateBoard.r109-training #privateDialogueTitle{font-size:12px;letter-spacing:1px;margin-bottom:12px}
@@ -10788,7 +10789,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(overlay&&(!on||modalSession!==privateDilemma?.id||!board.classList.contains('active')))close();
   const inventory=E('r109Inventory');if(on&&actions.parentElement!==inventory)inventory.insertBefore(actions,E('r109InventoryNote'));if(!on&&actions.parentElement!==E('privateDialogueForm'))E('privateDialogueForm').prepend(actions);
   for(const node of document.querySelectorAll('#privateBoard .r109-only'))node.hidden=!on;
+  const question=E('privateBoardQuestion'),details=E('privatePlanteamiento'),news=E('privateBoardQuestionNews');
+  if(on){if(question.parentElement!==board)details.before(question);if(news&&news.parentElement!==details)details.append(news)}
+  else{if(question.parentElement!==details)details.querySelector('summary').after(question);if(news&&news.previousElementSibling!==question)question.after(news)}
   if(!on)return;
+  E('privatePlanteamientoTitle').textContent='OPCIONES Y CONTEXTO';
   const choice=privateDilemma.choice;E('r109MinePosture').textContent=choice==='A'||choice==='B'?'TÚ · POSTURA '+choice:choice==='N'?'TÚ · ESTOY EN DUDA':'ELIGE TU POSTURA';E('r109OtherPosture').textContent=choice==='A'?'DILEMA · POSTURA B':choice==='B'?'DILEMA · POSTURA A':'DILEMA · CONTRASTA A Y B';
   board.querySelector('h1').textContent='DEBATIR VS DILEMA';E('privateDialogueTitle').textContent='CONVERSACIÓN';const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');label.textContent='TU ARGUMENTO';E('privateDialogueInput').placeholder='Responde a DILEMA y explica tus razones…';
   if(!privateDialogueSending&&!privateDialoguePending())E('privateDialogueSend').textContent='ENVIAR ARGUMENTO';
