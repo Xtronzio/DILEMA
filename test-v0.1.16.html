@@ -1009,7 +1009,7 @@
 #pilotHostBadge{text-align:center;font-size:10px;font-weight:900;letter-spacing:2px;padding:8px 0;color:#fff}
 #pilotHostGroup>button{width:100%!important;margin:0!important;min-height:54px!important}
 #debate .debate-option{cursor:pointer}
-#debate .debate-option.pilot-my-vote{border-color:#fff!important;box-shadow:0 0 0 2px #fff inset!important}
+#debate .debate-option.pilot-my-vote{border-color:#4ade80!important;box-shadow:none!important}
 #debate .pilot-vote-count{margin-top:12px;font-size:24px;font-weight:900;color:#fff}
 #debate .debate-option.pilot-win .pilot-vote-count{color:#39d353!important}
 #debate .debate-option.pilot-lose .pilot-vote-count{color:#ff4d5a!important}
@@ -1019,7 +1019,7 @@
 #resetDebateBtn{display:none!important}
 </style><style>
 /* 015W: stable selection + balanced lower controls */
-#debate .debate-option.pilot-my-vote{animation:none!important;transition:none!important;opacity:1!important;border:2px solid #fff!important;box-shadow:none!important}
+#debate .debate-option.pilot-my-vote{animation:none!important;transition:none!important;opacity:1!important;border:2px solid #4ade80!important;box-shadow:none!important}
 #pilotPresence{display:flex!important;flex-direction:column!important;gap:14px!important;width:100%!important;margin-top:14px!important}
 #pilotPresence .pilot-presence-row{display:grid!important;grid-template-columns:1fr 1fr!important;gap:9px!important;width:100%!important}
 #pilotPresence .pilot-presence-row>button{min-height:54px!important}
@@ -1047,7 +1047,7 @@
 </style><style>
 /* 016C: same visual voting language on collective result */
 #result .result-item{background:#0b0b0b!important;border:1px solid #3a3a3a!important;transition:none!important;animation:none!important}
-#result .result-item.result-my-vote{border:2px solid #fff!important;box-shadow:none!important}
+#result .result-item.result-my-vote{border:2px solid #4ade80!important;box-shadow:none!important}
 #result .result-item .result-number{color:#fff!important}
 #result .result-item.result-win .result-number{color:#39d353!important}
 #result .result-item.result-lose .result-number{color:#ff4d5a!important}
@@ -1055,7 +1055,7 @@
 #result #resetResultBtn{display:none!important}
 </style><style>
 /* 016D: result ownership + clear host waiting */
-#result .result-item.result-my-vote{border:2px solid #fff!important;outline:0!important}
+#result .result-item.result-my-vote{border:2px solid #4ade80!important;outline:0!important}
 #waitingRoleDraw.host-wait-animated,#waitingRoleDraw{
   color:#fff!important;font-size:13px!important;font-weight:900!important;
   letter-spacing:2px!important;opacity:1!important;margin:22px 0 8px!important;
@@ -1380,7 +1380,7 @@
 .selection-chip.selected:disabled{color:#111;background:#fff;border-color:#fff}
 .selection-questions{max-height:55vh;overflow:auto;margin:20px 0}
 .selection-question{display:block;width:100%;margin:10px 0;padding:16px;text-align:left;border:1px solid #555;border-radius:12px;background:#1a1a1a;color:white;font-size:15px;font-weight:800;line-height:1.4;cursor:pointer}
-.selection-question.selected{border-color:white}
+.selection-question.selected{border-color:#4ade80}
 .selection-question:disabled{opacity:.65;cursor:default}
 .selection-question.selected:disabled{opacity:1}
 .selection-count{display:block;margin-top:10px;color:#aaa;font-size:10px;letter-spacing:1px}
@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R111</div>
+    <div class="version">DILEMA · V0.1.16-010C-R112</div>
   </main>
 
 
@@ -8908,7 +8908,7 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
 #savedGroupQuestion{border:1px solid #444;border-radius:14px;padding:18px;margin:24px 0}
 .saved-option{border:1px solid #444;border-radius:12px;padding:14px;margin:12px 0;font-size:14px;line-height:1.4;font-weight:400;white-space:pre-wrap}
 .saved-option strong{display:block;margin-bottom:8px}
-.saved-option.saved-last-choice{border-color:#fff;background:#161616}
+.saved-option.saved-last-choice{border-color:#4ade80}
 .saved-last-vote{font-size:11px;font-weight:700;letter-spacing:1px;margin:18px 0;color:#fff;text-align:center}
 .saved-discard-overlay{position:fixed;inset:0;background:#000c;z-index:100001;display:none;align-items:center;justify-content:center;padding:24px}
 .saved-discard-overlay.open{display:flex}
@@ -9980,7 +9980,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 <style>
 .neutral-option strong{font-size:16px!important}.neutral-result{margin:14px 0;padding:12px;border:1px solid #444;border-radius:12px;font-size:12px;color:#aaa;text-align:center}
-.neutral-result.pilot-my-vote,.neutral-result.result-my-vote{border-color:#fff;color:#fff}
+.neutral-result.pilot-my-vote,.neutral-result.result-my-vote{border-color:#4ade80;color:#fff}
 .neutral-wide{grid-column:1/-1}#pilotInlineRevote .neutral-wide{width:100%}
 #privateVoteN{margin:12px 0}#privateVoteN.selected{border-color:#fff;background:#fff;color:#0b0b0b}#r90NeutralPosition p{font-weight:400;line-height:1.6}
 </style>
@@ -10647,9 +10647,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 <style>
 /* R107: consistent text and a private green mark for the person's own vote. */
 #r107ChangeTime[hidden],#r107SetupTime[hidden]{display:none!important}
-/* R111: own unfilled vote stays green on the active debate board too. */
-#catalogDilemmas .selection-question.selected,#voting .vote-option.selected,#result .result-item.result-my-vote,#resultNeutral.result-my-vote,#debate .debate-option.pilot-my-vote,#debate #pilotVoteN.pilot-my-vote{border:2px solid #4ade80!important;box-shadow:none!important;outline:0!important}
-#catalogDilemmas .selection-question.selected:disabled{opacity:1}
+/* R112 selection contract: green outline = my unfilled vote/selection.
+   Filled selectors keep their own fill and border; never use a blanket .selected rule. */
+.selection-question.selected,#voting .vote-option.selected,#result .result-item.result-my-vote,#resultNeutral.result-my-vote,#debate .debate-option.pilot-my-vote,#debate #pilotVoteN.pilot-my-vote,.saved-option.saved-last-choice{border:2px solid #4ade80!important;box-shadow:none!important;outline:0!important}
+.selection-question.selected:disabled{opacity:1}
 #r105ModerationStatus,#r106ModeHint{font-family:inherit;font-size:12px;font-weight:400;line-height:1.65;letter-spacing:0}
 #r106TableManagement #r105ModeButton{font-family:inherit;font-size:14px;font-weight:900;letter-spacing:.8px;color:#fff}
 </style>
