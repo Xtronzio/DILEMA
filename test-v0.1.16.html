@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R114</div>
+    <div class="version">DILEMA · V0.1.16-010C-R115</div>
   </main>
 
 
@@ -10893,6 +10893,8 @@ button.btn.r113-action-feedback,
  border-color:var(--r113-aura);background:#0b0b0b;box-shadow:none
 }
 #privateDialogue #privateDialogueTitle,#privateDialogue #r113DialogueMode{color:var(--r113-aura)}
+/* R115: every inner frame follows the current dialogue phase, including existing nested borders. */
+#privateDialogue.r99-thinking :where(*){border-color:var(--r113-aura)!important;outline-color:var(--r113-aura)}
 #r113DialogueMode{margin:8px 0 12px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.7px;line-height:1.5}
 #privateDialogue button:focus-visible{outline-color:var(--r113-aura)}
 #privateDialogueSend:not(:disabled){border-color:var(--r113-aura)}

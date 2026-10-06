@@ -22,6 +22,8 @@ const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),rgb);
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(11, 11, 11)');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).boxShadow),'none');
+  const frames=await page.locator('#privateDialogue').evaluate(e=>[...e.querySelectorAll('*')].filter(n=>n.getClientRects().length).flatMap(n=>{const s=getComputedStyle(n);return ['Top','Right','Bottom','Left'].filter(side=>parseFloat(s['border'+side+'Width'])>0&&s['border'+side+'Style']!=='none').map(side=>s['border'+side+'Color'])}));
+  assert.ok(frames.length>3);assert.ok(frames.every(color=>color===rgb),'All inner borders must follow the dialogue colour');
   await page.waitForFunction(()=>!!window.fixtureRelease);
   await page.evaluate(()=>{window.fixtureHold=false;window.fixtureRelease();window.fixtureRelease=null});
   await page.waitForFunction(()=>document.getElementById('privateDialogue').dataset.aura==='ready');
