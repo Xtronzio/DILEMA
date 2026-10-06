@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R115</div>
+    <div class="version">DILEMA · V0.1.16-010C-R116</div>
   </main>
 
 
@@ -10852,7 +10852,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 button.btn:not(:disabled):active,
 button.btn.r113-action-feedback,
 #debateChoice button.btn.r113-action-feedback{background:#fff!important;color:#0b0b0b!important;border-color:#fff!important}
-#debateChoice #dilemmaChoiceExit.r113-hall-return{margin-top:18px;margin-bottom:0;padding:12px;min-height:44px;border:0!important;background:transparent!important;color:#888!important;font-size:12px;font-weight:400;letter-spacing:.5px}
+#debateChoice #dilemmaChoiceExit.r113-hall-return{margin-top:18px;margin-bottom:0;padding:13px;min-height:48px;border:1px solid #444!important;background:transparent!important;color:#ccc!important;font-size:13px;font-weight:700;letter-spacing:.5px}
 #debateChoice #dilemmaChoiceExit.r113-hall-return.r113-action-feedback{background:#fff!important;color:#0b0b0b!important}
 </style>
 <script>
@@ -10907,6 +10907,46 @@ button.btn.r113-action-feedback,
 #privateDialogue[data-aura="order"] [data-thinking-action="order"]{border-color:var(--r113-aura);color:var(--r113-aura)}
 #privateDialogue [data-thinking-action]:not(:disabled):active .r99-thinking-icon{color:inherit}
 </style>
+<style>
+/* R116: one navigation vocabulary; icons support the existing actions and labels. */
+button[data-r116-nav]{--r116-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m10 5-7 7 7 7M3 12h18'/%3E%3C/svg%3E")}
+button[data-r116-nav="home"]{--r116-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 10 9-7 9 7M5 9v12h5v-7h4v7h5V9'/%3E%3C/svg%3E")}
+button[data-r116-nav="saved"]{--r116-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7V5h6l2 2h10v13H3ZM3 10h18'/%3E%3C/svg%3E")}
+button[data-r116-nav]::before{content:'';display:inline-block;width:20px;height:20px;flex:0 0 20px;vertical-align:middle;margin-right:10px;background:currentColor;-webkit-mask:var(--r116-icon) center/contain no-repeat;mask:var(--r116-icon) center/contain no-repeat}
+.btn[data-r116-nav],.r88-button[data-r116-nav]{display:flex;align-items:center;justify-content:center;gap:0}
+button[data-r116-nav]>.r88-symbol{display:none}
+.screen .back[data-r116-nav]{left:max(24px,calc(50% - 191px));top:16px;transform:none;min-width:44px;min-height:44px;width:44px;height:44px;padding:11px;border:1px solid #3b3b3b;border-radius:12px;background:transparent;color:#ccc;font-size:0;line-height:0}
+.screen .back[data-r116-nav]::before{display:block;margin:auto}
+.screen .back[data-r116-nav]:active{background:#fff;color:#0b0b0b;border-color:#fff}
+button[data-r116-nav]:focus-visible{outline:2px solid #fff;outline-offset:3px}
+</style>
+<script>
+/* R116: navigation icons without rewriting button content, handlers or saved state. */
+(function(){
+ function decorate(button){
+  const label=(button.querySelector('.r88-label')?.textContent||button.textContent||'').trim().replace(/\s+/g,' ');
+  let kind=null;
+  if(button.classList.contains('back')){
+   kind=/\bgoHome\s*\(/.test(button.getAttribute('onclick')||'')?'home':'back';
+   if(kind==='home')button.setAttribute('aria-label','Volver al hall');
+   else if(!button.hasAttribute('aria-label'))button.setAttribute('aria-label','Volver al paso anterior');
+  }else if(/^(?:GUARDAR Y )?VOLVER AL HALL(?: SIN ENVIAR)?$|^VOLVER AL INICIO$/.test(label))kind='home';
+  else if(label==='MIS DILEMAS')kind='saved';
+  else if(/^VOLVER AL TABLERO$|^VOLVER A MI ARGUMENTO$/.test(label))kind='back';
+  if(kind){if(button.dataset.r116Nav!==kind)button.dataset.r116Nav=kind}
+  else if(button.hasAttribute('data-r116-nav'))button.removeAttribute('data-r116-nav');
+ }
+ function scan(root){if(root.nodeType!==1)return;if(root.matches('button'))decorate(root);root.querySelectorAll('button').forEach(decorate)}
+ document.addEventListener('DOMContentLoaded',()=>{
+  scan(document.body);
+  new MutationObserver(records=>{
+   const candidates=new Set();
+   for(const record of records){const target=record.target.nodeType===1?record.target:record.target.parentElement;const button=target?.closest('button');if(button)candidates.add(button);for(const node of record.addedNodes)if(node.nodeType===1)scan(node)}
+   candidates.forEach(decorate);
+  }).observe(document.body,{childList:true,subtree:true,characterData:true});
+ });
+})();
+</script>
 </body>
 </html>
 
