@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R113</div>
+    <div class="version">DILEMA · V0.1.16-010C-R114</div>
   </main>
 
 
@@ -10884,14 +10884,13 @@ button.btn.r113-action-feedback,
 
 <style>
 /* R113: dialogue colour follows the selected thinking action until the reply arrives. */
-#privateDialogue{--r113-aura:#6ee7a0;--r113-aura-tint:#0d1510}
-#privateDialogue[data-aura="reply"],#privateDialogue[data-aura="order"]{--r113-aura:#fff;--r113-aura-tint:#131313}
-#privateDialogue[data-aura="counter"],#privateDialogue[data-aura="pressure"]{--r113-aura:#ff7373;--r113-aura-tint:#1c1010}
-#privateDialogue[data-aura="view"]{--r113-aura:#f179e5;--r113-aura-tint:#1a101b}
-#privateDialogue[data-aura="blind"]{--r113-aura:#72b7ff;--r113-aura-tint:#0e1520}
+#privateDialogue{--r113-aura:#6ee7a0}
+#privateDialogue[data-aura="reply"],#privateDialogue[data-aura="order"]{--r113-aura:#fff}
+#privateDialogue[data-aura="counter"],#privateDialogue[data-aura="pressure"]{--r113-aura:#ff7373}
+#privateDialogue[data-aura="view"]{--r113-aura:#f179e5}
+#privateDialogue[data-aura="blind"]{--r113-aura:#72b7ff}
 #privateDialogue.r99-thinking,#privateBoard.r109-training #privateDialogue{
- border-color:var(--r113-aura);background:var(--r113-aura-tint);
- box-shadow:0 0 18px color-mix(in srgb,var(--r113-aura) 14%,transparent)
+ border-color:var(--r113-aura);background:#0b0b0b;box-shadow:none
 }
 #privateDialogue #privateDialogueTitle,#privateDialogue #r113DialogueMode{color:var(--r113-aura)}
 #r113DialogueMode{margin:8px 0 12px;text-align:center;font-size:10px;font-weight:800;letter-spacing:.7px;line-height:1.5}

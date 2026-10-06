@@ -20,6 +20,8 @@ const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8');
   await page.evaluate(()=>{window.fixtureHold=true});await page.locator('#'+id).click();
   assert.equal(await page.locator('#privateDialogue').getAttribute('data-aura'),mode);
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),rgb);
+  assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(11, 11, 11)');
+  assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).boxShadow),'none');
   await page.waitForFunction(()=>!!window.fixtureRelease);
   await page.evaluate(()=>{window.fixtureHold=false;window.fixtureRelease();window.fixtureRelease=null});
   await page.waitForFunction(()=>document.getElementById('privateDialogue').dataset.aura==='ready');
