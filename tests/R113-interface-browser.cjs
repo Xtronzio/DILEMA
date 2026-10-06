@@ -1,0 +1,30 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8'),scripts=[...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]);
+const feedback=scripts.find(s=>s.includes('R113: visible action feedback'));
+const renderer=html.slice(html.indexOf('function splitDilemmaCopy('),html.indexOf('function normalizeDilemmaWindows('));
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.DILEMA_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-gpu','--disable-dev-shm-usage']});try{
+ const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.setContent(html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,''));
+ await page.evaluate(()=>{window.calls=[];window.showScreen=id=>document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));window.choosePrivateInteraction=mode=>{calls.push(mode);showScreen('debateChoice')};showScreen('privateModeChoice')});
+ await page.addScriptTag({content:feedback});
+ for(const e of await page.locator('#privateModeChoice .btn').all()){assert.equal(await e.evaluate(e=>getComputedStyle(e).backgroundColor),'rgba(0, 0, 0, 0)');assert.notEqual(await e.evaluate(e=>getComputedStyle(e).borderColor),'rgb(74, 222, 128)')}
+ // Capture the visible frame during the deliberate short pause, before navigation.
+ await page.evaluate(()=>{const b=document.querySelector('#privateModeChoice .btn-primary');b.click();b.click();window.feedbackAtTap={calls:calls.length,fill:getComputedStyle(b).backgroundColor,flash:b.classList.contains('r113-action-feedback')};});
+ assert.deepEqual(await page.evaluate(()=>feedbackAtTap),{calls:0,fill:'rgb(255, 255, 255)',flash:true});
+ await page.waitForFunction(()=>calls.length===1);assert.equal(await page.locator('#debateChoice').isVisible(),true);assert.deepEqual(await page.evaluate(()=>calls),['reflection']);assert.equal(await page.locator('.r113-action-feedback').count(),0,'No stale highlight after navigation');
+ // Keyboard activation has the same feedback and one action.
+ await page.evaluate(()=>showScreen('privateModeChoice'));await page.locator('#privateModeChoice .btn-secondary').filter({hasText:'DEBATIR VS DILEMA'}).press('Enter');await page.waitForFunction(()=>calls.length===2);assert.deepEqual(await page.evaluate(()=>calls),['reflection','training']);
+ // Existing votes are selected states, never delayed or recoloured by action feedback.
+ await page.evaluate(()=>{const b=document.createElement('button');b.className='btn btn-secondary';b.dataset.sessionVote='yes';b.onclick=()=>calls.push('vote');document.getElementById('debateChoice').append(b);b.click();b.remove()});assert.equal(await page.evaluate(()=>calls.at(-1)),'vote');
+ const sync=html.slice(html.indexOf('function syncDilemmaChoice()'),html.indexOf('async function openPrivateCatalog()'));await page.addScriptTag({content:sync});
+ await page.evaluate(()=>{Object.assign(window,{privateSelectionMode:true,privateInteractionMode:'reflection'});window.exitPrivateDilemma=()=>{};window.confirmResetGame=()=>{};syncDilemmaChoice()});
+ assert.equal(await page.locator('#debateChoice button').last().getAttribute('id'),'dilemmaChoiceExit');assert.equal(await page.locator('#dilemmaChoiceExit').textContent(),'VOLVER AL HALL');assert.equal(await page.locator('#dilemmaChoiceExit').evaluate(e=>getComputedStyle(e).fontSize),'12px');assert.equal(await page.locator('#dilemmaChoiceExit').evaluate(e=>getComputedStyle(e).borderWidth),'0px');
+ await page.evaluate(()=>{privateSelectionMode=false;syncDilemmaChoice()});assert.equal(await page.locator('#dilemmaChoiceExit').textContent(),'CERRAR SALA');assert.equal(await page.locator('#dilemmaChoiceExit').getAttribute('class'),'btn btn-danger');
+ await page.addScriptTag({content:renderer});
+ const samples=['CUÁNDO O CÓMO. Te obligan a conocer una verdad exacta sobre tu muerte. Puedes saber la fecha o la causa, pero no ambas.','Puedes leer durante cinco minutos todos los mensajes privados en los que tus amigos han hablado de ti. Nadie sabrá nunca que los has leído. ¿LOS LEES?','Un dilema manual sin título previo.','<img src=x onerror=alert(1)> Texto aportado por alguien.'];
+ await page.evaluate(samples=>{const list=document.getElementById('privateCatalogQuestions');list.style.display='block';list.replaceChildren();for(const text of samples){const b=document.createElement('button');b.className='selection-question';renderDilemmaCopy(b,text);list.append(b)}showScreen('privateCatalog')},samples);
+ for(const e of await page.locator('#privateCatalogQuestions .selection-question').all()){assert.equal(await e.locator('.dilemma-heading').count(),1);assert.equal(await e.locator('.dilemma-body').evaluate(e=>getComputedStyle(e).fontWeight),'400');assert.equal(await e.locator('.dilemma-heading').evaluate(e=>getComputedStyle(e).fontWeight),'900')}
+ assert.equal(await page.locator('#privateCatalogQuestions .dilemma-heading').first().textContent(),'CUÁNDO O CÓMO');assert.equal(await page.locator('#privateCatalogQuestions .dilemma-body').nth(1).textContent(),samples[1]);assert.equal(await page.locator('#privateCatalogQuestions img').count(),0);
+ await page.evaluate(()=>{const b=document.querySelector('#privateCatalogQuestions .selection-question');const first=b.firstElementChild;renderDilemmaCopy(b,b.dataset.dilemmaCopy);window.sameTitle=first===b.firstElementChild});assert.equal(await page.evaluate(()=>sameTitle),true,'Formatting is idempotent');
+ assert.deepEqual(errors,[]);console.log('PASS R113: neutral action entry, visible 160ms feedback before action, double-click lock, keyboard activation, actual votes immediate; hall exit last and quieter in private mode only; title/body separation and fallback preserves body; no HTML injection and no formatting loop');
+}finally{await browser.close()}})().catch(e=>{console.error(e);process.exitCode=1});
