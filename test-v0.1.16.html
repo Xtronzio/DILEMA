@@ -9,7 +9,7 @@
   <script>
   // Capture the private key only in memory; fragments are never sent to the hosting server.
   window.dilemaIncomingAccess=new URLSearchParams(location.hash.slice(1)).get('access');
-  if(window.dilemaIncomingAccess)history.replaceState(null,'',location.pathname+location.search);
+  if(window.dilemaIncomingAccess){const clean=new URL(location.href);clean.hash='';clean.searchParams.delete('_accessSwitch');history.replaceState(null,'',clean.pathname+clean.search);}
   </script>
 
 
@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R118</div>
+    <div class="version">DILEMA · V0.1.16-010C-R119</div>
   </main>
 
 
@@ -9131,6 +9131,12 @@ details.access-warning[open]>summary::after{content:"−"}
 details.access-warning>summary:focus-visible{outline:1px solid #facc15;outline-offset:6px;border-radius:4px}
 .access-url{display:none;width:100%;margin:12px 0 0;padding:12px;border:1px solid #777;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:400}
 .access-status{font-size:12px!important;overflow-wrap:anywhere;min-height:18px}
+.access-load{margin-top:14px}
+.access-load label{display:block;margin-top:16px;font-size:12px;font-weight:800;text-align:left}
+.access-load input{width:100%;min-height:48px;margin-top:10px;padding:12px;border:1px solid #8d7612;border-radius:8px;background:#111;color:#fff;font-size:14px;font-weight:400}
+.access-load input:focus-visible{outline:2px solid #facc15;outline-offset:2px}
+.access-load input[aria-invalid="true"]{border-color:#f87171}
+.access-load-status{font-size:12px!important;line-height:1.5;min-height:18px;overflow-wrap:anywhere}
 #portableAccessOverlay{display:none;position:fixed;inset:0;z-index:100010;background:#080808;align-items:center;justify-content:center;padding:24px}
 #portableAccessOverlay.open{display:flex}
 #portableAccessOverlay .access-warning{width:100%;max-width:420px;margin:0}
@@ -9194,17 +9200,46 @@ async function restorePortableAccess(){
  try{
   const token=window.dilemaIncomingAccess;if(!portableTokenPattern.test(token))throw Error('INVALID_LINK');
   const data=await portableRequest({action:'restore',token});if(!data?.session?.access_token||!data?.session?.refresh_token||!data?.user_id)throw Error('UNAVAILABLE');
+  const {data:previousAuth}=await sb.auth.getSession();
+  const previousOwner=previousAuth?.session?.user?.id;
   const {data:auth,error}=await sb.auth.setSession(data.session);if(error||auth.user?.id!==data.user_id)throw Error('UNAVAILABLE');
+  if(previousOwner!==auth.user.id){
+   if(previousOwner)localStorage.setItem('dilema_local_player_id:'+previousOwner,localPlayerId);
+   localPlayerId=localStorage.getItem('dilema_local_player_id:'+auth.user.id)||crypto.randomUUID();
+   localStorage.setItem('dilema_local_player_id',localPlayerId);
+   localStorage.setItem('dilema_local_player_id:'+auth.user.id,localPlayerId);
+  }
   currentUserId=auth.user.id;authReady=true;
   localStorage.setItem('dilema_profiles',JSON.stringify(data.profiles||[]));localStorage.setItem(portableStorageKey(),token);localStorage.removeItem('dilema_private_session');
   privateDilemma=null;privateGuides=[];window.dilemaIncomingAccess=null;cleanupRoom();
-  goHome();
+  const destination=sessionStorage.getItem('dilema_access_destination');sessionStorage.removeItem('dilema_access_destination');
+  if(destination==='savedDilemmas'){overlay.classList.remove('open');renderAvatarTabs();renderAvatars();refreshMicrophrases();await openSavedDilemmas();}
+  else goHome();
  }catch(e){
   message.textContent=e.message==='INVALID_LINK'?'Este enlace no es válido o ha sido reemplazado. Usa el último enlace que guardaste.':e.message==='TRY_LATER'?'Espera unos segundos y vuelve a intentarlo.':'No se ha podido recuperar el acceso. Tu historial sigue guardado; vuelve a intentarlo.';
   retry.style.display=e.message==='INVALID_LINK'?'none':'block';
  }finally{portableRestoreBusy=false;cancel.disabled=false}
 }
-function cancelPortableAccess(){if(portableRestoreBusy)return;window.dilemaIncomingAccess=null;goHome()}
+function cancelPortableAccess(){if(portableRestoreBusy)return;window.dilemaIncomingAccess=null;sessionStorage.removeItem('dilema_access_destination');goHome()}
+/* R119: change access in this tab; reboot before restoring to discard the old in-memory state. */
+function loadMyPortableAccess(event){
+ event.preventDefault();if(portableCopyBusy||portableRestoreBusy||window.dilemaIncomingAccess)return;
+ const field=document.getElementById('portableLoadUrl'),status=document.getElementById('portableLoadStatus');
+ field.removeAttribute('aria-invalid');status.textContent='';
+ let token;
+ try{
+  const url=new URL(field.value.trim());
+  if(url.protocol!=='https:'||url.origin!==location.origin||new URL('.',url).pathname!==new URL('.',location.href).pathname||url.username||url.password)throw Error('INVALID_LINK');
+  const params=new URLSearchParams(url.hash.slice(1));
+  if(params.getAll('access').length!==1)throw Error('INVALID_LINK');
+  token=params.get('access');if(!portableTokenPattern.test(token||''))throw Error('INVALID_LINK');
+ }catch(_){field.setAttribute('aria-invalid','true');status.textContent='Pega un enlace de acceso válido de DILEMA, copiado desde «GUARDA TU ACCESO».';field.focus();return;}
+ const next=new URL(portableAccessUrl(token));next.searchParams.set('_accessSwitch',crypto.randomUUID());
+ try{sessionStorage.setItem('dilema_access_destination','savedDilemmas');}
+ catch(_){status.textContent='No se ha podido cargar el acceso. Inténtalo de nuevo.';return;}
+ clearTimeout(portableSyncTimer);field.value='';field.disabled=true;document.getElementById('portableLoadButton').disabled=true;status.textContent='CARGANDO TU ACCESO…';
+ location.assign(next.href);
+}
 function addPortableAccessBox(id){
  const screen=document.getElementById(id);if(!screen||screen.querySelector('.access-warning'))return;
  const box=document.createElement('details');box.className='access-warning';
@@ -9212,6 +9247,11 @@ function addPortableAccessBox(id){
  screen.appendChild(box);
 }
 for(const id of ['profile','profileChoice','savedDilemmas'])addPortableAccessBox(id);
+{
+ const box=document.createElement('details');box.className='access-warning access-load';
+ box.innerHTML='<summary>CARGAR MI ACCESO</summary><p>Pega el enlace del perfil que quieres cargar. Para volver a otro perfil, carga su enlace de acceso.</p><form onsubmit="loadMyPortableAccess(event)" novalidate><label for="portableLoadUrl">ENLACE DE ACCESO</label><input id="portableLoadUrl" type="url" inputmode="url" placeholder="Pega aquí tu enlace" autocomplete="off" autocapitalize="none" spellcheck="false" aria-describedby="portableLoadStatus"><button id="portableLoadButton" type="submit" class="btn btn-secondary">CARGAR MI ACCESO</button><p id="portableLoadStatus" class="access-load-status" role="status" aria-live="polite"></p></form>';
+ document.querySelector('#savedDilemmas > .access-warning').after(box);
+}
 if(window.dilemaIncomingAccess)document.getElementById('portableAccessOverlay').classList.add('open');
 </script>
 
