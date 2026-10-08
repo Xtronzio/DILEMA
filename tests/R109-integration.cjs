@@ -33,7 +33,7 @@ const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(110, 231, 160)');assert.deepEqual(await page.locator('#privateDialogue').boundingBox(),stableFrame);
  }
  async function checkFixedColours(){
-  const palette={counter:'rgb(255, 115, 115)',pressure:'rgb(255, 115, 115)',view:'rgb(241, 121, 229)',blind:'rgb(114, 183, 255)',order:'rgb(255, 255, 255)'};
+  const palette={counter:'rgb(255, 115, 115)',pressure:'rgb(255, 115, 115)',view:'rgb(241, 121, 229)',blind:'rgb(114, 183, 255)',order:'rgb(250, 204, 21)'};
   for(const button of await page.locator('#privateDialogue [data-thinking-action]').all()){
    const mode=await button.getAttribute('data-thinking-action');
    assert.equal(await button.evaluate(e=>getComputedStyle(e).borderTopColor),palette[mode]);
@@ -49,7 +49,7 @@ const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8');
  await checkFixedColours();
  await checkAura('privateDialogueBlindspot','blind','rgb(114, 183, 255)');
  await page.evaluate(()=>{privateDilemma.interaction_mode='reflection';renderPrivateDilemma()});
- for(const [id,mode,rgb] of [['privateDialogueCounter','counter','rgb(255, 115, 115)'],['privateDialoguePressure','pressure','rgb(255, 115, 115)'],['privateDialogueDoubt','view','rgb(241, 121, 229)'],['privateDialogueBlindspot','blind','rgb(114, 183, 255)'],['privateDialogueOrder','order','rgb(255, 255, 255)']])await checkAura(id,mode,rgb);
+ for(const [id,mode,rgb] of [['privateDialogueCounter','counter','rgb(255, 115, 115)'],['privateDialoguePressure','pressure','rgb(255, 115, 115)'],['privateDialogueDoubt','view','rgb(241, 121, 229)'],['privateDialogueBlindspot','blind','rgb(114, 183, 255)'],['privateDialogueOrder','order','rgb(250, 204, 21)']])await checkAura(id,mode,rgb);
  assert.equal(await page.locator('#privateDialogueReply').count(),0);await page.locator('#privateDialogueInput').fill('Una respuesta propia.');assert.equal(await page.locator('#privateDialogue').getAttribute('data-aura'),'reply');await page.locator('#privateDialogueInput').fill('');
  assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(110, 231, 160)');
  await page.locator('#privateDialogueInput').fill('Quiero revisar el coste.');await page.locator('#privateDialogueDoubt').click();

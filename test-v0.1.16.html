@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R120</div>
+    <div class="version">DILEMA · V0.1.16-010C-R121</div>
   </main>
 
 
@@ -10966,7 +10966,8 @@ button.btn.r113-action-feedback,
 <style>
 /* R113: dialogue colour follows the selected thinking action until the reply arrives. */
 #privateDialogue{--r113-aura:#6ee7a0}
-#privateDialogue[data-aura="reply"],#privateDialogue[data-aura="order"]{--r113-aura:#fff}
+#privateDialogue[data-aura="reply"]{--r113-aura:#fff}
+#privateDialogue[data-aura="order"]{--r113-aura:#facc15}
 #privateDialogue[data-aura="counter"],#privateDialogue[data-aura="pressure"]{--r113-aura:#ff7373}
 #privateDialogue[data-aura="view"]{--r113-aura:#f179e5}
 #privateDialogue[data-aura="blind"]{--r113-aura:#72b7ff}
@@ -11180,7 +11181,7 @@ html.r117-chat-open,body.r117-chat-open{overflow:hidden;overscroll-behavior:none
 #privateDialogue [data-thinking-action="pressure"]{--r120-tool:#ff7373}
 #privateDialogue [data-thinking-action="blind"]{--r120-tool:#72b7ff}
 #privateDialogue [data-thinking-action="view"]{--r120-tool:#f179e5}
-#privateDialogue [data-thinking-action="order"],
+#privateDialogue [data-thinking-action="order"]{--r120-tool:#facc15}
 #privateDialogue [data-thinking-action="reply"]{--r120-tool:#fff}
 #privateDialogue.r99-thinking [data-thinking-action],
 #privateDialogue.r99-thinking [data-thinking-action] :where(*){
