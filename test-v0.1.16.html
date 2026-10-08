@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R119</div>
+    <div class="version">DILEMA · V0.1.16-010C-R120</div>
   </main>
 
 
@@ -11174,6 +11174,22 @@ html.r117-chat-open,body.r117-chat-open{overflow:hidden;overscroll-behavior:none
  document.addEventListener('DOMContentLoaded',window.r118ComposerSync);
 })();
 </script>
+<style>
+/* R120: each thinking tool keeps its colour; the user's composer stays white. */
+#privateDialogue [data-thinking-action="counter"],
+#privateDialogue [data-thinking-action="pressure"]{--r120-tool:#ff7373}
+#privateDialogue [data-thinking-action="blind"]{--r120-tool:#72b7ff}
+#privateDialogue [data-thinking-action="view"]{--r120-tool:#f179e5}
+#privateDialogue [data-thinking-action="order"],
+#privateDialogue [data-thinking-action="reply"]{--r120-tool:#fff}
+#privateDialogue.r99-thinking [data-thinking-action],
+#privateDialogue.r99-thinking [data-thinking-action] :where(*){
+ border-color:var(--r120-tool)!important;outline-color:var(--r120-tool)!important;color:var(--r120-tool)!important
+}
+#privateDialogue.r99-thinking :is(#privateDialogueInput,#privateDialogueSend){
+ border-color:#fff!important;outline-color:#fff!important;color:#fff!important;caret-color:#fff
+}
+</style>
 </body>
 </html>
 

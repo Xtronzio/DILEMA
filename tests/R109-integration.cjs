@@ -24,19 +24,36 @@ const html=fs.readFileSync(__dirname+'/../test-v0.1.16.html','utf8');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),rgb);
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(11, 11, 11)');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).boxShadow),'none');
-  const frames=await page.locator('#privateDialogue').evaluate(e=>[...e.querySelectorAll('*')].filter(n=>n.getClientRects().length).flatMap(n=>{const s=getComputedStyle(n);return ['Top','Right','Bottom','Left'].filter(side=>parseFloat(s['border'+side+'Width'])>0&&s['border'+side+'Style']!=='none').map(side=>s['border'+side+'Color'])}));
-  assert.ok(frames.length>3);assert.ok(frames.every(color=>color===rgb),'All inner borders must follow the dialogue colour');
+  const frames=await page.locator('#privateDialogue').evaluate(e=>[...e.querySelectorAll('*')].filter(n=>n.getClientRects().length&&!n.closest('[data-thinking-action],.r117-compose')).flatMap(n=>{const s=getComputedStyle(n);return ['Top','Right','Bottom','Left'].filter(side=>parseFloat(s['border'+side+'Width'])>0&&s['border'+side+'Style']!=='none').map(side=>s['border'+side+'Color'])}));
+  assert.ok(frames.length>3);assert.ok(frames.every(color=>color===rgb),'Conversation borders follow the dialogue colour');
+  await checkFixedColours();
   await page.waitForFunction(()=>!!window.fixtureRelease);
   await page.evaluate(()=>{window.fixtureHold=false;window.fixtureRelease();window.fixtureRelease=null});
   await page.waitForFunction(()=>document.getElementById('privateDialogue').dataset.aura==='ready');
   assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(110, 231, 160)');assert.deepEqual(await page.locator('#privateDialogue').boundingBox(),stableFrame);
  }
+ async function checkFixedColours(){
+  const palette={counter:'rgb(255, 115, 115)',pressure:'rgb(255, 115, 115)',view:'rgb(241, 121, 229)',blind:'rgb(114, 183, 255)',order:'rgb(255, 255, 255)'};
+  for(const button of await page.locator('#privateDialogue [data-thinking-action]').all()){
+   const mode=await button.getAttribute('data-thinking-action');
+   assert.equal(await button.evaluate(e=>getComputedStyle(e).borderTopColor),palette[mode]);
+   assert.equal(await button.locator('.r99-thinking-icon').evaluate(e=>getComputedStyle(e).color),palette[mode]);
+   assert.equal(await button.locator('.r99-thinking-label').evaluate(e=>getComputedStyle(e).color),palette[mode]);
+  }
+  for(const id of ['privateDialogueInput','privateDialogueSend']){
+   assert.equal(await page.locator('#'+id).evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(255, 255, 255)');
+   assert.equal(await page.locator('#'+id).evaluate(e=>getComputedStyle(e).color),'rgb(255, 255, 255)');
+   assert.equal(await page.locator('#'+id).evaluate(e=>getComputedStyle(e).outlineColor),'rgb(255, 255, 255)');
+  }
+ }
+ await checkFixedColours();
  await checkAura('privateDialogueBlindspot','blind','rgb(114, 183, 255)');
  await page.evaluate(()=>{privateDilemma.interaction_mode='reflection';renderPrivateDilemma()});
  for(const [id,mode,rgb] of [['privateDialogueCounter','counter','rgb(255, 115, 115)'],['privateDialoguePressure','pressure','rgb(255, 115, 115)'],['privateDialogueDoubt','view','rgb(241, 121, 229)'],['privateDialogueBlindspot','blind','rgb(114, 183, 255)'],['privateDialogueOrder','order','rgb(255, 255, 255)']])await checkAura(id,mode,rgb);
  assert.equal(await page.locator('#privateDialogueReply').count(),0);await page.locator('#privateDialogueInput').fill('Una respuesta propia.');assert.equal(await page.locator('#privateDialogue').getAttribute('data-aura'),'reply');await page.locator('#privateDialogueInput').fill('');
  assert.equal(await page.locator('#privateDialogue').evaluate(e=>getComputedStyle(e).borderTopColor),'rgb(110, 231, 160)');
  await page.locator('#privateDialogueInput').fill('Quiero revisar el coste.');await page.locator('#privateDialogueDoubt').click();
+ await checkFixedColours();
  assert.equal(await page.locator('#privateDialogue').getAttribute('data-aura'),'view');assert.equal(await page.evaluate(()=>!!window.fixtureRelease),false);
  await page.locator('#privateDialogueSend').click();await page.waitForFunction(()=>document.getElementById('privateDialogue').dataset.aura==='ready');
  assert.equal(await page.locator('#r99ThoughtMap').count(),0);assert.equal(await page.locator('#r99ThoughtStage').count(),0);
