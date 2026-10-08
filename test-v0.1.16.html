@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R116</div>
+    <div class="version">DILEMA · V0.1.16-010C-R117</div>
   </main>
 
 
@@ -10122,11 +10122,19 @@ function privateDialogueKickoff(){
  const message=privateDilemma.interaction_mode==="training"?"Abre el entrenamiento con un argumento breve para la postura contraria a la mía. Si estoy en duda, compara los dos costes para que pueda elegir.":String(privateDilemma.question||'').trim();if(!message)return;
  void sendPrivateDialogue({id:privateDilemma.id,turn_number:1,message});
 }
+function refreshPrivateDialogueEditor(){
+ const field=pdElement('privateDialogueInput');if(!pdElement('privateBoard').classList.contains('r117-chat'))return;
+ // A fixed textarea can retain an empty native editor after a modal closes or a send unlocks it.
+ // Rebuild its layout in the same task, preserving the draft and event handlers.
+ const display=field.style.display,focused=document.activeElement===field;
+ field.style.display='none';void field.offsetHeight;field.style.display=display;
+ if(focused)field.focus({preventScroll:true});
+}
 function paintPrivateDialogue(){
  if(!privateDilemma||privateDialogueKey!==privateDialogueCurrent())return;
  paintPrivateDialogueAura();
  const field=pdElement('privateDialogueInput'),busy=privateBusy||privateDialogueSending,pending=privateDialoguePending();
- field.disabled=busy;
+ if(field.disabled!==busy){field.disabled=busy;if(!busy)refreshPrivateDialogueEditor()}
  pdElement('privateDialogueSend').disabled=busy||pending||!field.value.trim();
  pdElement('privateDialogueSend').textContent=privateDialogueSending?'PREPARANDO RESPUESTA…':pending?'ESPERANDO RESPUESTA…':'ENVIAR A DILEMA';
  pdElement('privateDialogueDoubt').disabled=busy||pending;pdElement('privateDialogueBlindspot').disabled=busy||pending;
@@ -10426,32 +10434,34 @@ document.addEventListener('DOMContentLoaded',()=>{
   pressure:'Apriétame más. Hazme la pregunta más incómoda y útil que debería responder para avanzar de verdad.',
   order:'Ordena lo hablado hasta ahora. Separa hechos, suposiciones, lo que me importa, miedos o costes y preguntas que siguen abiertas. No decidas por mí.'
  };
- const defs=[['privateDialogueReply','reply','RESPONDER'],['privateDialogueCounter','counter','CONTRADÍCEME'],['privateDialogueBlindspot','blind','PUNTO CIEGO'],['privateDialogueDoubt','view','OTRA MIRADA'],['privateDialoguePressure','pressure','APRIÉTAME'],['privateDialogueOrder','order','ORDENA ESTO']];
+ const defs=[['privateDialogueCounter','counter','CONTRADÍCEME'],['privateDialogueBlindspot','blind','PUNTO CIEGO'],['privateDialogueDoubt','view','OTRA MIRADA'],['privateDialoguePressure','pressure','APRIÉTAME'],['privateDialogueOrder','order','ORDENA ESTO']];
+ const trainingOrder='Valora mis argumentos del entrenamiento. Señala con un ejemplo mi razón más sólida, una debilidad o contradicción y cómo mejorarla. No puntúes mi postura ni inventes un ganador.';
+ function describeTools(message){
+  const modes=[],copy=[];
+  for(const part of String(message||'').split(/\n\n/)){
+   const text=part.trim();const found=Object.entries(prompts).find(([,prompt])=>text===prompt)|| (text===trainingOrder?['order',trainingOrder]:null);
+   if(found){if(!modes.includes(found[0]))modes.push(found[0])}else copy.push(part);
+  }
+  return {modes,copy:copy.join('\n\n').trim()};
+ }
  function icon(name,label){return '<span class="r99-thinking-icon" aria-hidden="true">'+svg[name]+'</span><span class="r99-thinking-label">'+label+'</span>'}
  function openTopic(){return !!privateDilemma&&!privateDilemma.option_a&&!privateDilemma.option_b}
  function busy(){return !!privateBusy||!!privateDialogueSending||privateDialoguePending()}
  function ensure(){
   const box=E('privateDialogue'),form=E('privateDialogueForm'),actions=box?.querySelector('.pd-actions');if(!box||!form||!actions)return false;
   box.classList.add('r99-thinking');form.classList.add('r99-composer');
-  let principle=E('r99ThinkingPrinciple');if(!principle){principle=document.createElement('p');principle.id='r99ThinkingPrinciple';principle.textContent='DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.';E('privateDialogueTitle').insertAdjacentElement('afterend',principle)}
-  let stage=E('r99ThoughtStage');if(!stage){stage=document.createElement('div');stage.id='r99ThoughtStage';stage.innerHTML='<span>AHORA MISMO</span><strong>EXPLORANDO</strong>';principle.insertAdjacentElement('afterend',stage)}
   let note=box.querySelector(':scope > .pd-note');if(note)note.classList.add('r99-main-note');
-  if(!E('r99ThoughtMap')){
-   const map=document.createElement('details');map.id='r99ThoughtMap';map.innerHTML='<summary><span>LO QUE ESTÁ APARECIENDO</span><span id="r99MapCount">0</span></summary><div class="r99-map"><div class="r99-map-item"><b>TU ÚLTIMA IDEA</b><p id="r99MapUser">Todavía estamos abriendo el tema.</p></div><div class="r99-map-item"><b>DILEMA HA SEÑALADO</b><p id="r99MapReflection">Aún no hay una observación guardada.</p></div><div class="r99-map-item"><b>PREGUNTA ABIERTA</b><p id="r99MapQuestion">Empieza por contar qué quieres aclarar.</p></div></div>';
-   form.insertAdjacentElement('beforebegin',map);
-  }
   actions.classList.add('r99-actions');
   if(actions.dataset.r99!=='1'){
    actions.replaceChildren();
    for(const [id,name,label] of defs){const b=document.createElement('button');b.type='button';b.id=id;b.dataset.thinkingAction=name;b.innerHTML=icon(name,label);b.setAttribute('aria-label',label);actions.appendChild(b)}
    actions.dataset.r99='1';form.insertBefore(actions,form.firstChild);
-   E('privateDialogueReply').onclick=()=>{const f=E('privateDialogueInput');if(!f.disabled){setPrivateDialogueAura('reply');f.focus();f.scrollIntoView({block:'center',behavior:'smooth'})}};
    for(const id of ['privateDialogueCounter','privateDialogueBlindspot','privateDialogueDoubt','privateDialoguePressure','privateDialogueOrder'])E(id).onclick=()=>guided(E(id).dataset.thinkingAction);
   }
   return true;
  }
  async function guided(mode){
-  if(busy())return;const field=E('privateDialogueInput'),prompt=mode==='order'&&privateDilemma?.interaction_mode==='training'?'Valora mis argumentos del entrenamiento. Señala con un ejemplo mi razón más sólida, una debilidad o contradicción y cómo mejorarla. No puntúes mi postura ni inventes un ganador.':prompts[mode];if(!field||!prompt||field.disabled)return;
+  if(busy())return;const field=E('privateDialogueInput'),prompt=mode==='order'&&privateDilemma?.interaction_mode==='training'?trainingOrder:prompts[mode];if(!field||!prompt||field.disabled)return;
   if(field.value.trim()){
    const joined=(field.value.trim()+'\n\n'+prompt).slice(0,3000);field.value=joined;privateDialogueDrafts.set(privateDialogueKey,joined);field.oninput?.();setPrivateDialogueAura(mode);field.focus();sync();return;
   }
@@ -10464,27 +10474,22 @@ document.addEventListener('DOMContentLoaded',()=>{
    turn.classList.add('r99-turn');const id=turn.dataset.turn||String(index);let toggle=turn.querySelector(':scope > .r99-turn-toggle');
    if(!toggle){toggle=document.createElement('button');toggle.type='button';toggle.className='r99-turn-toggle';const num=document.createElement('span');num.className='r99-turn-number';const title=document.createElement('span');title.className='r99-turn-title';const arrow=document.createElement('span');arrow.className='r99-turn-arrow';toggle.append(num,title,arrow);turn.prepend(toggle);toggle.onclick=()=>{const isCollapsed=turn.classList.toggle('r99-collapsed');toggle.setAttribute('aria-expanded',String(!isCollapsed));arrow.textContent=isCollapsed?'›':'⌄';if(isCollapsed){expanded.delete(id);collapsed.add(id)}else{expanded.add(id);collapsed.delete(id)}}}
    const mine=turn.querySelector('.pd-user .pd-copy')?.textContent||turn.querySelector('.pd-question')?.textContent||turn.querySelector('.pd-reply .pd-copy')?.textContent||'Intercambio';
-   toggle.querySelector('.r99-turn-number').textContent=String(index+1);toggle.querySelector('.r99-turn-title').textContent=short(mine);
+   const row=privateDialogueRows.find(t=>t.id===id),tool=describeTools(row?.message||mine),labels=tool.modes.map(mode=>mode==='order'&&privateDilemma?.interaction_mode==='training'?'VALORA MIS ARGUMENTOS':defs.find(d=>d[1]===mode)?.[2]||mode);
+   const userCopy=turn.querySelector('.pd-user .pd-copy');if(userCopy&&tool.modes.length)userCopy.textContent=tool.copy||labels.join(' · ');
+   let marks=toggle.querySelector('.r117-turn-tools');if(!marks){marks=document.createElement('span');marks.className='r117-turn-tools';marks.setAttribute('aria-hidden','true');toggle.querySelector('.r99-turn-number').after(marks)}
+   marks.innerHTML=tool.modes.map(mode=>svg[mode]).join('');marks.hidden=!tool.modes.length;toggle.dataset.tools=tool.modes.join(',');
+   toggle.querySelector('.r99-turn-number').textContent=String(index+1);toggle.querySelector('.r99-turn-title').textContent=tool.modes.length?labels.join(' · '):short(mine);
    const shouldOpen=!collapsed.has(id)&&(index===turns.length-1||expanded.has(id));turn.classList.toggle('r99-collapsed',!shouldOpen);toggle.setAttribute('aria-expanded',String(shouldOpen));toggle.querySelector('.r99-turn-arrow').textContent=shouldOpen?'⌄':'›';
   });
- }
- function stage(){
-  const ready=privateDialogueRows.filter(t=>t.status==='ready'),n=ready.length,last=ready.at(-1)?.message||'';let value='EXPLORANDO';
-  if(/ordena lo hablado|sintetiza|conclusi[oó]n/i.test(last))value='CONCLUYENDO';else if(n>=7)value='CONTRASTANDO';else if(n>=3)value='ACLARANDO';
-  const strong=E('r99ThoughtStage')?.querySelector('strong');if(strong)strong.textContent=value;
- }
- function updateMap(){
-  const ready=privateDialogueRows.filter(t=>t.status==='ready'),last=ready.at(-1),own=[...privateDialogueRows].reverse().find(t=>t.message&&t.id!==privateDilemma?.id);
-  E('r99MapCount').textContent=String(ready.length);E('r99MapUser').textContent=short(own?.message||'Todavía estamos abriendo el tema.',220);E('r99MapReflection').textContent=short(last?.reflection||'Aún no hay una observación guardada.',240);E('r99MapQuestion').textContent=short(last?.question||'Empieza por contar qué quieres aclarar.',220);
  }
  function sync(){
   // Ignore our own log writes: observing them again starves clicks and network callbacks.
   if(syncing)return;syncing=true;queueMicrotask(()=>{logObserver?.disconnect();try{
    if(!privateDilemma||!ensure())return;const isOpen=openTopic(),box=E('privateDialogue'),pending=busy(),training=privateDilemma.interaction_mode==='training';
-   E('privateDialogueTitle').textContent=training?'DEBATIR VS DILEMA':isOpen?'EL TEMA':'DILEMA PRIVADO';const note=box.querySelector(':scope > .pd-note');if(note)note.textContent=training?'Defiende tus razones. DILEMA responde desde la postura contraria; puedes revisar tu elección y pedir una valoración.':isOpen?'Habla con DILEMA hasta aclarar el problema, encontrar una conclusión o descubrir qué te falta para llegar a ella.':'Explora tu decisión sin necesidad de cerrar una postura antes de estar preparado.';E('r99ThinkingPrinciple').textContent=training?'ENTRENAMIENTO · ARGUMENTOS, NO ATAQUES PERSONALES.':'DILEMA NO DECIDE POR TI. TE AYUDA A VER MEJOR.';const order=E('privateDialogueOrder');if(order){order.innerHTML=icon('order',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO');order.setAttribute('aria-label',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO')}const header=E('privateBoard').querySelector(':scope > .small-note');if(header)header.textContent=training?'ENTRENAMIENTO INDIVIDUAL · SOLO TÚ':'DILEMA PRIVADO · SOLO TÚ';E('privateBoard').querySelector(':scope > .title').textContent=training?'PON A PRUEBA TUS ARGUMENTOS':'VAMOS A PENSARLO';
+   E('privateDialogueTitle').textContent=training?'DEBATIR VS DILEMA':isOpen?'EL TEMA':'DILEMA PRIVADO';const order=E('privateDialogueOrder');if(order){order.innerHTML=icon('order',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO');order.setAttribute('aria-label',training?'VALORA MIS ARGUMENTOS':'ORDENA ESTO')}const header=E('privateBoard').querySelector(':scope > .small-note');if(header)header.textContent=training?'ENTRENAMIENTO INDIVIDUAL · SOLO TÚ':'DILEMA PRIVADO · SOLO TÚ';E('privateBoard').querySelector(':scope > .title').textContent=training?'PON A PRUEBA TUS ARGUMENTOS':'VAMOS A PENSARLO';
    const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');if(label)label.textContent='¿QUÉ ESTÁS PENSANDO AHORA?';E('privateDialogueInput').placeholder='Escribe, responde a la pregunta o usa una herramienta de pensamiento…';
    for(const [id] of defs){const b=E(id);if(b)b.disabled=pending}
-   stage();updateMap();enhanceTurns();window.r109TrainingSync?.();
+   enhanceTurns();window.r109TrainingSync?.();window.r117ChatSync?.();
   }finally{const log=E('privateDialogueLog');if(log&&logObserver)logObserver.observe(log,{childList:true,subtree:true});syncing=false}})
  }
  const previousPaint=paintPrivateDialogue;paintPrivateDialogue=function(){const result=previousPaint.apply(this,arguments);sync();return result};
@@ -10829,10 +10834,10 @@ document.addEventListener('DOMContentLoaded',()=>{
  window.r109TrainingSync=function(){
   if(!ensure())return;const on=training(),board=E('privateBoard'),actions=E('privateDialogue').querySelector('.pd-actions');board.classList.toggle('r109-training',on);
   if(overlay&&(!on||modalSession!==privateDilemma?.id||!board.classList.contains('active')))close();
-  const inventory=E('r109Inventory');if(on&&actions.parentElement!==inventory)inventory.insertBefore(actions,E('r109InventoryNote'));if(!on&&actions.parentElement!==E('privateDialogueForm'))E('privateDialogueForm').prepend(actions);
+  const inventory=E('r109Inventory');if(!board.classList.contains('r117-chat')){if(on&&actions.parentElement!==inventory)inventory.insertBefore(actions,E('r109InventoryNote'));if(!on&&actions.parentElement!==E('privateDialogueForm'))E('privateDialogueForm').prepend(actions)}
   for(const node of document.querySelectorAll('#privateBoard .r109-only'))node.hidden=!on;
   const question=E('privateBoardQuestion'),details=E('privatePlanteamiento'),news=E('privateBoardQuestionNews');
-  if(on){if(question.parentElement!==board)details.before(question);if(news&&news.parentElement!==details)details.append(news)}
+  if(on){if(!board.classList.contains('r117-chat')&&question.parentElement!==board)details.before(question);if(news&&news.parentElement!==details)details.append(news)}
   else{if(question.parentElement!==details)details.querySelector('summary').after(question);if(news&&news.previousElementSibling!==question)question.after(news)}
   if(!on)return;
   E('privatePlanteamientoTitle').textContent='OPCIONES Y CONTEXTO';
@@ -10840,7 +10845,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   board.querySelector('h1').textContent='DEBATIR VS DILEMA';E('privateDialogueTitle').textContent='CONVERSACIÓN';const label=E('privateDialogueForm').querySelector('label[for="privateDialogueInput"]');label.textContent='TU ARGUMENTO';E('privateDialogueInput').placeholder='Responde a DILEMA y explica tus razones…';
   if(!privateDialogueSending&&!privateDialoguePending())E('privateDialogueSend').textContent='ENVIAR ARGUMENTO';
   const disabled=locked();for(const id of ['r109RevisePosture','r109Open_escape','r109Open_help','r109Open_action','r109SaveExit','r109Saved','r109Finish'])E(id).disabled=disabled;
-  const last=E('privateDialogueLog').querySelector('.pd-turn:last-child .r99-turn-title');if(last)last.textContent='ÚLTIMO INTERCAMBIO';
+  // Keep each exchange's tool mark and title, including the latest exchange.
  };
  document.addEventListener('DOMContentLoaded',()=>r109TrainingSync());
 })();
@@ -10947,6 +10952,106 @@ button[data-r116-nav]:focus-visible{outline:2px solid #fff;outline-offset:3px}
  });
 })();
 </script>
+<style>
+/* R117: a stable chat viewport; only the conversation scrolls. */
+html.r117-chat-open,body.r117-chat-open{overflow:hidden;overscroll-behavior:none}
+#privateBoard.r117-chat.active{position:fixed;left:var(--r117-left,0px);top:var(--r117-top,0px);width:var(--r117-width,100%);max-width:430px;height:var(--r117-height,100dvh);min-height:0;margin:0;padding:6px;overflow:hidden;background:#0b0b0b;z-index:30}
+#privateBoard.r117-chat>:not(#privateDialogue):not(dialog){display:none!important}
+#privateBoard.r117-chat #privateDialogue{display:flex;flex-direction:column;gap:8px;width:100%;height:100%;min-height:0;margin:0;padding:max(8px,env(safe-area-inset-top)) 10px max(8px,env(safe-area-inset-bottom));overflow:hidden;border-radius:14px;background:#0b0b0b}
+#r117ChatBar{display:flex;align-items:center;gap:6px;flex:0 0 44px;min-height:44px}
+#privateBoard.r117-chat #privateDialogueTitle{flex:1;min-width:0;margin:0;font-size:13px;letter-spacing:.6px;text-align:left}
+#privateDialogue #r117ChatBar button{flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:11px;background:transparent;border-radius:10px;font-size:0;line-height:0;color:var(--r113-aura)}
+#r117ChatBar button::before{display:block;margin:0}
+#r117ChatBar svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.r117-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#privateBoard.r117-chat #r113DialogueMode{flex:none;margin:0;text-align:left;font-size:10px;line-height:16px;min-height:16px}
+#privateBoard.r117-chat #privateDialogue>.pd-note,#privateBoard.r117-chat #privateDialogueForm>.pd-note,#privateBoard.r117-chat #privateDialogueForm>label,#privateBoard.r117-chat .character-count{display:none!important}
+#privateBoard.r117-chat #r109Inventory{display:none!important}
+#privateBoard.r117-chat #privateDialogueOlder{flex:none;margin:0;min-height:32px;padding:6px;font-size:10px}
+#privateBoard.r117-chat #privateDialogueLog{flex:1 1 0;min-height:0;max-height:none!important;overflow-y:auto!important;overscroll-behavior:contain;scrollbar-width:thin;overflow-anchor:none;touch-action:pan-y}
+#privateBoard.r117-chat .pd-turn.r99-turn{background:#0b0b0b;margin:0 0 8px}
+#privateBoard.r117-chat .r99-turn-toggle{min-height:44px;padding:8px;gap:7px;background:#0b0b0b}
+.r117-turn-tools{display:flex;align-items:center;gap:3px;flex:none}
+.r117-turn-tools svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#privateBoard.r117-chat .pd-user,#privateBoard.r117-chat .pd-reply{background:#0b0b0b;padding:10px;margin:8px}
+#privateBoard.r117-chat .pd-copy,#privateBoard.r117-chat .pd-question{font-size:14px;line-height:1.55}
+#privateBoard.r117-chat .pd-source:not(.pd-fallback){display:none}
+#privateBoard.r117-chat #privateDialogueForm{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:end;gap:8px;flex:none;margin:0;padding:8px 0 0}
+.r117-compose{grid-column:1/-1;display:flex;gap:8px;min-width:0}
+#privateBoard.r117-chat .r117-compose #privateDialogueInput{flex:1;min-width:0}
+#privateBoard.r117-chat .r117-compose #privateDialogueSend{flex:none}
+#privateBoard.r117-chat #privateDialogueForm>.pd-actions{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin:0}
+#privateBoard.r117-chat.r109-training #privateDialogueForm>.pd-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+#privateBoard.r117-chat .pd-actions.r99-actions button{min-height:52px;padding:6px 2px;gap:4px;background:#0b0b0b}
+#privateBoard.r117-chat .r99-thinking-icon{width:20px;height:20px}
+#privateBoard.r117-chat .r99-thinking-label{font-size:8px;letter-spacing:0;line-height:1.15;overflow-wrap:anywhere}
+#privateBoard.r117-chat #privateDialogueInput{grid-column:1;min-height:64px;height:64px;max-height:64px;padding:9px;resize:none;font-size:16px;line-height:1.4;background:#0b0b0b;scroll-margin:0}
+#privateBoard.r117-chat #privateDialogueSend{grid-column:2;align-self:stretch;width:44px;min-height:44px;margin:0;padding:11px;font-size:0;line-height:0;background:#0b0b0b;color:var(--r113-aura)}
+#privateBoard.r117-chat #privateDialogueSend::before{content:'';display:block;width:20px;height:20px;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 13 8-9 8 9M12 4v17'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 13 8-9 8 9M12 4v17'/%3E%3C/svg%3E") center/contain no-repeat}
+#privateBoard.r117-chat #privateDialogueSend:disabled{color:#666}
+#privateBoard.r117-chat #privateDialogueStatus{display:none;margin:0;flex:none;font-size:11px;line-height:1.4}
+#privateBoard.r117-chat #privateDialogueStatus.pd-error{display:block}
+#privateBoard.r117-chat #privateBoardError{flex:none;min-height:0;margin:0;font-size:11px;line-height:1.4}
+#privateBoard.r117-chat #privateBoardError:empty{display:none}
+#r117Details{position:fixed;inset:0;margin:auto;width:min(414px,calc(100% - 20px));max-height:calc(100dvh - 20px);padding:16px;border:1px solid #777;border-radius:14px;background:#0b0b0b;color:#fff;overflow:auto;overscroll-behavior:contain;text-align:left}
+#r117Details::backdrop{background:#000c}
+#r117Details>h2{font-size:15px;margin:0 0 16px;padding-right:44px}
+#r117DetailsClose{position:absolute;top:8px;right:8px;width:44px;height:44px;border:1px solid #444;border-radius:10px;background:#0b0b0b;color:#fff;font-size:20px}
+#r117Details #privatePlanteamiento{margin:12px 0}
+#r117Details #privateBoardQuestion{margin:12px 0;font-size:16px}
+#r117Details .private-options button{min-height:80px;padding:12px}
+#r117Details #r109Management{margin-top:12px}
+#r117Details .btn,#r117Details .r88-button{font-size:12px;padding:12px;min-height:44px}
+#r117Details .private-note,#r117Details #r109ManagementNote,#r117Details #r109ToolboxNote{display:none}
+@media(max-height:450px){#privateBoard.r117-chat #privateDialogue{gap:4px;padding-top:5px;padding-bottom:5px}#privateBoard.r117-chat #r113DialogueMode{display:none}#privateBoard.r117-chat .pd-actions.r99-actions button{min-height:44px}#privateBoard.r117-chat #privateDialogueInput{height:48px;min-height:48px;max-height:48px}}
+</style>
+<script>
+/* R117: fixed chat, with the existing dilemma and management actions in a context panel. */
+(function(){
+ const E=id=>document.getElementById(id);let panel=null,autoSession=null,seenSession=null,viewportFrame=0;
+ function button(id,label,action){const b=document.createElement('button');b.type='button';b.id=id;b.setAttribute('aria-label',label);b.title=label;const span=document.createElement('span');span.className='r117-sr';span.textContent=label.toUpperCase();b.append(span);b.onclick=action;return b}
+ function close(){autoSession=null;if(panel?.open){panel.close();refreshPrivateDialogueEditor()}}
+ function open(){if(!panel||panel.open)return;panel.showModal();E('r117DetailsClose').focus()}
+ function ensure(){
+  const board=E('privateBoard'),box=E('privateDialogue');if(!box.querySelector('.pd-actions'))return false;
+  if(!E('r117ChatBar')){
+   const bar=document.createElement('header');bar.id='r117ChatBar';
+   const topic=button('r117Topic','Ver dilema y postura',open);topic.setAttribute('aria-haspopup','dialog');topic.setAttribute('aria-controls','r117Details');topic.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v13H9l-5 4Z"/><path d="M9 8h6M9 12h4"/></svg>';
+   bar.append(topic,E('privateDialogueTitle'),button('r117Saved','Mis dilemas',()=>{if(privateDilemma?.interaction_mode==='training')E('r109Saved')?.click();else openSavedDilemmas()}),button('r117Hall','Volver al hall',()=>{if(privateDilemma?.interaction_mode==='training')E('r109SaveExit')?.click();else exitPrivateDilemma()}));box.prepend(bar);
+   panel=document.createElement('dialog');panel.id='r117Details';panel.setAttribute('aria-modal','true');panel.setAttribute('aria-labelledby','r117DetailsTitle');const title=document.createElement('h2');title.id='r117DetailsTitle';title.textContent='DILEMA Y POSTURA';const dismiss=button('r117DetailsClose','Cerrar',close);dismiss.textContent='×';panel.append(title,dismiss);board.append(panel);
+   panel.addEventListener('close',()=>{autoSession=null;refreshPrivateDialogueEditor()});panel.addEventListener('click',event=>{if(event.target===panel){const r=panel.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)close()}});
+   const composer=document.createElement('div');composer.className='r117-compose';E('privateDialogueForm').append(composer);composer.append(E('privateDialogueInput'),E('privateDialogueSend'));
+   panel.append(E('privatePlanteamiento'));
+   for(const node of [...board.children])if(node.matches('.saved-actions')||node.id==='privateHistory')panel.append(node);
+  }
+  return true;
+ }
+ function size(){
+  const board=E('privateBoard');if(!board?.classList.contains('active')||!board.classList.contains('r117-chat'))return;
+  const view=window.visualViewport,width=view?.width||innerWidth,height=view?.height||innerHeight,frameWidth=Math.min(width,430);
+  board.style.setProperty('--r117-width',frameWidth+'px');board.style.setProperty('--r117-height',height+'px');board.style.setProperty('--r117-left',((view?.offsetLeft||0)+(width-frameWidth)/2)+'px');board.style.setProperty('--r117-top',(view?.offsetTop||0)+'px');
+ }
+ function scheduleSize(){cancelAnimationFrame(viewportFrame);viewportFrame=requestAnimationFrame(size)}
+ window.r117ChatSync=function(){
+  const board=E('privateBoard'),on=!!privateDilemma&&board.classList.contains('active');document.body.classList.toggle('r117-chat-open',on);document.documentElement.classList.toggle('r117-chat-open',on);
+  if(!on){close();return}if(!ensure())return;board.classList.add('r117-chat');
+  const box=E('privateDialogue'),form=E('privateDialogueForm'),actions=box.querySelector('.pd-actions'),training=privateDilemma.interaction_mode==='training';
+  if(actions.parentElement!==form)form.prepend(actions);
+  for(const id of ['r109Posture','r109Toolbox','r109Management']){const node=E(id);if(node&&node.parentElement!==panel)panel.append(node);if(node)node.hidden=!training}
+  const question=E('privateBoardQuestion');if(training&&question.parentElement!==panel)E('privatePlanteamiento').before(question);
+  const error=E('privateBoardError');if(error.parentElement!==box)form.after(error);
+  E('privateDialogueTitle').textContent=training?'VS DILEMA':'DILEMA';const aura=E('r113DialogueMode');if(aura&&aura.parentElement!==box)E('r117ChatBar').after(aura);E('privateDialogueInput').placeholder=training?'Tu argumento…':'Escribe a DILEMA…';E('privateDialogueSend').setAttribute('aria-label',E('privateDialogueSend').textContent.trim());E('privateDialogueSend').title=E('privateDialogueSend').textContent.trim();
+  const locked=training&&(privateBusy||privateDialogueSending||privateDialoguePending());E('r117Saved').disabled=locked;E('r117Hall').disabled=locked;
+  if(seenSession!==privateDilemma.id){seenSession=privateDilemma.id;close();if(!privateDilemma.choice&&privateDilemma.option_a&&privateDilemma.option_b){open();autoSession=privateDilemma.id;E('privatePlanteamiento').open=true}}
+  else if(autoSession===privateDilemma.id&&privateDilemma.choice)close();
+  size();
+ };
+ const previousRender=renderPrivateDilemma;renderPrivateDilemma=function(){const result=previousRender.apply(this,arguments);window.r117ChatSync();return result};
+ const previousShow=showScreen;showScreen=function(){const result=previousShow.apply(this,arguments);window.r117ChatSync();return result};
+ document.addEventListener('DOMContentLoaded',()=>{window.r117ChatSync();window.addEventListener('resize',scheduleSize);window.visualViewport?.addEventListener('resize',scheduleSize);window.visualViewport?.addEventListener('scroll',scheduleSize)});
+})();
+</script>
 </body>
 </html>
+
 
