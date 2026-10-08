@@ -1485,7 +1485,7 @@
     </button>
 
     <button class="btn btn-secondary" onclick="openSavedDilemmas()">MIS DILEMAS</button>
-    <div class="version">DILEMA · V0.1.16-010C-R117</div>
+    <div class="version">DILEMA · V0.1.16-010C-R118</div>
   </main>
 
 
@@ -8929,6 +8929,7 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
  <div class="small-note">TU HISTORIAL · SOLO TÚ</div>
  <h1 class="title">MIS DILEMAS</h1>
  <p class="private-note">PRIV: tus dilemas privados. GRUP: tus debates guardados o finalizados como anfitrión. PAUSADO: una sesión pendiente de retomar.</p>
+ <div id="r118SavedOrder"><label for="r118Sort">ORDENAR</label><select id="r118Sort" onchange="changeSavedDilemmaOrder(this.value)"><option value="recent">MÁS RECIENTES</option><option value="oldest">MÁS ANTIGUOS</option><option value="title">TÍTULO · A–Z</option></select></div>
  <div id="savedDilemmaList"></div>
  <p id="savedDilemmaError" class="private-error" role="status"></p>
  <button id="savedDilemmaMore" class="btn btn-secondary" onclick="loadSavedDilemmas(false)" style="display:none">VER MÁS</button>
@@ -8959,12 +8960,14 @@ window.pilotRefresh=async function(){await r71PreviousRefresh.apply(this,argumen
 </div>
 <script>
 /* R74: historial privado y archivo grupal independientes de la sala. */
-let savedLibraryRows=[],savedLibraryPage=0,savedLibraryBusy=false,savedLibraryRun=0,savedLibraryBack='home',savedDiscardTarget=null,savedDiscardFocus=null;
+let savedLibraryRows=[],savedLibraryPage=0,savedLibraryBusy=false,savedLibraryRun=0,savedLibraryBack='home',savedDiscardTarget=null,savedDiscardFocus=null,savedLibraryOrder=['recent','oldest','title'].includes(localStorage.getItem('dilema_saved_order'))?localStorage.getItem('dilema_saved_order'):'recent';
+const savedLibraryExpanded=new Set();
+function changeSavedDilemmaOrder(value){if(!['recent','oldest','title'].includes(value)||savedLibraryBusy)return;savedLibraryOrder=value;localStorage.setItem('dilema_saved_order',value);savedLibraryExpanded.clear();void loadSavedDilemmas(true)}
 async function openSavedDilemmas(){
  if(privateBusy||savedLibraryBusy)return;
  const screen=document.querySelector('.screen.active')?.id;
  if(screen&&!['savedDilemmas','savedGroupDilemma'].includes(screen))savedLibraryBack=screen;
- showScreen('savedDilemmas');await loadSavedDilemmas(true);
+ if(screen!=='savedDilemmas')savedLibraryExpanded.clear();showScreen('savedDilemmas');await loadSavedDilemmas(true);
 }
 function closeSavedDilemmas(){
  savedLibraryRun++;savedLibraryBusy=false;
@@ -8975,38 +8978,65 @@ async function loadSavedDilemmas(reset=true){
  if(savedLibraryBusy)return;
  savedLibraryBusy=true;const run=++savedLibraryRun;
  const errorNode=document.getElementById('savedDilemmaError'),more=document.getElementById('savedDilemmaMore'),retry=document.getElementById('savedDilemmaRetry');
- errorNode.textContent='';more.disabled=true;retry.style.display='none';
+ errorNode.textContent='';more.disabled=true;document.getElementById('r118Sort').disabled=true;retry.style.display='none';
  if(reset){savedLibraryRows=[];savedLibraryPage=0;document.getElementById('savedDilemmaList').textContent='CARGANDO TUS DILEMAS…';more.style.display='none'}
  try{
   await ensureAnonymousAuth();const start=savedLibraryPage*20;
-  const results=await Promise.all([
-   sb.from('private_dilemma_sessions').select('id,question,choice,created_at').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19),
-   sb.from('saved_group_dilemmas').select('id,question,choice,created_at,session_state,session_id,room_id').eq('user_id',currentUserId).order('created_at',{ascending:false}).order('id',{ascending:false}).range(start,start+19)
-  ]);
+  let query=sb.from('saved_dilemma_library').select('id,user_id,origin,question,choice,created_at,is_pinned,session_state,session_id,room_id,sort_title').eq('user_id',currentUserId).order('is_pinned',{ascending:false});
+  query=savedLibraryOrder==='title'?query.order('sort_title',{ascending:true}):query.order('created_at',{ascending:savedLibraryOrder==='oldest'});
+  const result=await query.order('origin',{ascending:true}).order('id',{ascending:true}).range(start,start+19);
   if(run!==savedLibraryRun)return;
-  for(const r of results)if(r.error)throw r.error;
-  const incoming=results.flatMap((r,i)=>(r.data||[]).map(row=>({...row,origin:i===0?'PRIV':'GRUP'})));
-  for(const row of incoming)if(!savedLibraryRows.some(old=>old.id===row.id&&old.origin===row.origin))savedLibraryRows.push(row);
-  savedLibraryRows.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));savedLibraryPage++;
-  renderSavedDilemmas();more.style.display=results.some(r=>r.data?.length===20)?'block':'none';
+  if(result.error)throw result.error;
+  const incoming=result.data||[];
+  for(const row of incoming){if(!savedLibraryRows.some(old=>old.id===row.id&&old.origin===row.origin))savedLibraryRows.push(row);if(row.origin==='PRIV'&&privateDilemma?.id===row.id)privateDilemma.is_pinned=row.is_pinned}
+  savedLibraryPage++;
+  renderSavedDilemmas();more.style.display=incoming.length===20?'block':'none';
  }catch(e){if(run===savedLibraryRun){errorNode.textContent='No se ha podido cargar tu historial. Inténtalo de nuevo.';retry.style.display='block';if(reset)document.getElementById('savedDilemmaList').textContent=''}}
- finally{if(run===savedLibraryRun){savedLibraryBusy=false;more.disabled=false}}
+ finally{if(run===savedLibraryRun){savedLibraryBusy=false;more.disabled=false;document.getElementById('r118Sort').disabled=false;document.querySelectorAll('#savedDilemmaList button').forEach(b=>b.disabled=false)}}
+}
+function savedDilemmaIsPinned(row){
+ const current=savedLibraryRows.find(r=>r.id===row?.id&&r.origin===row?.origin);
+ return !!(row?.is_pinned||current?.is_pinned||(row?.origin==='PRIV'&&privateDilemma?.id===row.id&&privateDilemma.is_pinned));
+}
+async function toggleSavedDilemmaPin(row){
+ if(savedLibraryBusy||privateBusy)return;
+ const value=!savedDilemmaIsPinned(row);savedLibraryBusy=true;renderSavedDilemmas();
+ const errorNode=document.getElementById('savedDilemmaError');errorNode.textContent='';
+ try{
+  const table=row.origin==='PRIV'?'private_dilemma_sessions':'saved_group_dilemmas';
+  const {data,error}=await sb.from(table).update({is_pinned:value}).eq('id',row.id).eq('user_id',currentUserId).select('id,is_pinned').single();
+  if(error||!data)throw error||Error('Pin not saved');
+  row.is_pinned=data.is_pinned;
+  if(row.origin==='PRIV'&&privateDilemma?.id===row.id)privateDilemma.is_pinned=data.is_pinned;
+  savedLibraryBusy=false;await loadSavedDilemmas(true);
+ }catch(e){savedLibraryBusy=false;renderSavedDilemmas();errorNode.textContent='No se ha podido guardar el anclaje. Inténtalo de nuevo.'}
+ finally{savedLibraryBusy=false;const key=row.origin+':'+row.id;document.querySelector('[data-saved-key="'+key+'"] .r118-pin')?.focus({preventScroll:true})}
 }
 function renderSavedDilemmas(){
  const root=document.getElementById('savedDilemmaList');root.replaceChildren();
- if(!savedLibraryRows.length){const p=document.createElement('p');p.className='private-note';p.textContent='Todavía no tienes dilemas guardados. Los privados se conservan al crear otro o volver al hall.';root.appendChild(p);return}
+ const order=document.getElementById('r118Sort');order.value=savedLibraryOrder;order.disabled=savedLibraryBusy;document.getElementById('r118SavedOrder').hidden=savedLibraryRows.length<2;
+ if(!savedLibraryRows.length){const p=document.createElement('p');p.className='private-note';p.textContent='Todavía no tienes dilemas guardados.';root.appendChild(p);return}
  for(const row of savedLibraryRows){
-  const card=document.createElement('article');card.className='saved-card';
+  const key=row.origin+':'+row.id,pinned=!!row.is_pinned,parts=splitDilemmaCopy(row.question);
+  const card=document.createElement('details');card.className='saved-card r118-card';card.dataset.savedKey=key;card.open=savedLibraryRows.length===1||savedLibraryExpanded.has(key);
+  card.ontoggle=()=>{if(!card.isConnected)return;if(card.open)savedLibraryExpanded.add(key);else savedLibraryExpanded.delete(key)};
+  const summary=document.createElement('summary');summary.className='r118-saved-summary';
+  const heading=document.createElement('div');heading.className='r118-saved-heading';
   const meta=document.createElement('div');meta.className='saved-meta';
   const mark=document.createElement('span');mark.className='saved-mark';mark.textContent=row.origin+(row.session_state==='paused'?' · PAUSADO':'');
   const date=document.createElement('time');date.dateTime=row.created_at;date.textContent=new Date(row.created_at).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'});
-  meta.append(mark,date);const copy=document.createElement('div');copy.className='saved-copy';renderDilemmaCopy(copy,row.question);
+  const title=document.createElement('strong');title.className='r118-saved-title';title.textContent=parts.title;meta.append(mark,date);heading.append(meta,title);
+  const pin=document.createElement('button');pin.type='button';pin.className='r118-pin';pin.dataset.pinned=String(pinned);pin.disabled=savedLibraryBusy;pin.setAttribute('aria-pressed',String(pinned));pin.setAttribute('aria-label',pinned?'Desanclar dilema':'Anclar dilema');pin.title=pinned?'DESANCLAR':'ANCLAR';
+  pin.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l-1 6 4 4v2H6v-2l4-4ZM12 15v6"/></svg>';
+  pin.onclick=event=>{event.preventDefault();event.stopPropagation();void toggleSavedDilemmaPin(row)};
+  const arrow=document.createElement('span');arrow.className='r118-saved-arrow';arrow.setAttribute('aria-hidden','true');arrow.textContent='⌄';summary.append(heading,pin,arrow);card.append(summary);
+  const body=document.createElement('div');body.className='r118-saved-body';const copy=document.createElement('div');copy.className='saved-copy';copy.textContent=parts.body;body.append(copy);
+  if(pinned){const protection=document.createElement('p');protection.className='r118-protected';protection.textContent='ANCLADO · PROTEGIDO';body.append(protection)}
+  if(['A','B','N'].includes(row.choice)){const last=document.createElement('p');last.className='saved-last-vote';last.textContent='TU ÚLTIMO VOTO · '+(row.choice==='N'?'ESTOY EN DUDA':row.choice);body.append(last)}
   const actions=document.createElement('div');actions.className='saved-actions';
-  const resume=document.createElement('button');resume.type='button';resume.className='btn btn-secondary';resume.textContent=row.origin==='PRIV'?'RETOMAR':'VER DILEMA';resume.onclick=()=>openSavedDilemma(row);
-  const discard=document.createElement('button');discard.type='button';discard.className='btn btn-danger';discard.textContent='DESCARTAR';discard.onclick=()=>requestSavedDiscard(row);
-  actions.append(resume,discard);card.append(meta,copy);
-  if(['A','B','N'].includes(row.choice)){const last=document.createElement('p');last.className='saved-last-vote';last.textContent='TU ÚLTIMO VOTO · '+(row.choice==='N'?'ESTOY EN DUDA':row.choice);card.appendChild(last)}
-  card.appendChild(actions);root.appendChild(card);
+  const resume=document.createElement('button');resume.type='button';resume.className='btn btn-secondary';resume.textContent=row.origin==='PRIV'?'RETOMAR':'VER DILEMA';resume.disabled=savedLibraryBusy;resume.onclick=()=>openSavedDilemma(row);actions.append(resume);
+  if(!pinned){const discard=document.createElement('button');discard.type='button';discard.className='btn btn-danger';discard.textContent='DESCARTAR';discard.disabled=savedLibraryBusy;discard.onclick=()=>requestSavedDiscard(row);actions.append(discard)}
+  body.append(actions);card.append(body);root.append(card);
  }
 }
 async function openSavedDilemma(row){
@@ -9031,6 +9061,7 @@ async function openSavedDilemma(row){
    const guides=document.getElementById('savedGroupGuides');guides.textContent='MIS AYUDAS GUARDADAS · '+(data.guides?.length||0);guides.disabled=!data.guides?.length;
    guides.onclick=()=>{window.showAssistantHistory(data.guides||[],true);document.getElementById('amClose').textContent='VOLVER AL DILEMA GUARDADO'};
    const resume=document.getElementById('r86SavedResume');resume.style.display=data.session_state==='paused'&&data.session_id?'block':'none';resume.onclick=()=>proposeSavedSession(data);
+   document.getElementById('savedGroupDiscard').hidden=!!data.is_pinned;
    document.getElementById('savedGroupDiscard').onclick=()=>requestSavedDiscard({...data,origin:'GRUP'});
    showScreen('savedGroupDilemma');
   }
@@ -9039,9 +9070,10 @@ async function openSavedDilemma(row){
 }
 function requestSavedDiscard(row){
  if(!row?.id||savedLibraryBusy||privateBusy)return;
+ if(savedDilemmaIsPinned(row)){document.getElementById('savedDilemmaError').textContent='Este dilema está anclado. Desánclalo para poder descartarlo.';return}
  savedDiscardTarget={...row};savedDiscardFocus=document.activeElement;
  document.getElementById('savedDiscardQuestion').textContent=row.question;
- document.getElementById('savedDiscardError').textContent='';
+ document.getElementById('savedDiscardError').textContent='';document.getElementById('savedDiscardAccept').hidden=false;
  document.getElementById('savedDiscardModal').classList.add('open');document.getElementById('savedDiscardCancel').focus();
 }
 function cancelSavedDiscard(){
@@ -9051,6 +9083,7 @@ function cancelSavedDiscard(){
 async function confirmSavedDiscard(){
  if(!savedDiscardTarget||savedLibraryBusy||privateBusy)return;
  const row={...savedDiscardTarget};
+ if(savedDilemmaIsPinned(row)){document.getElementById('savedDiscardError').textContent='Este dilema está anclado. Desánclalo para poder descartarlo.';return}
  const discardFromLibrary=document.getElementById('savedDilemmas')?.classList.contains('active');
  const libraryScroll=window.scrollY;
  savedLibraryBusy=true;
@@ -9067,10 +9100,12 @@ async function confirmSavedDiscard(){
   savedDiscardTarget=null;document.getElementById('savedDiscardModal').classList.remove('open');
   document.getElementById('pilotAssistantModal')?.classList.remove('open');
   if(discardFromLibrary){
+   // Re-read the last incomplete page: deleting shifts later offset pages backwards.
+   savedLibraryPage=Math.floor(savedLibraryRows.length/20);
    renderSavedDilemmas();
    window.scrollTo(0,libraryScroll);
   }else goHome();
- }catch(e){document.getElementById('savedDiscardError').textContent='No se ha podido descartar. Tu dilema sigue guardado.'}
+ }catch(e){const pinned=String(e?.message||'').includes('DILEMMA_PINNED');document.getElementById('savedDiscardError').textContent=pinned?'Este dilema está anclado. Desánclalo para poder descartarlo.':'No se ha podido descartar. Tu dilema sigue guardado.';if(pinned){accept.hidden=true;const known=savedLibraryRows.find(r=>r.id===row.id&&r.origin===row.origin);if(known)known.is_pinned=true;if(row.origin==='PRIV'&&privateDilemma?.id===row.id)privateDilemma.is_pinned=true}}
  finally{savedLibraryBusy=false;accept.disabled=cancel.disabled=false}
 }
 document.getElementById('savedDiscardModal').addEventListener('keydown',e=>{
@@ -10091,6 +10126,7 @@ function paintPrivateDialogueAura(){
  if(privateDialogueAuraRequest&&privateDialogueRows.find(t=>t.id===privateDialogueAuraRequest)?.status==='ready'){
   privateDialogueAuraMode='ready';privateDialogueAuraRequest=null;
  }
+ if(['reply','order'].includes(privateDialogueAuraMode)&&!pdElement('privateDialogueInput').value.trim())privateDialogueAuraMode='ready';
  box.dataset.aura=privateDialogueAuraMode;
  let label=pdElement('r113DialogueMode');if(!label){label=document.createElement('p');label.id='r113DialogueMode';label.setAttribute('role','status');label.setAttribute('aria-live','polite');pdElement('privateDialogueTitle').insertAdjacentElement('afterend',label)}
  const labels={ready:'DILEMA · TE ESCUCHO',reply:'RESPONDER · TU RESPUESTA',counter:'CONTRADÍCEME',pressure:'APRIÉTAME',view:'OTRA MIRADA',blind:'PUNTO CIEGO',order:privateDilemma?.interaction_mode==='training'?'VALORA MIS ARGUMENTOS':'ORDENA ESTO'};
@@ -11049,6 +11085,53 @@ html.r117-chat-open,body.r117-chat-open{overflow:hidden;overscroll-behavior:none
  const previousRender=renderPrivateDilemma;renderPrivateDilemma=function(){const result=previousRender.apply(this,arguments);window.r117ChatSync();return result};
  const previousShow=showScreen;showScreen=function(){const result=previousShow.apply(this,arguments);window.r117ChatSync();return result};
  document.addEventListener('DOMContentLoaded',()=>{window.r117ChatSync();window.addEventListener('resize',scheduleSize);window.visualViewport?.addEventListener('resize',scheduleSize);window.visualViewport?.addEventListener('scroll',scheduleSize)});
+})();
+</script>
+<style>
+/* R118: protected pins, compact saved cards and a counter inside the argument frame. */
+#r118SavedOrder{display:flex;align-items:center;gap:12px;margin:18px 0;font-size:11px;color:#aaa}
+#r118SavedOrder[hidden]{display:none}
+#r118Sort{flex:1;min-width:0;min-height:44px;padding:10px;border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#fff;font:inherit;font-size:12px}
+#savedDilemmas .r118-card{padding:0;background:#0b0b0b;overflow:hidden}
+.r118-saved-summary{display:flex;align-items:center;gap:10px;list-style:none;padding:12px;cursor:pointer}
+.r118-saved-summary::-webkit-details-marker{display:none}
+.r118-saved-heading{flex:1;min-width:0}
+.r118-saved-heading .saved-meta{justify-content:flex-start;flex-wrap:wrap;gap:8px;margin:0 0 8px;font-size:10px}
+.r118-saved-heading .saved-mark{padding:3px 6px;font-size:9px}
+.r118-saved-title{display:block;line-height:1.45;font-size:12px;overflow-wrap:anywhere;color:#fff}
+.r118-pin{flex:none;width:44px;height:44px;min-height:44px;padding:11px;border:1px solid #555;border-radius:10px;background:#0b0b0b;color:#bbb}
+.r118-pin svg{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.r118-pin[data-pinned="true"]{background:#fff;border-color:#fff;color:#0b0b0b}
+.r118-pin:disabled{opacity:.5}
+.r118-saved-arrow{font-size:18px;color:#aaa;transform:rotate(-90deg)}
+.r118-card[open] .r118-saved-arrow{transform:none}
+.r118-saved-body{padding:14px;border-top:1px solid #444}
+.r118-saved-body .saved-actions{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.r118-protected{font-size:10px;color:#facc15;letter-spacing:.6px;margin:14px 0}
+#savedGroupDiscard[hidden],#savedDiscardAccept[hidden],#r117Details .saved-actions .btn-danger[hidden]{display:none!important}
+#privateBoard.r117-chat .r117-compose{position:relative}
+#privateBoard.r117-chat #privateDialogueInput{height:80px;min-height:80px;max-height:80px;padding-bottom:25px}
+#r118DraftRemaining{position:absolute;right:64px;bottom:6px;font-size:9px;line-height:14px;letter-spacing:.3px;color:#aaa;pointer-events:none;background:#0b0b0b;padding-left:4px}
+#r118DraftRemaining[hidden]{display:none}
+#r118DraftRemaining.at-limit{color:#facc15}
+@media(max-height:450px){#privateBoard.r117-chat #privateDialogueInput{height:64px;min-height:64px;max-height:64px}}
+</style>
+<script>
+/* R118: count after typing pauses; never add a row or move the fixed composer. */
+(function(){
+ const E=id=>document.getElementById(id);let timer=null,stamp=null,composing=false;
+ function showCount(){const field=E('privateDialogueInput'),counter=E('r118DraftRemaining');if(!counter)return;const left=Math.max(0,Number(field.maxLength)-field.value.length);counter.textContent=left+' CARACTERES RESTANTES';counter.classList.toggle('at-limit',left===0);counter.hidden=privateBusy||privateDialogueSending}
+ function schedule(){clearTimeout(timer);const counter=E('r118DraftRemaining');if(counter)counter.hidden=true;if(!composing)timer=setTimeout(showCount,650)}
+ window.r118ComposerSync=function(){
+  const form=E('privateDialogueForm'),composer=form.querySelector('.r117-compose'),field=E('privateDialogueInput');
+  if(composer&&!E('r118DraftRemaining')){const counter=document.createElement('output');counter.id='r118DraftRemaining';counter.setAttribute('for','privateDialogueInput');counter.setAttribute('aria-live','polite');counter.hidden=true;composer.append(counter);field.addEventListener('input',schedule);field.addEventListener('blur',()=>{clearTimeout(timer);showCount()});field.addEventListener('compositionstart',()=>{composing=true;clearTimeout(timer);counter.hidden=true});field.addEventListener('compositionend',()=>{composing=false;schedule()})}
+  const value=(privateDilemma?.id||'')+':'+field.value;if(stamp!==value){stamp=value;schedule()}
+  if(privateBusy||privateDialogueSending){const counter=E('r118DraftRemaining');if(counter)counter.hidden=true}
+  for(const button of document.querySelectorAll('#r117Details .saved-actions .btn-danger'))button.hidden=!!privateDilemma?.is_pinned;
+ };
+ const paint=paintPrivateDialogue;paintPrivateDialogue=function(){const result=paint.apply(this,arguments);window.r118ComposerSync();return result};
+ const render=renderPrivateDilemma;renderPrivateDilemma=function(){const result=render.apply(this,arguments);window.r118ComposerSync();return result};
+ document.addEventListener('DOMContentLoaded',window.r118ComposerSync);
 })();
 </script>
 </body>
