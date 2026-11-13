@@ -117,6 +117,7 @@ const EVIDENCE={
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
+let soloMessages=[],soloRound=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
 function notice(s){$("notice").textContent=s||"";}
 async function auth(){
@@ -167,7 +168,7 @@ async function nextQuestion(id){
     p=chooseQuestion(id,prior);mode="CATÁLOGO";
     result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
   }
-  state=result;vote=null;angle=null;runFingerprint="";
+  state=result;vote=null;angle=null;runFingerprint="";soloMessages=[];soloRound=null;
   render();setTab("debate");
   notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
  });
@@ -206,7 +207,13 @@ function renderDebate(){
  $("revealBlock").hidden=phase!=="reveal";
  $("hostControls").hidden=!state||!state.host;
  $("another").hidden=!state||!state.host;
- $("nextTurn").hidden=!state||!state.host;
+ $("nextTurn").hidden=!state||!state.host||Number(state.count)===1;
+ $("soloDialogue").hidden=!(phase==="discussion"&&Number(state.count)===1);
+ $("groupSummary").hidden=!(phase==="discussion"&&Number(state.count)>1&&state.host);
+ if(phase==="discussion"&&Number(state.count)===1){
+  if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
+  renderSoloMessages();
+ }
  document.querySelectorAll("[data-giro]").forEach(b=>b.disabled=!state||!state.host||phase!=="discussion");
  if(!active){$("phaseDetail").textContent="Crea una sala o únete con su código para comenzar.";return;}
  if(phase==="lobby"){$("phaseDetail").textContent="El anfitrión abre un Hot Point. Después todos votáis, debatís y pasáis a otra pregunta.";return;}
@@ -266,6 +273,15 @@ function renderMap(){
   root.append(c);
  });
 }
+function renderSoloMessages(){
+ const root=$("soloMessages");root.replaceChildren();
+ soloMessages.forEach(x=>{
+  const card=el("div","detail");
+  card.append(el("div","label",x.role),el("p","small",x.text));
+  root.append(card);
+ });
+ $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=5;
+}
 function render(){renderRoom();renderHotpoints();renderDebate();renderMap();}
 async function refresh(){
  if(!roomId||working)return;
@@ -308,6 +324,24 @@ async function init(){
   const c=vote||(state&&state.my_vote);if(!c)throw Error("Elige una opción.");
   state=await rpc("politics_vote",{p_room:roomId,p_choice:c});vote=null;angle=null;render();
  });
+ $("sendArgument").onclick=()=>execute(async()=>{
+  if(!state||state.phase!=="discussion"||Number(state.count)!==1)throw Error("La conversación individual no está disponible.");
+  const argument=$("soloArgument").value.trim();
+  if(argument.length<12)throw Error("Escribe un argumento algo más detallado.");
+  const seq=soloMessages.filter(x=>x.role==="TÚ").length+1;
+  if(seq>5)throw Error("Ya has completado los cinco intercambios de esta ronda. Puedes iniciar otra pregunta.");
+  soloMessages.push({role:"TÚ",text:argument});$("soloArgument").value="";renderSoloMessages();
+  notice("DILEMA está analizando tu argumento...");
+  let response="¿Qué hecho o ejemplo concreto pondría a prueba el argumento que acabas de defender?";
+  try{
+   const ret=await sb.functions.invoke("politics-moderator",{body:{action:"reply",room_id:roomId,argument,seq}});
+   if(ret.error)throw ret.error;
+   if(ret.data&&typeof ret.data.reflection==="string"&&typeof ret.data.question==="string"){
+    response=ret.data.reflection+" "+ret.data.question;
+   }
+  }catch(e){console.warn("Diálogo IA no disponible; pregunta de apoyo",String(e&&e.message||e));}
+  soloMessages.push({role:"DILEMA",text:response});renderSoloMessages();notice("");
+ });
  $("nextTurn").onclick=()=>execute(async()=>{state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();});
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
   if(!state||state.phase!=="discussion"||!state.host)return;
@@ -315,7 +349,7 @@ async function init(){
   notice("DILEMA está preparando una objeción para todo el grupo...");
   let question=null,mode="CATÁLOGO";
   try{
-    const res=await sb.functions.invoke("politics-moderator",{body:{action:"pressure",room_id:roomId,style:kind}});
+    const res=await sb.functions.invoke("politics-moderator",{body:{action:"pressure",room_id:roomId,style:kind,summary:$("argumentSummary").value.trim().slice(0,500)}});
     if(res.error)throw res.error;
     if(res.data&&typeof res.data.question==="string"&&res.data.question.length>18){
       question=res.data.question;mode="IA";
