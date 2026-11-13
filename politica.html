@@ -166,6 +166,20 @@ body.noobs-fullscreen #notice:empty{display:none}
  body.noobs-fullscreen .noobs-tool{min-height:45px}
  body.noobs-fullscreen .noobs-compose-row textarea{min-height:42px}
 }
+
+/* R126: respuestas por turno sorteado; el marco mantiene sus colores de estado */
+#discussionTurn #speaker{font-size:20px;color:var(--noobs-aura)}
+.noobs-order{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.noobs-order .person{margin:0;border-radius:12px}
+.noobs-order .person.is-done{border-color:#688a73;color:#a7d7b2}
+.noobs-order .person.is-current{border-color:var(--noobs-aura);color:var(--noobs-aura);font-weight:800}
+#registeredAnswers .result{padding:10px 0}
+#registeredAnswers .answer-text{white-space:pre-wrap;overflow-wrap:anywhere}
+#speakerForm{padding-top:9px;border-top:1px solid #333;margin-top:10px}
+#speakerForm .choice{margin:6px 0;padding:10px;min-height:44px}
+#speakerForm #speakerArgument{font-size:16px}
+#speakerForm #nextTurn{width:100%;margin-top:8px}
+#deepAnswerLog{border-color:#39493e}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -184,7 +198,7 @@ body.noobs-fullscreen #notice:empty{display:none}
     <p class="fine" id="ageHint">Introduce 4 edades separadas por comas. Sirven para ajustar el lenguaje; no se guardarán las edades exactas.</p>
   </div>
   <label class="choice" style="font-size:12px"><input id="consent" type="checkbox">
-    <span>Acepto participar en una sala privada donde se registran votos individuales para poder contarlos y se muestran <strong>solo resultados agregados</strong>. Los datos se eliminan al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
+    <span>Acepto participar en una sala privada. El pulso inicial muestra solo votos agrupados. En el debate, <strong>mi elección y el argumento que escriba se mostrarán con mi apodo a las personas de la sala</strong>, para poder debatir y revisar cada pregunta. Las respuestas podrán utilizarse, sin nombres, para generar nuevas preguntas de IA. Se eliminarán al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
   </label>
   <div class="actions"><button class="btn" id="join">UNIRME</button><button class="btn primary" id="create">CREAR SALA</button></div>
 </section>
@@ -245,18 +259,35 @@ body.noobs-fullscreen #notice:empty{display:none}
         <p id="twistText" class="muted small"></p>
         <div id="voteChoices"></div>
         <button type="button" class="btn primary" id="submitVote">VOTAR</button>
-        <p class="fine">Una votación por pregunta. Los resultados no se muestran hasta que hayan votado todos.</p>
+        <p class="fine">En el pulso, todos votan; el resultado se muestra cuando ha votado la mesa.</p>
       </div>
       <div id="discussionBlock" hidden>
-        <div class="box">
-          <div class="eyebrow">RESULTADO DE LA PREGUNTA</div>
+        <div class="box" id="groupVoteResult">
+          <div class="eyebrow">RESULTADO DEL PULSO</div>
           <div id="voteResults"></div>
         </div>
+        <div class="box" id="deepAnswerLog" hidden>
+          <div class="eyebrow">RESPUESTAS REGISTRADAS</div>
+          <p class="small muted" id="answerProgress"></p>
+          <div id="answerOrder" class="noobs-order"></div>
+          <div id="registeredAnswers" role="log" aria-live="polite"></div>
+        </div>
         <div class="box" id="discussionTurn">
-          <div class="eyebrow">TURNO DE DEBATE</div>
+          <div class="eyebrow">DILEMA SORTEA EL TURNO</div>
           <h3 id="speaker"></h3>
-          <p class="small muted">Explicad vuestros argumentos. La IA puede ponerlos a prueba sin favorecer ninguna postura.</p>
-          <button type="button" class="btn" id="nextTurn">SIGUIENTE TURNO</button>
+          <p class="small muted" id="turnHint">Los demás podéis debatir oralmente. Solo quien tiene el turno puede registrar su respuesta.</p>
+          <div id="speakerForm" hidden>
+            <div class="eyebrow">¿QUÉ RESPONDES TÚ?</div>
+            <div class="noobs-choice-list">
+              <label class="choice"><input type="radio" name="speakerChoice" value="A"><span>A · <span id="speakerA"></span></span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="B"><span>B · <span id="speakerB"></span></span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="N"><span>DEPENDE / NECESITO MÁS INFORMACIÓN</span></label>
+            </div>
+            <label class="eyebrow" for="speakerArgument">¿POR QUÉ? (OPCIONAL)</label>
+            <textarea class="field" id="speakerArgument" maxlength="700" rows="2" placeholder="Resume tu argumento con tus palabras..."></textarea>
+            <button type="button" class="btn primary" id="nextTurn">REGISTRAR RESPUESTA Y PASAR TURNO</button>
+            <p class="fine">Tu respuesta se guarda con tu apodo y es visible solo para quienes participan en esta sala.</p>
+          </div>
         </div>
         <div id="soloDialogue" class="box" hidden>
           <div class="eyebrow">CONVERSACIÓN INDIVIDUAL</div>
@@ -326,14 +357,14 @@ body.noobs-fullscreen #notice:empty{display:none}
 </section>
 <section id="mapa" role="tabpanel" hidden>
   <h2>Mapa de ideas del grupo</h2>
-  <p class="muted small">Porcentajes de las respuestas del grupo en cada ronda, no porcentajes de afinidad con partidos. La aplicación no asocia los votos individuales a un participante en los resultados colectivos.</p>
+  <p class="muted small">El pulso muestra votos del grupo. En el debate, cada participante registra su elección y su argumento en su turno. El mapa describe las respuestas, no asigna afinidad con partidos.</p>
   <div id="ideaMap"></div>
   <button class="btn" id="copySummary">COPIAR RESUMEN</button>
   <p class="small muted">Las propuestas de los partidos se contrastan en la pestaña DEBATE al revelar las siglas.</p>
 </section>
 </main>
-<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos individuales se almacenan en una zona privada de Supabase y solo se presentan agrupados. Las edades solo se utilizan para calcular el nivel de lenguaje; las edades exactas no se guardan. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
-<footer>DILEMA · POLÍTICA PARA NOOBS · BETA R125</footer>
+<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos del pulso se presentan agrupados. Las respuestas del debate se guardan junto al apodo y solo pueden verlas los miembros de la sala. DILEMA puede analizar fragmentos sin nombres para generar nuevas preguntas. Las edades solo se usan para elegir el lenguaje y no se guardan por separado. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
+<footer>DILEMA · POLÍTICA PARA NOOBS · BETA R126</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./politica-noobs.js?v=R125" defer></script>
+<script src="./politica-noobs.js?v=R126" defer></script>
 </body></html>

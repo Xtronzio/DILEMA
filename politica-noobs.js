@@ -120,7 +120,7 @@ const EVIDENCE={
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
 let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
-let sentencePending=false,sentenceAttemptedCycle=null;
+let sentencePending=false,sentenceAttemptedCycle=null,speakerQuestionCycle=null;
 const expandedHistory=new Set();
 let noticeTimer=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
@@ -196,7 +196,8 @@ async function nextQuestion(id){
   questionCacheRoom=roomId;
   render();setTab("debate");
   requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
-  notice((state.stage==="pulse"?"PRIMER PULSO · ":"")+ (mode==="IA"?"Pregunta de DILEMA. Todos votáis.":"Pregunta del catálogo. Todos votáis."));
+  notice(state.stage==="pulse"?(mode==="IA"?"PRIMER PULSO · Todos votáis.":"PRIMER PULSO · Nueva votación para todos."):
+  (mode==="IA"?"DILEMA ha sorteado el turno. Cada persona registrará su respuesta.":"Nueva pregunta. DILEMA ha sorteado el turno."));
  });
 }
 async function loadQuestionHistory(){
@@ -229,8 +230,16 @@ function renderQuestionHistory(){
   if(row){
    const total=Number(row.A||0)+Number(row.B||0)+Number(row.N||0);
    const pct=x=>total?Math.round(Number(row[x]||0)*100/total):0;
-   body.append(el("p","fine","RESULTADO · A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"));
+   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"));
   }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
+  if(q.kind==="debate"){
+   (q.answers||[]).forEach(a=>{
+    const answer=el("div","result");
+    answer.append(el("b","",a.name+" · "+(a.choice==="N"?"DEPENDE":a.choice)));
+    if(a.argument)answer.append(el("p","",a.argument));
+    body.append(answer);
+   });
+  }
   item.append(body);
   item.addEventListener("toggle",()=>{if(item.open)expandedHistory.add(n);else expandedHistory.delete(n);});
   root.append(item);
@@ -264,7 +273,7 @@ function renderRoom(){
  const phases={lobby:"SALA PREPARADA",voting:"VOTACIÓN",discussion:"DEBATE",reveal:"SIGLAS REVELADAS"};
  $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(state.stage==="pulse"?"PRIMER PULSO · ":"")+(phases[state.phase]||state.phase);
  const root=$("members");root.replaceChildren();
- (state.participants||[]).forEach((m,i)=>root.append(el("span","person",(state.phase==="discussion"&&i===state.turn?"🎤 ":"")+m.name+(m.host?" · ANFITRIÓN":""))));
+ (state.participants||[]).forEach((m,i)=>root.append(el("span","person",(state.stage==="debate"&&state.phase==="discussion"&&m.name===state.speaker?"🎤 ":"")+m.name+(m.host?" · ANFITRIÓN":""))));
 }
 function renderPulseSummary(){
  const isReady=!!state&&state.stage==="debate";
@@ -290,7 +299,7 @@ function renderDebate(){
  $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
   (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
  $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
-  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · UN VOTO · UN DEBATE"):"";
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · RESPONDEMOS POR TURNOS"):"";
  $("ballotBlock").hidden=!voting;
  $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
@@ -302,11 +311,15 @@ function renderDebate(){
  $("nextPulse").innerHTML='<span aria-hidden="true">⇢</span>'+(
   Number(state?.pulse_count)===0?"EMPEZAR PULSO":"OTRA PREGUNTA CON VOTO");
  $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
- $("hostControls").hidden=!canInteract;
- $("revote").hidden=!canInteract;
- $("reveal").hidden=!canInteract;
+ const allAnswered=!!state?.response_complete;
+ $("hostControls").hidden=!canInteract||!allAnswered;
+ $("revote").hidden=!canInteract||!allAnswered;
+ $("reveal").hidden=!canInteract||!allAnswered;
  $("another").hidden=!state?.host;
- $("nextTurn").hidden=!canInteract||Number(state?.count)===1;
+ $("nextTurn").hidden=!canInteract||!!state.my_answer_registered;
+ $("speakerForm").hidden=!canInteract||!!state.my_answer_registered;
+ $("deepAnswerLog").hidden=!(debating&&discussion);
+ $("groupVoteResult").hidden=!(pulse&&discussion);
  $("politicsTools").hidden=!canInteract;
  $("soloComposer").hidden=!(canInteract&&Number(state?.count)===1);
  $("soloDialogue").hidden=!(debating&&discussion&&Number(state?.count)===1&&!state.closing_open);
@@ -358,18 +371,49 @@ function renderDebate(){
  }
  if(discussion){
   $("phaseDetail").textContent=pulse?
-   (state.pulse_count>=state.pulse_goal?"Primer pulso terminado. Ahora empieza el debate.":"Votación cerrada. Todavía no debatimos: continuamos con otro tema."):
-   (state.closing_open?"La mesa está votando si termina el debate.":
-    onTurn?"Ahora tienes la palabra. Solo tú puedes pedir objeciones, pasar el turno o abrir otra pregunta.":
-    "Escucha a quien tiene la palabra. Podrás intervenir cuando te llegue el turno.");
-  const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");out.replaceChildren();
-  [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
-   const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
-   row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
-  });
-  if(!pulse){
-   $("speaker").textContent=(state.participants[state.turn]||{}).name||"Participante";
-   $("moderatorQuestion").textContent=angle||state.twist||"¿Qué argumento te haría revisar tu respuesta?";
+   (state.pulse_count>=state.pulse_goal?"Pulso terminado. Elegid los temas para debatir.":"Pulso registrado. Continuamos con otro tema."):
+   (state.closing_open?"La mesa está votando si termina.":allAnswered?
+    "Todos han registrado su respuesta. Quien tiene el turno puede abrir otra pregunta o proponer el cierre.":
+    (onTurn?"Te toca responder. Los demás pueden opinar, pero solo tu respuesta se guarda en este turno.":
+    "Ahora responde "+(state.speaker||"otro participante")+". Puedes opinar oralmente, pero tu respuesta se registrará cuando te toque."));
+  if(pulse){
+   const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");
+   out.replaceChildren();
+   [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
+    const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
+    row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
+   });
+  }else{
+   $("speaker").textContent=state.speaker||"Participante";
+   $("turnHint").textContent=allAnswered?"Todos han respondido a esta pregunta. Podéis comentarla antes de continuar.":
+    (onTurn?"DILEMA te ha elegido para hablar. Los demás pueden opinar, pero solo tú puedes registrar tu respuesta. Al guardarla pasarás el turno.":
+    "DILEMA ha elegido a "+(state.speaker||"otra persona")+". Escucha y debate; tu respuesta se guardará cuando te toque.");
+   $("speakerA").textContent=state.A||"";
+   $("speakerB").textContent=state.B||"";
+   if(speakerQuestionCycle!==state.cycle){
+    speakerQuestionCycle=state.cycle;
+    $("speakerArgument").value="";
+    document.querySelectorAll('input[name="speakerChoice"]').forEach(input=>{input.checked=false;});
+   }
+   $("nextTurn").disabled=!document.querySelector('input[name="speakerChoice"]:checked');
+   $("nextTurn").textContent=Number(state.answers_count)+1>=Number(state.answers_total)?"REGISTRAR MI RESPUESTA":"REGISTRAR Y PASAR TURNO";
+   $("answerProgress").textContent=(state.answers_count||0)+" de "+(state.answers_total||state.count)+" respuestas registradas.";
+   const order=$("answerOrder");order.replaceChildren();
+   (state.answer_order||[]).forEach(item=>{
+    const badge=el("span","person"+(item.answered?" is-done":(!allAnswered&&item.slot===state.turn?" is-current":"")),
+      (item.slot+1)+". "+item.name+(item.answered?" ✓":""));
+    order.append(badge);
+   });
+   const history=$("registeredAnswers");history.replaceChildren();
+   (state.answers||[]).forEach(item=>{
+    const answer=el("div","result");
+    const choice=item.choice==="N"?"DEPENDE":item.choice;
+    answer.append(el("b","",item.name+" · "+choice));
+    if(item.argument)answer.append(el("p","answer-text",item.argument));
+    history.append(answer);
+   });
+   if(!(state.answers||[]).length)history.append(el("p","fine","Aún no hay respuestas registradas."));
+   $("moderatorQuestion").textContent=angle||state.twist||"¿Qué detalle te haría pensar de otra manera?";
   }
   if(debating&&Number(state.count)===1){
    if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
@@ -418,9 +462,9 @@ function sentenceFallback(){
  const debated=rounds.length-pulse;
  const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
  return {
-  summary:"La mesa ha votado "+rounds.length+" preguntas, de ellas "+pulse+
-   " del primer pulso y "+debated+" del debate. En "+divisions+
-   " votaciones hubo respuestas distintas entre A y B. Ese resultado no basta para saber qué piensa cada participante sobre todo el programa de un partido. Lo valioso son los argumentos que habéis puesto sobre la mesa.",
+  summary:"La mesa ha abordado "+rounds.length+" preguntas: "+pulse+
+   " del pulso inicial y "+debated+" del debate por turnos. En "+divisions+
+   " preguntas hubo elecciones diferentes entre A y B. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
   question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
  };
 }
@@ -450,7 +494,7 @@ function renderMap(){
   const pct=k=>n?Math.round(Number(h[k]||0)*100/n):0,c=el("div","card");
   c.append(el("div","label",(TOPICS[h.topic]&&TOPICS[h.topic].title||h.topic)+" · RONDA "+h.cycle),
    el("h3","","A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"),
-   el("p","fine",n+" votos. Son porcentajes de respuestas, no de afinidad con partidos."));
+   el("p","fine",n+" "+(questionCache.find(q=>Number(q.cycle)===Number(h.cycle))?.kind==="debate"?"respuestas registradas":"votos del pulso")+". Estos porcentajes no equivalen a afinidad con partidos."));
   root.append(c);
  });
 }
@@ -470,14 +514,14 @@ async function refresh(){
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
   if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
-  const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence]);
+  const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence,s.answers_count,s.answers_total,s.response_complete]);
   if(fp!==runFingerprint){
    runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;aura="ready";}render();
   }
  }catch(e){notice("No se pudo actualizar la sala: "+String(e&&e.message||"error"));}
 }
 function leave(){
- roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";sentenceAttemptedCycle=null;
+ roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";sentenceAttemptedCycle=null;speakerQuestionCycle=null;
  document.body.classList.remove("noobs-fullscreen");
  session();history.replaceState(null,"",location.pathname);
  render();setTab("hotpoints");notice("Has salido. La sala seguirá hasta que el anfitrión la cierre.");
@@ -530,10 +574,11 @@ async function init(){
  $("refresh").onclick=refresh;
  $("leave").onclick=()=>execute(async()=>{
   if(!state||!roomId)return leave();
-  if(state.host&&!confirm("Si abandonas como anfitrión se cerrará esta sala y se eliminarán todos sus votos. ¿Continuar?"))return;
+  if(state.host&&!confirm("Si sales como anfitrión, se cerrará la sala y se eliminarán todos los votos y respuestas. ¿Continuar?"))return;
   await rpc("politics_leave_room",{p_room:roomId});
   leave();
  });
+ document.querySelectorAll('input[name="speakerChoice"]').forEach(x=>x.addEventListener("change",()=>{$("nextTurn").disabled=false;}));
  $("submitVote").onclick=()=>execute(async()=>{
   const c=vote||(state&&state.my_vote);if(!c)throw Error("Elige una opción.");
   state=await rpc("politics_vote",{p_room:roomId,p_choice:c});vote=null;angle=null;render();
@@ -557,8 +602,15 @@ async function init(){
   soloMessages.push({role:"DILEMA",text:response});renderSoloMessages();notice("");
  });
  $("nextTurn").onclick=()=>execute(async()=>{
-  if(!state?.can_act)throw Error("Debe pulsarlo quien está en turno.");
-  state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();
+  if(!state?.can_act||state.stage!=="debate"||state.phase!=="discussion")throw Error("DILEMA ha dado el turno a otra persona.");
+  if(state.my_answer_registered)throw Error("Tu respuesta ya está registrada.");
+  const selected=document.querySelector('input[name="speakerChoice"]:checked');
+  if(!selected)throw Error("Elige A, B o Depende.");
+  state=await rpc("politics_answer",{p_room:roomId,p_choice:selected.value,p_argument:$("speakerArgument").value.trim()});
+  $("speakerArgument").value="";
+  document.querySelectorAll('input[name="speakerChoice"]').forEach(x=>x.checked=false);
+  render();
+  notice(state.response_complete?"Ya habéis respondido todos. Podéis continuar o terminar.":"Respuesta registrada. DILEMA da la palabra a otra persona.");
  });
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
   if(!state||state.stage!=="debate"||state.phase!=="discussion"||!state.can_act||state.closing_open)return;
@@ -611,7 +663,7 @@ async function init(){
  $("requestSentence").onclick=()=>requestSentence();
  $("anotherTopic").onclick=()=>setTab("hotpoints");
  $("finishRoom").onclick=()=>execute(async()=>{
-  if(!confirm("¿Cerrar la sala y eliminar sus votaciones?"))return;
+  if(!confirm("¿Cerrar la sala y eliminar votos y respuestas registrados?"))return;
   await rpc("politics_manage",{p_room:roomId,p_action:"delete"});leave();
  });
  $("copySummary").onclick=()=>copy((state&&state.history||[]).map(h=>{
