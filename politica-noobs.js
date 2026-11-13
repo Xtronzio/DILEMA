@@ -298,6 +298,9 @@ function renderDebate(){
  $("discussionTurn").hidden=!canInteract&&!(debating&&discussion)||pulse||state?.closing_open;
  $("pulseControls").hidden=!allowPulse;
  $("nextPulse").hidden=!allowPulse||state.pulse_count>=state.pulse_goal;
+ $("nextPulse").disabled=!state||state.count<state.expected;
+ $("nextPulse").innerHTML='<span aria-hidden="true">⇢</span>'+(
+  Number(state?.pulse_count)===0?"EMPEZAR PULSO":"OTRA PREGUNTA CON VOTO");
  $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
  $("hostControls").hidden=!canInteract;
  $("revote").hidden=!canInteract;
@@ -498,7 +501,13 @@ async function init(){
   $("ageList").placeholder=count===1?"14":count===2?"13, 45":count===4?"13, 15, 45, 48":"Una edad por participante";
  }
  $("participantsExpected").addEventListener("change",updateAgeHint);
- updateAgeHint();
+ function showAgeFields(){
+  const isJoining=$("roomJoin").value.trim().length>0;
+  $("agesBlock").hidden=isJoining;
+  $("participantsExpected").disabled=isJoining;
+ }
+ $("roomJoin").addEventListener("input",showAgeFields);
+ updateAgeHint();showAgeFields();
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
  $("create").onclick=()=>execute(async()=>{
@@ -510,7 +519,7 @@ async function init(){
     throw Error("Indica "+expected+" edad"+(expected===1?"":"es")+" (entre 12 y 100 años), separadas por comas.");
   }
   await auth();const r=await rpc("politics_new_room_ages",{p_name:$("alias").value.trim(),p_expected:expected,p_consent:true,p_ages:ages});
-  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("hotpoints");
+  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");
  });
  $("join").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
