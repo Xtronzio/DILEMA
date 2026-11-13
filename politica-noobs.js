@@ -196,7 +196,8 @@ async function nextQuestion(id){
   questionCacheRoom=roomId;
   render();setTab("debate");
   requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
-  notice((state.stage==="pulse"?"PRIMER PULSO · ":"")+ (mode==="IA"?"Pregunta de DILEMA. Todos votáis.":"Pregunta del catálogo. Todos votáis."));
+  notice(state.stage==="pulse"?(mode==="IA"?"PRIMER PULSO · Todos votáis.":"PRIMER PULSO · Nueva votación para todos."):
+  (mode==="IA"?"DILEMA ha sorteado el turno. Cada persona registrará su respuesta.":"Nueva pregunta. DILEMA ha sorteado el turno."));
  });
 }
 async function loadQuestionHistory(){
@@ -298,7 +299,7 @@ function renderDebate(){
  $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
   (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
  $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
-  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · UN VOTO · UN DEBATE"):"";
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · RESPONDEMOS POR TURNOS"):"";
  $("ballotBlock").hidden=!voting;
  $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
@@ -460,9 +461,9 @@ function sentenceFallback(){
  const debated=rounds.length-pulse;
  const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
  return {
-  summary:"La mesa ha votado "+rounds.length+" preguntas, de ellas "+pulse+
-   " del primer pulso y "+debated+" del debate. En "+divisions+
-   " votaciones hubo respuestas distintas entre A y B. Ese resultado no basta para saber qué piensa cada participante sobre todo el programa de un partido. Lo valioso son los argumentos que habéis puesto sobre la mesa.",
+  summary:"La mesa ha abordado "+rounds.length+" preguntas: "+pulse+
+   " del pulso inicial y "+debated+" del debate por turnos. En "+divisions+
+   " preguntas hubo elecciones diferentes entre A y B. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
   question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
  };
 }
@@ -492,7 +493,7 @@ function renderMap(){
   const pct=k=>n?Math.round(Number(h[k]||0)*100/n):0,c=el("div","card");
   c.append(el("div","label",(TOPICS[h.topic]&&TOPICS[h.topic].title||h.topic)+" · RONDA "+h.cycle),
    el("h3","","A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"),
-   el("p","fine",n+" votos. Son porcentajes de respuestas, no de afinidad con partidos."));
+   el("p","fine",n+" "+(questionCache.find(q=>Number(q.cycle)===Number(h.cycle))?.kind==="debate"?"respuestas registradas":"votos del pulso")+". Estos porcentajes no equivalen a afinidad con partidos."));
   root.append(c);
  });
 }
@@ -572,7 +573,7 @@ async function init(){
  $("refresh").onclick=refresh;
  $("leave").onclick=()=>execute(async()=>{
   if(!state||!roomId)return leave();
-  if(state.host&&!confirm("Si abandonas como anfitrión se cerrará esta sala y se eliminarán todos sus votos. ¿Continuar?"))return;
+  if(state.host&&!confirm("Si sales como anfitrión, se cerrará la sala y se eliminarán todos los votos y respuestas. ¿Continuar?"))return;
   await rpc("politics_leave_room",{p_room:roomId});
   leave();
  });
@@ -661,7 +662,7 @@ async function init(){
  $("requestSentence").onclick=()=>requestSentence();
  $("anotherTopic").onclick=()=>setTab("hotpoints");
  $("finishRoom").onclick=()=>execute(async()=>{
-  if(!confirm("¿Cerrar la sala y eliminar sus votaciones?"))return;
+  if(!confirm("¿Cerrar la sala y eliminar votos y respuestas registrados?"))return;
   await rpc("politics_manage",{p_room:roomId,p_action:"delete"});leave();
  });
  $("copySummary").onclick=()=>copy((state&&state.history||[]).map(h=>{
