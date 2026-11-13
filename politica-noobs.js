@@ -118,6 +118,7 @@ const EVIDENCE={
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
 let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
+let sentencePending=false,sentenceAttemptedCycle=null;
 const expandedHistory=new Set();
 let noticeTimer=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
@@ -142,17 +143,31 @@ async function execute(fn){
 }
 function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
 function chooseQuestion(id,prior){
- const t=TOPICS[id],used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLowerCase()));
- const available=t.q.filter(x=>!used.has(x[0].toLowerCase()));
- if(!available.length)throw Error("Ya hemos debatido todas las preguntas de este Hot Point. Elige otro tema.");
+ const t=TOPICS[id];
+ const used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLocaleLowerCase("es")));
+ const easy=state?.audience==="teen_early"||state?.audience==="teen"||state?.audience==="mixed";
+ const source=(easy&&t.easy&&t.easy.length?t.easy:[...(t.easy||[]),...t.q]);
+ const available=source.filter(x=>!used.has(x[0].toLocaleLowerCase("es")));
+ if(!available.length)throw Error("Ya hemos debatido las preguntas preparadas de este Hot Point. Puedes elegir otra temática.");
  const item=available[rand(available.length)];
  if(rand(2)===0)return {question:item[0],a:item[1],b:item[2],twist:item[3]};
  return {question:item[0],a:item[2],b:item[1],twist:item[3]};
 }
+function choosePulseTopic(){
+ const done=new Set((questionCache||[]).filter(x=>x.kind==="pulse").map(x=>x.topic));
+ const fresh=Object.keys(TOPICS).filter(x=>!done.has(x));
+ const options=fresh.length?fresh:Object.keys(TOPICS);
+ return options[rand(options.length)];
+}
 async function nextQuestion(id){
  await execute(async()=>{
-  if(!roomId||!state||!state.host)throw Error("Solo el anfitrión puede abrir la ronda.");
-  if(["lobby","discussion","reveal"].indexOf(state.phase)<0)throw Error("La ronda actual sigue en votación.");
+  if(!roomId||!state||!state.can_act)throw Error("Ahora es el turno de otra persona.");
+  if(!["lobby","discussion"].includes(state.phase)||state.closing_open)throw Error("Esta ronda o la votación de cierre sigue abierta.");
+  if(state.stage==="pulse"){
+   if(Number(state.pulse_count)>=Number(state.pulse_goal))throw Error("El primer pulso ha terminado. Entrad al debate.");
+   id=choosePulseTopic();
+  }
+  if(!TOPICS[id])throw Error("Elige uno de los temas disponibles.");
   notice("DILEMA está preparando una pregunta diferente...");
   const prior=await rpc("politics_questions_used",{p_room:roomId});
   let p=null,mode="CATÁLOGO";
@@ -175,11 +190,11 @@ async function nextQuestion(id){
     result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
   }
   state=result;vote=null;angle=null;aura="ready";runFingerprint="";soloMessages=[];soloRound=null;
-  questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,question:p.question,A:p.a,B:p.b}]):[];
+  questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,kind:state.stage,question:p.question,A:p.a,B:p.b}]):[];
   questionCacheRoom=roomId;
   render();setTab("debate");
   requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
-  notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
+  notice((state.stage==="pulse"?"PRIMER PULSO · ":"")+ (mode==="IA"?"Pregunta de DILEMA. Todos votáis.":"Pregunta del catálogo. Todos votáis."));
  });
 }
 async function loadQuestionHistory(){
@@ -230,8 +245,8 @@ function renderHotpoints(){
  Object.entries(TOPICS).forEach(pair=>{
   const id=pair[0],t=pair[1],card=el("article","card");
   card.append(el("h3","",t.title),el("p","small muted",t.teaser));
-  const b=el("button","btn small","INICIAR OTRA RONDA");
-  if(!state||!state.host)b.disabled=true;
+  const b=el("button","btn small","DEBATIR ESTE TEMA");
+  if(!state||state.stage!=="debate"||!state.can_act||!["lobby","discussion"].includes(state.phase)||state.closing_open)b.disabled=true;
   b.onclick=()=>nextQuestion(id);
   card.append(b);root.append(card);
  });
@@ -245,7 +260,7 @@ function renderRoom(){
  $("roomCode").textContent=state.code;
  $("noobsRoomMeta").textContent="SALA "+state.code+" · "+state.count+"/"+state.expected+" PERSONAS";
  const phases={lobby:"SALA PREPARADA",voting:"VOTACIÓN",discussion:"DEBATE",reveal:"SIGLAS REVELADAS"};
- $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(phases[state.phase]||state.phase);
+ $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(state.stage==="pulse"?"PRIMER PULSO · ":"")+(phases[state.phase]||state.phase);
  const root=$("members");root.replaceChildren();
  (state.participants||[]).forEach((m,i)=>root.append(el("span","person",(state.phase==="discussion"&&i===state.turn?"🎤 ":"")+m.name+(m.host?" · ANFITRIÓN":""))));
 }
