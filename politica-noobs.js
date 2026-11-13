@@ -117,7 +117,8 @@ const EVIDENCE={
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
-let soloMessages=[],soloRound=null;
+let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
+const expandedHistory=new Set();
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
 function notice(s){$("notice").textContent=s||"";}
 async function auth(){
@@ -168,9 +169,48 @@ async function nextQuestion(id){
     p=chooseQuestion(id,prior);mode="CATÁLOGO";
     result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
   }
-  state=result;vote=null;angle=null;runFingerprint="";soloMessages=[];soloRound=null;
+  state=result;vote=null;angle=null;aura="ready";runFingerprint="";soloMessages=[];soloRound=null;
+  questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,question:p.question,A:p.a,B:p.b}]):[];
+  questionCacheRoom=roomId;
   render();setTab("debate");
   notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
+ });
+}
+async function loadQuestionHistory(){
+ if(!roomId)return;
+ const loadedRoom=roomId;
+ try{
+  const list=await rpc("politics_questions_used",{p_room:loadedRoom});
+  if(roomId!==loadedRoom)return;
+  questionCache=Array.isArray(list)?list:[];
+  questionCacheRoom=loadedRoom;
+ }catch(error){
+  console.warn("No se pudo recuperar el historial de preguntas",String(error&&error.message||error));
+ }
+}
+function renderQuestionHistory(){
+ const root=$("questionHistory");root.replaceChildren();
+ if(!state)return;
+ const entries=(questionCacheRoom===roomId?questionCache:[])
+  .filter(x=>Number(x.cycle)<Number(state.cycle))
+  .sort((a,b)=>Number(a.cycle)-Number(b.cycle));
+ const closed=state.history||[];
+ entries.forEach(q=>{
+  const n=Number(q.cycle),item=el("details","noobs-entry"),top=el("summary");
+  item.open=expandedHistory.has(n);
+  top.append(el("span","noobs-number",String(n)),el("span","noobs-summary",q.question),el("span","noobs-expand","›"));
+  item.append(top);
+  const body=el("div","noobs-entry-body");
+  body.append(el("p","","A · "+q.A),el("p","","B · "+q.B));
+  const row=closed.find(x=>Number(x.cycle)===n);
+  if(row){
+   const total=Number(row.A||0)+Number(row.B||0)+Number(row.N||0);
+   const pct=x=>total?Math.round(Number(row[x]||0)*100/total):0;
+   body.append(el("p","fine","RESULTADO · A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"));
+  }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
+  item.append(body);
+  item.addEventListener("toggle",()=>{if(item.open)expandedHistory.add(n);else expandedHistory.delete(n);});
+  root.append(item);
  });
 }
 function setTab(name){
@@ -190,6 +230,8 @@ function renderHotpoints(){
  });
 }
 function renderRoom(){
+ document.body.classList.toggle("noobs-in-room",!!state);
+ $("noobsGlobalNav").hidden=!state;
  $("roomSetup").hidden=!!state;
  $("roomInfo").hidden=!state;
  if(!state)return;
@@ -205,11 +247,28 @@ function renderDebate(){
  $("ballotBlock").hidden=phase!=="voting";
  $("discussionBlock").hidden=phase!=="discussion";
  $("revealBlock").hidden=phase!=="reveal";
- $("hostControls").hidden=!state||!state.host;
+ $("hostControls").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
+ $("revote").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
+ $("reveal").hidden=!state||!state.host||phase!=="discussion";
  $("another").hidden=!state||!state.host;
  $("nextTurn").hidden=!state||!state.host||Number(state.count)===1;
- $("soloDialogue").hidden=!(phase==="discussion"&&Number(state.count)===1);
- $("groupSummary").hidden=!(phase==="discussion"&&Number(state.count)>1&&state.host);
+ $("politicsTools").hidden=phase!=="discussion"||!state?.host;
+ $("soloComposer").hidden=!(phase==="discussion"&&Number(state?.count)===1);
+ $("soloDialogue").hidden=!(phase==="discussion"&&Number(state?.count)===1);
+ $("groupSummary").hidden=!(phase==="discussion"&&Number(state?.count)>1&&state.host);
+ const sharedAura=phase==="discussion"&&typeof state?.twist==="string"
+   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":
+     /^PUNTO CIEGO:/i.test(state.twist)?"blind":
+     /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
+ const currentAura=phase==="voting"?"vote":phase==="discussion"?(sharedAura||aura):"ready";
+ $("noobsShell").dataset.aura=currentAura;
+ const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
+ $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
+ $("liveQuestionTitle").hidden=!active||phase==="lobby"||phase==="voting";
+ if(active){
+  $("liveQuestionNumber").textContent=String(state.cycle);
+  $("liveQuestionText").textContent=state.question||"";
+ }
  if(phase==="discussion"&&Number(state.count)===1){
   if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
   renderSoloMessages();
@@ -282,20 +341,22 @@ function renderSoloMessages(){
  });
  $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=5;
 }
-function render(){renderRoom();renderHotpoints();renderDebate();renderMap();}
+function render(){renderRoom();renderHotpoints();renderQuestionHistory();renderDebate();renderMap();}
 async function refresh(){
  if(!roomId||working)return;
  try{
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
+  if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
   const fp=JSON.stringify([s.cycle,s.phase,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist]);
   if(fp!==runFingerprint){
-   runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;}render();
+   runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;aura="ready";}render();
   }
  }catch(e){notice("No se pudo actualizar la sala: "+String(e&&e.message||"error"));}
 }
 function leave(){
- roomId=null;state=null;session();history.replaceState(null,"",location.pathname);
+ roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";
+ session();history.replaceState(null,"",location.pathname);
  render();setTab("hotpoints");notice("Has salido. La sala seguirá hasta que el anfitrión la cierre.");
 }
 async function copy(s){
@@ -309,15 +370,16 @@ async function init(){
  }
  $("roomJoin").value=(new URLSearchParams(location.search).get("room")||"").toUpperCase().slice(0,10);
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+ document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
  $("create").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
   await auth();const r=await rpc("politics_new_room_safe",{p_name:$("alias").value.trim(),p_expected:Number($("participantsExpected").value),p_consent:true});
-  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});render();setTab("hotpoints");
+  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("hotpoints");
  });
  $("join").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
   await auth();const r=await rpc("politics_join_room_safe",{p_code:$("roomJoin").value.trim().toUpperCase(),p_name:$("alias").value.trim(),p_consent:true});
-  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});render();setTab("debate");
+  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");
  });
  $("share").onclick=()=>copy(location.origin+location.pathname+"?room="+encodeURIComponent(state&&state.code||""));
  $("refresh").onclick=refresh;
@@ -353,6 +415,8 @@ async function init(){
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
   if(!state||state.phase!=="discussion"||!state.host)return;
   const kind=b.dataset.giro;
+  aura=kind==="contra"?"counter":kind==="ciego"?"blind":"view";
+  $("noobsShell").dataset.aura=aura;
   notice("DILEMA está preparando una objeción para todo el grupo...");
   let question=null,mode="CATÁLOGO";
   try{
@@ -367,11 +431,11 @@ async function init(){
      kind==="ciego"?"¿Quién queda fuera de esta discusión y qué consecuencia soportaría?":
      "Si cambias una condición importante, ¿cuándo dejaría de convencerte la opción elegida?";
   }
-  state=await rpc("politics_set_pressure",{p_room:roomId,p_question:question});
+  const label=kind==="contra"?"CONTRADÍCEME":kind==="ciego"?"PUNTO CIEGO":"OTRA MIRADA";
+  state=await rpc("politics_set_pressure",{p_room:roomId,p_question:(label+": "+question).slice(0,400)});
   angle=null;runFingerprint="";render();
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
- $("revote").textContent="SIGUIENTE PREGUNTA · NUEVA VOTACIÓN";
  $("revote").onclick=()=>nextQuestion(state&&state.topic||"vivienda");
  $("reveal").onclick=()=>execute(async()=>{
   state=await rpc("politics_manage",{p_room:roomId,p_action:"reveal"});render();
@@ -388,7 +452,7 @@ async function init(){
  render();
  const existing=sessionStorage.getItem(KEY);
  if(existing&&/^[\da-f-]{36}$/i.test(existing)){
-  try{await auth();roomId=existing;state=await rpc("politics_state",{p_room:roomId});render();}
+  try{await auth();roomId=existing;state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");}
   catch{roomId=null;state=null;session();render();}
  }
  window.setInterval(refresh,4000);
