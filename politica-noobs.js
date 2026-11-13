@@ -396,6 +396,7 @@ function renderDebate(){
     document.querySelectorAll('input[name="speakerChoice"]').forEach(input=>{input.checked=false;});
    }
    $("nextTurn").disabled=!document.querySelector('input[name="speakerChoice"]:checked');
+   $("nextTurn").textContent=Number(state.answers_count)+1>=Number(state.answers_total)?"REGISTRAR MI RESPUESTA":"REGISTRAR Y PASAR TURNO";
    $("answerProgress").textContent=(state.answers_count||0)+" de "+(state.answers_total||state.count)+" respuestas registradas.";
    const order=$("answerOrder");order.replaceChildren();
    (state.answer_order||[]).forEach(item=>{
