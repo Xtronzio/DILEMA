@@ -142,6 +142,13 @@ body.noobs-fullscreen .noobs-shell{width:100%;height:100%;min-height:0;max-heigh
 body.noobs-fullscreen .noobs-header{flex-shrink:0;min-height:44px}
 body.noobs-fullscreen .noobs-status{flex-shrink:0;margin:6px 0 3px;font-size:11px}
 body.noobs-fullscreen .noobs-topic{flex-shrink:0;margin:0 0 5px;font-size:12px}
+.noobs-stage-subtitle{font-size:11px;color:#bfbfbf;font-weight:650;margin:0 0 4px}
+#pulseSummary{border-color:#d5b05a;background:#15120a}
+#pulseDivergences .result{padding:7px 0}
+#closingBlock{border-color:#ff9f43}
+#sentenceText{line-height:1.6;white-space:pre-wrap}
+#startDeepDebate{min-height:46px}
+body.noobs-fullscreen .noobs-stage-subtitle{flex-shrink:0}
 body.noobs-fullscreen #questionHistory{margin:5px 0 10px}
 body.noobs-fullscreen .noobs-bottom{position:relative;flex:0 0 auto;bottom:auto;max-height:min(45dvh,350px);overflow-y:auto;z-index:2;margin:0;padding:7px 0 0;background:#090909}
 body.noobs-fullscreen .noobs-tool{min-height:53px;padding:5px 3px}
@@ -216,8 +223,15 @@ body.noobs-fullscreen #notice:empty{display:none}
       </div>
     </div>
     <p id="dialogueStatus" class="noobs-status">DILEMA · TE ESCUCHO</p>
+    <p id="stageSubtitle" class="noobs-stage-subtitle"></p>
     <h2 id="phaseTitle" class="noobs-topic">Debate</h2>
     <div id="noobsScroll" class="noobs-scroll">
+    <div id="pulseSummary" class="box" hidden>
+      <h3>PRIMER PULSO DE LA MESA</h3>
+      <p id="pulseSummaryText" class="small muted"></p>
+      <div id="pulseDivergences"></div>
+      <p class="fine">Esto muestra diferencias de respuestas, no ideologías ni recomendaciones de voto.</p>
+    </div>
     <div id="questionHistory" class="noobs-history" aria-label="Preguntas anteriores"></div>
     <div id="activeRound" class="noobs-current" aria-live="polite">
       <div id="liveQuestionTitle" class="noobs-live-title" hidden>
@@ -257,8 +271,23 @@ body.noobs-fullscreen #notice:empty{display:none}
           <p id="moderatorQuestion"></p>
         </div>
       </div>
+      <div id="closingBlock" class="box" hidden>
+        <div class="eyebrow">LA MESA DECIDE</div>
+        <h3>¿CERRAMOS EL DEBATE?</h3>
+        <p class="small muted" id="closingStatus"></p>
+        <div class="actions" id="closingChoices">
+          <button type="button" class="btn primary" id="acceptClose">SÍ, TERMINAMOS</button>
+          <button type="button" class="btn" id="rejectClose">NO, SEGUIMOS</button>
+        </div>
+        <p class="fine">Cuando vote toda la mesa, una mayoría decidirá si se cierra. En caso de empate, se continúa.</p>
+      </div>
       <div id="revealBlock" hidden>
-        <div class="box"><div class="eyebrow">FINAL DEL HOT POINT</div>
+        <div class="box"><div class="eyebrow">DILEMA DICTA SENTENCIA</div>
+          <h2>LO QUE HA DICHO LA MESA</h2>
+          <div id="sentenceText" class="small"></div>
+          <button type="button" class="btn small" id="requestSentence">GENERAR SENTENCIA</button>
+        </div>
+        <div class="box"><div class="eyebrow">FUENTES DOCUMENTALES</div>
           <h2>AHORA, LAS SIGLAS</h2>
           <p class="small muted">Las siguientes posiciones proceden de documentos electorales identificados. No equivalen a una recomendación de voto.</p>
           <div id="partySources"></div>
@@ -276,9 +305,13 @@ body.noobs-fullscreen #notice:empty{display:none}
         <button type="button" class="noobs-tool tool-blind" data-giro="ciego"><span aria-hidden="true">◉</span>PUNTO CIEGO</button>
         <button type="button" class="noobs-tool tool-view" data-giro="otra"><span aria-hidden="true">✺</span>OTRA MIRADA</button>
       </div>
+      <div class="noobs-round-actions" id="pulseControls" hidden>
+        <button type="button" class="noobs-another" id="nextPulse"><span aria-hidden="true">⇢</span>OTRA PREGUNTA CON VOTO</button>
+        <button type="button" class="btn primary" id="startDeepDebate" hidden>ENTRAR AL DEBATE</button>
+      </div>
       <div class="noobs-round-actions" id="hostControls" hidden>
         <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
-        <button type="button" class="btn noobs-reveal" id="reveal">REVELAR SIGLAS</button>
+        <button type="button" class="btn noobs-reveal" id="reveal">PROPONER CIERRE</button>
       </div>
       <div id="soloComposer" class="noobs-composer" hidden>
         <label for="soloArgument" class="eyebrow">ESCRIBE A DILEMA</label>
