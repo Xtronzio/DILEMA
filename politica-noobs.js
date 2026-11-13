@@ -386,17 +386,56 @@ function renderDebate(){
 }
 function renderSources(){
  const root=$("partySources");root.replaceChildren();
- const refs=EVIDENCE[state.topic]||[];
- PARTIES.forEach(p=>{
-  const item=el("div","result"),e=refs.find(x=>x.p===p);
-  item.append(el("b","",p),el("div","label",e?e.type:"PROPUESTAS PENDIENTES DE VERIFICAR"));
-  item.append(el("p","",e?e.t:"Aún no hay documentos electorales de 2026 contrastados para este Hot Point. No se atribuye una posición."));
-  if(e){
-   if(e.page)item.append(el("div","fine","Páginas del documento: "+e.page));
-   const a=el("a","","CONSULTAR FUENTE OFICIAL");a.href=e.url;a.target="_blank";a.rel="noopener noreferrer";item.append(a);
-  }
-  root.append(item);
+ const topics=[...new Set((questionCache||[]).map(q=>q.topic).filter(x=>TOPICS[x]))];
+ if(!topics.length&&state?.topic)topics.push(state.topic);
+ topics.forEach(topic=>{
+  const section=el("details","noobs-entry"),head=el("summary");
+  head.append(el("span","noobs-summary",(TOPICS[topic]||{}).title||topic),el("span","noobs-expand","›"));
+  section.append(head);
+  const body=el("div","noobs-entry-body"),refs=EVIDENCE[topic]||[];
+  PARTIES.forEach(p=>{
+   const item=el("div","result"),source=refs.find(x=>x.p===p);
+   item.append(el("b","",p));
+   if(source){
+    item.append(el("div","label",source.type),el("p","",source.t));
+    if(source.page)item.append(el("div","fine","Páginas: "+source.page));
+    const link=el("a","","VER PROGRAMA OFICIAL");link.href=source.url;
+    link.target="_blank";link.rel="noopener noreferrer";item.append(link);
+   }else item.append(el("p","","Esta propuesta todavía no está documentada para este tema. No se presupone ninguna postura."));
+   body.append(item);
+  });
+  section.append(body);root.append(section);
  });
+}
+function sentenceFallback(){
+ const rounds=state?.history||[];
+ const pulse=rounds.filter(h=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(h.cycle))).length;
+ const debated=rounds.length-pulse;
+ const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
+ return {
+  summary:"La mesa ha votado "+rounds.length+" preguntas, de ellas "+pulse+
+   " del primer pulso y "+debated+" del debate. En "+divisions+
+   " votaciones hubo respuestas distintas entre A y B. Ese resultado no basta para saber qué piensa cada participante sobre todo el programa de un partido. Lo valioso son los argumentos que habéis puesto sobre la mesa.",
+  question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
+ };
+}
+async function requestSentence(){
+ if(!roomId||!state||state.phase!=="reveal"||!state.can_act||state.sentence||sentencePending||working)return;
+ sentencePending=true;
+ try{
+  const fallback=sentenceFallback();
+  let statement=fallback;
+  try{
+   const r=await sb.functions.invoke("politics-moderator",{body:{action:"sentence",room_id:roomId}});
+   if(r.error)throw r.error;
+   if(typeof r.data?.summary==="string"&&typeof r.data?.openQuestions==="string"){
+    statement={summary:r.data.summary,question:r.data.openQuestions};
+   }
+  }catch(e){console.warn("No se pudo generar sentencia IA",String(e?.message||e));}
+  state=await rpc("politics_save_sentence",{p_room:roomId,p_summary:statement.summary,p_question:statement.question});
+  render();
+ }catch(e){notice("No se pudo guardar la sentencia: "+String(e?.message||e));}
+ finally{sentencePending=false;}
 }
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
@@ -426,14 +465,14 @@ async function refresh(){
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
   if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
-  const fp=JSON.stringify([s.cycle,s.phase,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist]);
+  const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence]);
   if(fp!==runFingerprint){
    runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;aura="ready";}render();
   }
  }catch(e){notice("No se pudo actualizar la sala: "+String(e&&e.message||"error"));}
 }
 function leave(){
- roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";
+ roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";sentenceAttemptedCycle=null;
  document.body.classList.remove("noobs-fullscreen");
  session();history.replaceState(null,"",location.pathname);
  render();setTab("hotpoints");notice("Has salido. La sala seguirá hasta que el anfitrión la cierre.");
