@@ -64,38 +64,45 @@ const PARTIES=["PP","PSOE","Vox","Frente Amplio","Podemos","PNV","EH Bildu","SAL
 const PDF={
  PP:"https://www.pp.es/wp-content/uploads/2026/11/LA-RECONSTRUCCION-NACIONAL.pdf",
  Vox:"https://www.voxespana.es/wp-content/uploads/2026/11/Programa-completo-A5-1.pdf",
- PNV:"https://www.eaj-pnv.eus/es/adjuntos-documentos/21765/pdf/programa-electoral-29n"
+ PNV:"https://www.eaj-pnv.eus/es/adjuntos-documentos/21765/pdf/programa-electoral-29n",
+ SALF:"https://www.seacabolafiesta.com/SALF_Contrato_Electoral_29N.pdf?v=073425b9522d"
 };
 const EVIDENCE={
  vivienda:[
   {p:"PP",type:"Programa 29N 2026 · medidas 144–156",t:"Propone aumentar la construcción, agilizar licencias y facilitar la primera vivienda de los jóvenes mediante medidas fiscales y avales.",url:PDF.PP,page:"53–56"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 26–34",t:"Plantea ampliar suelo y vivienda protegida, derogar la Ley de Vivienda y establecer prioridad nacional en vivienda social y ayudas.",url:PDF.Vox,page:"23–25"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 1.1",t:"Propone facilitar nuevas viviendas, rehabilitar y movilizar viviendas vacías, y regular los alquileres temporales y turísticos.",url:PDF.PNV,page:"7–8"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 1.1",t:"Propone facilitar nuevas viviendas, rehabilitar y movilizar viviendas vacías, y regular los alquileres temporales y turísticos.",url:PDF.PNV,page:"7–8"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 1",t:"Promete eliminar la carga fiscal de la primera vivienda, simplificar licencias y facilitar financiación hipotecaria; los efectos de ahorro son afirmaciones del propio partido.",url:PDF.SALF,page:"4–6"}
  ],
  inmigracion:[
   {p:"PP",type:"Programa 29N 2026 · medida 35",t:"Propone una autoridad única para coordinar entrada, permanencia, retorno e integración y evaluar sus efectos.",url:PDF.PP,page:"21"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 9–17",t:"Plantea prohibir regularizaciones masivas, suprimir el arraigo y reforzar controles y repatriaciones.",url:PDF.Vox,page:"15–16"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 3.2",t:"Propone más competencias vascas en gestión migratoria, vías legales y ordenadas, acogida e integración laboral.",url:PDF.PNV,page:"24–25"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 3.2",t:"Propone más competencias vascas en gestión migratoria, vías legales y ordenadas, acogida e integración laboral.",url:PDF.PNV,page:"24–25"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 4",t:"Plantea limitar la inmigración a vías legales y agilizar expulsiones en los supuestos que describe.",url:PDF.SALF,page:"4"}
  ],
  sanidad:[
   {p:"PP",type:"Programa 29N 2026 · medidas 219–223",t:"Propone un plan de reducción de listas de espera, más personal de atención primaria, prevención y refuerzo de salud mental.",url:PDF.PP,page:"69–70"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 60–65",t:"Propone tarjeta sanitaria común, refuerzo de atención primaria y un plan nacional para reducir listas de espera.",url:PDF.Vox,page:"37–38"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 4.2",t:"Propone ajustar la formación de especialistas a las necesidades sanitarias y completar competencias sanitarias de Euskadi.",url:PDF.PNV,page:"31–32"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 4.2",t:"Propone ajustar la formación de especialistas a las necesidades sanitarias y completar competencias sanitarias de Euskadi.",url:PDF.PNV,page:"31–32"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 6",t:"Propone una central de compras sanitarias, reducir la espera quirúrgica y revisar remuneraciones profesionales.",url:PDF.SALF,page:"4"}
  ],
  educacion:[
   {p:"PP",type:"Programa 29N 2026 · medidas 209–218",t:"Propone refuerzo temprano en lectura y cálculo, apoyo a alumnado con dificultades y una revisión del marco educativo.",url:PDF.PP,page:"67–69"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 66–69",t:"Propone currículo y evaluaciones comunes, libertad de elección de centro, cambios legislativos y refuerzo de becas.",url:PDF.Vox,page:"41"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 1.4",t:"Defiende las competencias educativas de Euskadi y una educación inclusiva, plurilingüe e intercultural.",url:PDF.PNV,page:"10"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 1.4",t:"Defiende las competencias educativas de Euskadi y una educación inclusiva, plurilingüe e intercultural.",url:PDF.PNV,page:"10"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 9",t:"Propone una ley educativa de larga duración, garantías de escolarización en castellano y financiación vinculada al alumno.",url:PDF.SALF,page:"4"}
  ],
  impuestos:[
   {p:"PP",type:"Programa 29N 2026 · medidas 177–185",t:"Propone bajar el IRPF para rentas medias y bajas, actualizar mínimos personales y familiares y deflactar la tarifa.",url:PDF.PP,page:"61–62"},
   {p:"Vox",type:"Programa 29N 2026 · medida 2",t:"Propone simplificar y reducir el IRPF, bajar parte del IVA y cuotas de autónomos según ingresos.",url:PDF.Vox,page:"9–10"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 2.7",t:"Propone revisar el IVA de ciertos bienes esenciales y reforzar la autonomía fiscal y financiera de Euskadi.",url:PDF.PNV,page:"20–21"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 2.7",t:"Propone revisar el IVA de ciertos bienes esenciales y reforzar la autonomía fiscal y financiera de Euskadi.",url:PDF.PNV,page:"20–21"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 3",t:"Propone una exención de IRPF para los primeros 35.000 euros de renta.",url:PDF.SALF,page:"4"}
  ],
  empleo:[
   {p:"PP",type:"Programa 29N 2026 · medidas 170–174",t:"Propone incentivos para nuevos autónomos, beneficios a primeras contrataciones y menos cotización para empresas con estabilidad laboral.",url:PDF.PP,page:"59–60"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 2 y 8",t:"Plantea menores cargas fiscales a empresas y autónomos, incentivos a la innovación y una política de reindustrialización.",url:PDF.Vox,page:"9–12"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 1.3",t:"Defiende un salario mínimo propio en Euskadi, negociación colectiva y la protección del empleo estable.",url:PDF.PNV,page:"9"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 1.3",t:"Defiende un salario mínimo propio en Euskadi, negociación colectiva y la protección del empleo estable.",url:PDF.PNV,page:"9"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 8",t:"Plantea reducir cargas laborales, un contrato único con mochila y eliminar la cuota de autónomos.",url:PDF.SALF,page:"4"}
  ],
  medioambiente:[
   {p:"PP",type:"Programa 29N 2026 · medida 228",t:"Propone revisar el calendario de cierre nuclear y combinar nuclear, renovables, almacenamiento y respaldo eléctrico.",url:PDF.PP,page:"71"},
@@ -104,7 +111,8 @@ const EVIDENCE={
  ],
  seguridad:[
   {p:"Vox",type:"Programa 29N 2026 · medidas 79–91",t:"Propone aumentar recursos policiales y de defensa, endurecer ciertas respuestas penales y reforzar ciberseguridad.",url:PDF.Vox,page:"45–47"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 3.1",t:"Plantea más capacidad operativa para la Ertzaintza, cooperación policial europea y medidas contra la multirreincidencia.",url:PDF.PNV,page:"23–24"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 3.1",t:"Plantea más capacidad operativa para la Ertzaintza, cooperación policial europea y medidas contra la multirreincidencia.",url:PDF.PNV,page:"23–24"},
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"}
  ]
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
