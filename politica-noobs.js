@@ -119,8 +119,13 @@ const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
 let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
 const expandedHistory=new Set();
+let noticeTimer=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
-function notice(s){$("notice").textContent=s||"";}
+function notice(message){
+ const note=$("notice");note.textContent=message||"";
+ if(noticeTimer)clearTimeout(noticeTimer);
+ if(message)noticeTimer=setTimeout(()=>{if(note.textContent===message)note.textContent="";},4800);
+}
 async function auth(){
  const current=await sb.auth.getUser();
  if(current.data&&current.data.user)return current.data.user;
@@ -173,6 +178,7 @@ async function nextQuestion(id){
   questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,question:p.question,A:p.a,B:p.b}]):[];
   questionCacheRoom=roomId;
   render();setTab("debate");
+  requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
   notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
  });
 }
@@ -216,6 +222,7 @@ function renderQuestionHistory(){
 function setTab(name){
  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===name)));
  ["hotpoints","debate","mapa"].forEach(x=>$(x).hidden=x!==name);
+ document.body.classList.toggle("noobs-fullscreen",!!state&&name==="debate");
  if(name==="mapa")renderMap();
 }
 function renderHotpoints(){
@@ -236,6 +243,7 @@ function renderRoom(){
  $("roomInfo").hidden=!state;
  if(!state)return;
  $("roomCode").textContent=state.code;
+ $("noobsRoomMeta").textContent="SALA "+state.code+" · "+state.count+"/"+state.expected+" PERSONAS";
  const phases={lobby:"SALA PREPARADA",voting:"VOTACIÓN",discussion:"DEBATE",reveal:"SIGLAS REVELADAS"};
  $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(phases[state.phase]||state.phase);
  const root=$("members");root.replaceChildren();
@@ -356,6 +364,7 @@ async function refresh(){
 }
 function leave(){
  roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";
+ document.body.classList.remove("noobs-fullscreen");
  session();history.replaceState(null,"",location.pathname);
  render();setTab("hotpoints");notice("Has salido. La sala seguirá hasta que el anfitrión la cierre.");
 }
@@ -369,11 +378,27 @@ async function init(){
   $("participantsExpected").append(opt);
  }
  $("roomJoin").value=(new URLSearchParams(location.search).get("room")||"").toUpperCase().slice(0,10);
+ function updateAgeHint(){
+  const count=Number($("participantsExpected").value)||1;
+  $("ageHint").textContent=(count===1?
+    "Indica tu edad en años. Ejemplo: 14.":
+    "Indica "+count+" edades separadas por comas. Ejemplo: 13, 15, 45, 48.")+
+    " Solo sirven para adaptar el lenguaje; no se guardan individualmente.";
+  $("ageList").placeholder=count===1?"14":count===2?"13, 45":count===4?"13, 15, 45, 48":"Una edad por participante";
+ }
+ $("participantsExpected").addEventListener("change",updateAgeHint);
+ updateAgeHint();
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
  $("create").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
-  await auth();const r=await rpc("politics_new_room_safe",{p_name:$("alias").value.trim(),p_expected:Number($("participantsExpected").value),p_consent:true});
+  const expected=Number($("participantsExpected").value);
+  const typed=$("ageList").value.trim();
+  const ages=typed.split(/[;,\s]+/).filter(Boolean).map(Number);
+  if(ages.length!==expected||!ages.every(x=>Number.isInteger(x)&&x>=12&&x<=100)){
+    throw Error("Indica "+expected+" edad"+(expected===1?"":"es")+" (entre 12 y 100 años), separadas por comas.");
+  }
+  await auth();const r=await rpc("politics_new_room_ages",{p_name:$("alias").value.trim(),p_expected:expected,p_consent:true,p_ages:ages});
   roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("hotpoints");
  });
  $("join").onclick=()=>execute(async()=>{
