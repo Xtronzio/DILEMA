@@ -256,7 +256,11 @@ function renderDebate(){
  $("soloComposer").hidden=!(phase==="discussion"&&Number(state?.count)===1);
  $("soloDialogue").hidden=!(phase==="discussion"&&Number(state?.count)===1);
  $("groupSummary").hidden=!(phase==="discussion"&&Number(state?.count)>1&&state.host);
- const currentAura=phase==="voting"?"vote":phase==="discussion"?aura:"ready";
+ const sharedAura=phase==="discussion"&&typeof state?.twist==="string"
+   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":
+     /^PUNTO CIEGO:/i.test(state.twist)?"blind":
+     /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
+ const currentAura=phase==="voting"?"vote":phase==="discussion"?(sharedAura||aura):"ready";
  $("noobsShell").dataset.aura=currentAura;
  const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
  $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
@@ -427,7 +431,8 @@ async function init(){
      kind==="ciego"?"¿Quién queda fuera de esta discusión y qué consecuencia soportaría?":
      "Si cambias una condición importante, ¿cuándo dejaría de convencerte la opción elegida?";
   }
-  state=await rpc("politics_set_pressure",{p_room:roomId,p_question:question});
+  const label=kind==="contra"?"CONTRADÍCEME":kind==="ciego"?"PUNTO CIEGO":"OTRA MIRADA";
+  state=await rpc("politics_set_pressure",{p_room:roomId,p_question:(label+": "+question).slice(0,400)});
   angle=null;runFingerprint="";render();
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
