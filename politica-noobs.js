@@ -60,6 +60,8 @@ const TOPICS={
   ["La tecnología puede ayudar a investigar delitos. ¿Qué priorizarías?","Más límites a vigilancia y datos personales.","Nuevas herramientas con control judicial.","¿Qué controles aceptarías sobre la privacidad?"]
  ]}
 };
+const EASY_BANK={"vivienda":[["¿Qué harías si una familia no puede pagar el alquiler?","Poner un límite a las subidas.","Ayudar a que haya más pisos para alquilar.","¿Qué harías mientras llegan los pisos nuevos?"],["Un pueblo tiene terreno libre. ¿Para qué lo usarías?","Para pisos públicos baratos.","Para viviendas que construyan empresas privadas.","¿Quién debería fijar los precios?"],["Muchos jóvenes trabajan pero no pueden irse de casa. ¿Qué ayuda darías?","Ayuda para pagar el alquiler.","Más pisos de alquiler barato.","¿Quién podría pedirla?"],["Hay muchas casas vacías. ¿Cómo animarías a alquilarlas?","Poner una obligación en ciertos casos.","Dar ventajas a quien las alquile.","¿Qué harías con una casa heredada que alguien quiere conservar?"],["Los pisos turísticos ocupan un barrio. ¿Qué harías?","Limitar los pisos para turistas.","Construir más casas para todos.","¿Cómo afectaría a la gente que trabaja en turismo?"],["Solo puedes ayudar a un grupo a conseguir vivienda. ¿A quién?","A las familias con menos dinero.","A quienes quieren irse de casa por primera vez.","¿Y si dos personas necesitan la misma ayuda?"],["Una persona quiere comprar piso, pero no tiene ahorros. ¿Qué apoyo darías?","Ayudar con el dinero de la entrada.","Facilitar un alquiler más barato.","¿Qué pasa si sube el precio de los pisos?"],["El barrio necesita viviendas. ¿Dónde construirías?","Cerca del centro y los colegios.","Más lejos, donde hay más espacio.","¿Qué harías con el transporte público?"],["Un piso nuevo cuesta mucho. ¿Qué harías?","Reducir algunos impuestos de compra.","Reservar pisos a precio más bajo.","¿Cómo sabrías que el precio realmente bajó?"],["Una familia teme perder su casa y el dueño teme un impago. ¿A quién ayudarías primero?","A la familia para que no se quede en la calle.","Al dueño para que no pierda el dinero.","¿Cómo protegerías a ambas partes?"],["Hay edificios viejos que podrían arreglarse. ¿Qué harías?","Dar dinero para convertirlos en viviendas.","Construir pisos nuevos en otros lugares.","¿Cuál se podría terminar antes?"],["Un amigo tiene piso alquilado, pero le quieren subir mucho la renta. ¿Qué harías?","Limitar esa subida.","Permitir que el dueño fije el precio.","¿Y si tiene que marcharse del barrio?"]],"inmigracion":[["En tu ciudad llegan nuevas familias. ¿Qué ayudaría más?","Clases de idioma y apoyo para empezar.","Más plazas en colegios y centros de salud.","¿Se pueden hacer ambas cosas?"],["Una empresa necesita trabajadores. ¿Qué facilitarías?","Conseguir permisos de trabajo legales más rápido.","Formar a la gente que ya busca empleo aquí.","¿Cómo evitarías trabajos injustos?"],["Una persona llega sin todos sus documentos. ¿Qué harías primero?","Escuchar y estudiar su caso.","Comprobar sus datos cuanto antes.","¿Cómo hacerlo rápido y de forma justa?"],["Hay personas que trabajan sin contrato. ¿Qué medida probarías?","Ayudarlas a conseguir un contrato legal.","Vigilar más a las empresas que incumplen la ley.","¿Cómo protegerías a los trabajadores?"],["En un barrio hay personas de muchos países. ¿Qué ayudaría más a convivir?","Actividades para conocerse.","Reglas claras que todos conozcan.","¿Qué harías si alguien se siente excluido?"],["Un niño llega al colegio sin conocer el idioma. ¿Qué harías?","Darle ayuda en su clase normal.","Darle clases de apoyo durante un tiempo.","¿Cómo evitarías que se quede solo?"],["Hay pocas ayudas de vivienda. ¿Cómo elegirías a quién ayudar?","Según la necesidad de cada familia.","También según cuánto tiempo lleve viviendo aquí.","¿Qué harías con una familia recién llegada que necesita ayuda urgente?"],["Una familia solicita protección porque teme volver a su país. ¿Qué priorizas?","Estudiar bien su historia.","Resolver su solicitud más rápido.","¿Qué pasaría si la decisión fuese equivocada?"],["Una oficina tarda meses en responder solicitudes. ¿Qué harías?","Contratar más personal.","Hacer trámites más sencillos.","¿Qué controles no quitarías?"],["Un rumor sobre extranjeros se hace viral. ¿Qué harías?","Publicar datos claros para comprobarlo.","Organizar un encuentro para escuchar a los vecinos.","¿Cómo diferenciarías un dato de una opinión?"],["Un pueblo pierde población. ¿Qué opción apoyarías?","Facilitar que nuevas familias se instalen.","Ofrecer primero ayudas a quienes ya viven allí.","¿Qué haría que el pueblo siguiera vivo dentro de diez años?"],["Hay un problema de convivencia entre vecinos. ¿Qué priorizarías?","Ayudarles a llegar a acuerdos.","Aplicar las normas comunes con claridad.","¿Qué harías si no consiguen entenderse?"]],"sanidad":[["Tienes que reducir las esperas del médico. ¿Qué harías primero?","Contratar más profesionales.","Organizar mejor las citas.","¿Qué harías si no hay suficientes médicos?"],["¿Dónde gastarías dinero para mejorar la salud?","En centros de salud cerca de casa.","En hospitales más preparados.","¿Qué pacientes necesitan más cada opción?"],["Un pueblo se queda sin médico algunos días. ¿Qué harías?","Dar ventajas a médicos que vayan allí.","Usar consultas a distancia cuando sirva.","¿Cuándo es necesario ir en persona?"],["¿Qué ayudaría a evitar enfermedades?","Enseñar hábitos saludables.","Ofrecer más revisiones médicas.","¿Cómo sabrías cuál tiene más efecto?"],["En urgencias hay mucha gente. ¿Qué cambiarías?","Abrir más lugares de atención.","Organizar mejor quién necesita urgencias.","¿Cómo evitarías que alguien grave espere demasiado?"],["Solo puedes mejorar una cosa. ¿Cuál?","Que el médico tenga más tiempo para atenderte.","Que haya pruebas más rápidas.","¿Qué se necesita para tratar bien a una persona?"],["Un adolescente necesita apoyo psicológico. ¿Qué priorizarías?","Más psicólogos disponibles.","Más prevención y apoyo en el instituto.","¿Qué harías si necesita ayuda hoy?"],["Un hospital compra máquinas caras. ¿Qué pedirías?","Que sean muy modernas.","Que se usen mucho y ayuden de verdad.","¿Cómo medirías si ha valido la pena?"],["Una persona mayor vive sola. ¿Qué ayuda darías?","Más cuidados en casa.","Más centros donde pasar el día y recibir ayuda.","¿Qué preferiría ella?"],["Hay una operación que no puede esperar. ¿Cómo darías prioridad?","Según la gravedad del problema.","Teniendo en cuenta cuánto lleva esperando.","¿Qué harías si una persona empeora de repente?"],["En un colegio hay muchos resfriados. ¿Qué harías?","Dar más información para prevenirlos.","Mejorar limpieza y ventilación.","¿Cómo evitarías gastar sin obtener resultados?"],["Para atender bien en las islas o montañas, ¿qué harías?","Mantener centros pequeños cerca.","Mejorar el transporte a hospitales grandes.","¿Qué harías con personas sin coche?"]],"educacion":[["En clase unos van muy rápido y otros necesitan ayuda. ¿Qué harías?","Dar apoyo a quien lo necesita.","Pedir que todos lleguen a los mismos conocimientos.","¿Cómo harías compatibles ambas ideas?"],["Un colegio recibe dinero extra. ¿En qué lo gastarías?","En más profesores.","En material y formación para enseñar mejor.","¿Cómo sabrías si mejoran las notas?"],["¿Qué debe contar más en una nota?","El esfuerzo y la mejora.","Lo que se sabe demostrar.","¿Cómo harías una evaluación justa?"],["Un alumno no tiene ordenador en casa. ¿Qué ayuda darías?","Prestarle un dispositivo.","Abrir espacios para estudiar con ordenadores.","¿Qué necesita fuera del horario de clase?"],["En el instituto hay acoso. ¿Qué harías primero?","Más vigilancia y respuesta rápida.","Más actividades para mejorar la convivencia.","¿Qué harías con una víctima que necesita ayuda inmediata?"],["¿Qué debería enseñarse más en clase?","Ciencias, historia y lengua.","Cosas prácticas para la vida diaria.","¿Qué harías si no cabe todo en el horario?"],["Una familia quiere elegir colegio. ¿Qué es más importante?","Que pueda escoger entre varios centros.","Que todos los centros del barrio sean buenos.","¿Qué pasaría en un pueblo con un solo colegio?"],["¿Cómo ayudarías a un alumno que lo pasa mal?","Con apoyo dentro de su clase.","Con clases pequeñas de refuerzo.","¿Cómo escucharías lo que necesita?"],["Los deberes ocupan toda la tarde. ¿Qué harías?","Reducirlos.","Mantener tareas cortas para practicar.","¿Cómo comprobarías que ayudan a aprender?"],["Un instituto tiene muchos suspensos. ¿Qué harías?","Dar más ayuda a los alumnos.","Revisar cómo se enseña y se evalúa.","¿Y si el problema viene de varias cosas?"],["Un alumno aprende mejor haciendo proyectos. ¿Qué debería contar más?","Proyectos y trabajos.","Exámenes comunes para todos.","¿Cómo evaluarías conocimientos importantes?"],["Un colegio necesita reformas y nuevos libros. ¿Qué elegirías?","Arreglar el edificio primero.","Comprar libros y materiales.","¿Qué pasa si alguna obra es urgente?"]],"impuestos":[["El Estado recibe más dinero del esperado. ¿Qué harías?","Bajar algunos impuestos.","Mejorar servicios públicos.","¿Qué pasaría si el año siguiente entra menos dinero?"],["Una persona gana mucho más que otra. ¿Cómo deberían pagar impuestos?","Quien gana más debería aportar una parte mayor.","Debería haber reglas parecidas para todos.","¿Qué entiendes por un reparto justo?"],["El autobús es muy caro. ¿Qué harías?","Bajar el billete con dinero público.","Mantener el precio y poner más líneas.","¿Qué opción usarían más vecinos?"],["Hace falta un centro de salud nuevo. ¿Cómo lo pagarías?","Cobrar más impuestos a quien más gana.","Recortar otros gastos para ahorrar.","¿Qué otros servicios protegerías?"],["Tu ciudad tiene una deuda grande. ¿Qué harías?","Pagarla antes de gastar más.","Invertir en problemas urgentes ahora.","¿Cuándo conviene pedir dinero prestado?"],["Una tienda pequeña paga muchos gastos. ¿Cómo la ayudarías?","Reducir algunos impuestos.","Dar ayudas para modernizarla.","¿Cómo comprobarías que ayuda a crear empleo?"],["Hay que mejorar las carreteras. ¿Quién debería pagar más?","Las personas que más las usan.","Todas las personas con impuestos generales.","¿Cómo atenderías a quien no puede pagar?"],["Los libros escolares cuestan mucho. ¿Qué harías?","Ponerlos gratis para todos.","Ayudar solo a quienes los necesitan.","¿Cuál sale más caro y a quién beneficia?"],["Hay dinero para dos proyectos, pero solo puedes pagar uno. ¿Qué priorizarías?","Un parque que use todo el barrio.","Arreglar calles en mal estado.","¿Quién se vería más afectado por esperar?"],["¿Qué prefieres para ayudar a una familia?","Que pague menos impuestos.","Que reciba mejores servicios gratis.","¿Qué tendría más valor para familias distintas?"],["El gobierno debe explicar en qué gasta el dinero. ¿Cómo?","Publicando facturas y cifras fáciles de entender.","Dejando que vecinos revisen y opinen sobre gastos.","¿Cómo descubrirías si algo se está gastando mal?"],["Una empresa muy grande gana mucho dinero. ¿Qué priorizas?","Pedirle una mayor aportación de impuestos.","Facilitar que invierta y contrate a más personas.","¿Cómo comprobarías que cumple lo prometido?"]],"empleo":[["Una persona trabaja mucho y gana poco. ¿Qué harías?","Mejorar su salario mínimo.","Ayudar a las empresas a contratar más gente.","¿Qué pasaría con una tienda pequeña?"],["Un joven busca su primer empleo. ¿Qué le ayudaría?","Ayudas a las empresas que le contraten.","Más formación práctica con sueldo.","¿Cómo evitarías trabajos de mentira?"],["Alguien cambia de empleo cada tres meses. ¿Qué mejorarías?","Más contratos estables.","Más formación para encontrar un trabajo mejor.","¿Qué harías con empleos solo de verano?"],["Una fábrica quiere abrir cerca de tu pueblo. ¿Qué priorizas?","Que dé empleos con buenas condiciones.","Que pueda abrir sin demasiados papeleos.","¿Qué normas no deberían saltarse?"],["Una persona quiere montar una tienda. ¿Qué ayudaría más?","Menos impuestos al empezar.","Un préstamo barato y consejos para vender.","¿Qué harías si el negocio no funciona?"],["Una empresa usa robots para trabajar más rápido. ¿Qué harías?","Ayudar a que los trabajadores aprendan nuevas tareas.","Dar libertad a la empresa para cambiar su forma de trabajar.","¿Qué pasaría con quienes pierdan su empleo?"],["Dos personas hacen el mismo trabajo y cobran distinto. ¿Qué harías?","Pedir una explicación y reglas más claras.","Dejar que se negocie el sueldo por separado.","¿Qué diferencias justificarían distintos salarios?"],["Una tienda necesita abrir los domingos. ¿Qué harías?","Proteger los descansos del personal.","Permitir más flexibilidad para elegir horarios.","¿Cómo asegurarías que nadie se sienta obligado?"],["En tu ciudad faltan trabajadores de un oficio. ¿Qué ayudas darías?","Más formación en ese oficio.","Mejores condiciones para atraer trabajadores.","¿Qué haría más atractivo el puesto?"],["Un compañero no consigue empleo por falta de experiencia. ¿Qué harías?","Crear puestos para principiantes con ayuda.","Dar formación con prácticas reales.","¿Cómo pagarías por ese periodo de aprendizaje?"],["Una persona pierde su empleo. ¿Qué necesita primero?","Dinero mientras encuentra otro.","Ayuda rápida para aprender y buscar.","¿Qué harías si tarda mucho en encontrar trabajo?"],["Un empleo contamina mucho, pero da trabajo a familias. ¿Qué harías?","Invertir para cambiar la fábrica.","Dar más tiempo a la empresa para adaptarse.","¿Qué garantías pedirías para proteger a todos?"]],"medioambiente":[["Tu ciudad quiere contaminar menos. ¿Qué harías?","Mejorar autobuses y trenes.","Ayudar a cambiar coches viejos.","¿Qué harías con los vecinos de pueblos lejanos?"],["Una fábrica contamina y da mucho empleo. ¿Qué harías?","Pedir cambios rápidos para contaminar menos.","Dar más tiempo para que cambie sin cerrar.","¿Quién pagaría las mejoras?"],["Hay que construir más energía. ¿Qué elegirías?","Más placas solares y molinos de viento.","Mejorar el almacenamiento y la red eléctrica.","¿Qué pasa cuando no hace viento ni sol?"],["Para ahorrar energía en las casas, ¿qué harías?","Dar ayudas para aislar ventanas y tejados.","Bajar el precio de aparatos que gastan menos.","¿Qué harías con familias que viven de alquiler?"],["Un pueblo discute dónde poner un parque eólico. ¿Qué harías?","Construirlo aunque cambie el paisaje.","Buscar otro lugar aunque cueste más.","¿Cómo escucharías a quienes viven allí?"],["¿Qué harías con envases de usar y tirar?","Cobrar más por los que contaminan.","Dar ayudas a tiendas que reutilicen envases.","¿Qué opción sería más cómoda para las familias?"],["Hay una sequía. ¿Qué priorizarías?","Limitar el consumo de agua.","Invertir en nuevas formas de conseguir agua.","¿Qué usos del agua protegerías primero?"],["Una ciudad quiere tener menos coches en el centro. ¿Qué harías?","Crear calles para caminar y bicicletas.","Mantener más espacio para aparcar.","¿Cómo llegarían al centro las personas mayores?"],["Se necesita electricidad barata. ¿Qué harías?","Invertir en formas de producir más energía.","Ayudar a las familias a pagar la factura.","¿Qué medida duraría más tiempo?"],["Un bosque se incendia muchas veces. ¿Qué priorizas?","Más prevención y cuidado del monte.","Más equipos para apagar incendios.","¿Qué harías si el dinero no llega para todo?"],["Una playa se llena de basura. ¿Qué harías?","Poner multas por tirar basura.","Más papeleras, limpieza e información.","¿Cómo evitarías que el problema vuelva?"],["Hay que construir una carretera por una zona natural. ¿Qué harías?","Buscar otro recorrido para protegerla.","Seguir el recorrido si mejora mucho el transporte.","¿Qué datos te ayudarían a decidir?"]],"seguridad":[["Hay más robos en un barrio. ¿Qué harías?","Invertir en prevención y apoyo a jóvenes.","Poner más policías en la calle.","¿Qué harías para ayudar a las víctimas hoy?"],["Una persona cumple condena. ¿Qué debería pasar al salir?","Recibir ayuda para no volver a delinquir.","Tener más seguimiento y controles.","¿Cómo sabrías si la medida funciona?"],["Alguien roba algo pequeño varias veces. ¿Qué respuesta ayudaría?","Obligarle a reparar el daño y recibir apoyo.","Aplicar castigos más duros a las repeticiones.","¿Cómo protegerías a las personas afectadas?"],["Se investiga un delito con cámaras. ¿Qué es importante?","Limitar mucho cómo se usan las imágenes.","Permitir su uso con controles claros.","¿Cuándo se deberían borrar las grabaciones?"],["Hay amenazas en las redes sociales. ¿Qué harías?","Enseñar a prevenirlas y pedir ayuda.","Investigar y castigar con rapidez los casos graves.","¿Cómo evitarías acusaciones falsas?"],["Un juicio tarda años. ¿Qué harías?","Poner más personas en los juzgados.","Simplificar los trámites.","¿Qué garantías no deberían recortarse?"],["Dos vecinos discuten y quieren denunciarse. ¿Qué harías?","Intentar primero una mediación.","Dejar que un juez resuelva.","¿Cuándo no sería segura la mediación?"],["Una persona denuncia violencia. ¿Qué priorizarías?","Protegerla cuanto antes.","Investigar bien los hechos con todas las garantías.","¿Cómo conseguirías ambas cosas?"],["Un colegio sufre acoso. ¿Qué harías primero?","Dar protección y apoyo a quien lo sufre.","Aplicar medidas claras a quien acosa.","¿Qué ayuda necesitarían después?"],["Un pueblo no tiene comisaría cerca. ¿Qué harías?","Más agentes que se desplacen por la zona.","Mejores servicios digitales para denunciar.","¿Qué pasa con una urgencia?"],["Para reducir accidentes, ¿qué medida probarías?","Más controles de velocidad.","Mejorar calles y carreteras peligrosas.","¿Cómo sabrías cuál salva más vidas?"],["Una persona fue condenada injustamente. ¿Qué mejorarías?","Más controles para evitar errores antes del juicio.","Procesos más sencillos para revisar condenas.","¿Cómo repararías el daño causado?"]]};
+for(const [topic,questions] of Object.entries(EASY_BANK)){if(TOPICS[topic])TOPICS[topic].easy=questions;}
 const PARTIES=["PP","PSOE","Vox","Frente Amplio","Podemos","PNV","EH Bildu","SALF","PCTE"];
 const PDF={
  PP:"https://www.pp.es/wp-content/uploads/2026/11/LA-RECONSTRUCCION-NACIONAL.pdf",
@@ -118,9 +120,15 @@ const EVIDENCE={
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
 let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
+let sentencePending=false,sentenceAttemptedCycle=null;
 const expandedHistory=new Set();
+let noticeTimer=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
-function notice(s){$("notice").textContent=s||"";}
+function notice(message){
+ const note=$("notice");note.textContent=message||"";
+ if(noticeTimer)clearTimeout(noticeTimer);
+ if(message)noticeTimer=setTimeout(()=>{if(note.textContent===message)note.textContent="";},4800);
+}
 async function auth(){
  const current=await sb.auth.getUser();
  if(current.data&&current.data.user)return current.data.user;
@@ -137,17 +145,31 @@ async function execute(fn){
 }
 function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
 function chooseQuestion(id,prior){
- const t=TOPICS[id],used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLowerCase()));
- const available=t.q.filter(x=>!used.has(x[0].toLowerCase()));
- if(!available.length)throw Error("Ya hemos debatido todas las preguntas de este Hot Point. Elige otro tema.");
+ const t=TOPICS[id];
+ const used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLocaleLowerCase("es")));
+ const easy=state?.audience==="teen_early"||state?.audience==="teen"||state?.audience==="mixed";
+ const source=(easy&&t.easy&&t.easy.length?t.easy:[...(t.easy||[]),...t.q]);
+ const available=source.filter(x=>!used.has(x[0].toLocaleLowerCase("es")));
+ if(!available.length)throw Error("Ya hemos debatido las preguntas preparadas de este Hot Point. Puedes elegir otra temática.");
  const item=available[rand(available.length)];
  if(rand(2)===0)return {question:item[0],a:item[1],b:item[2],twist:item[3]};
  return {question:item[0],a:item[2],b:item[1],twist:item[3]};
 }
+function choosePulseTopic(){
+ const done=new Set((questionCache||[]).filter(x=>x.kind==="pulse").map(x=>x.topic));
+ const fresh=Object.keys(TOPICS).filter(x=>!done.has(x));
+ const options=fresh.length?fresh:Object.keys(TOPICS);
+ return options[rand(options.length)];
+}
 async function nextQuestion(id){
  await execute(async()=>{
-  if(!roomId||!state||!state.host)throw Error("Solo el anfitrión puede abrir la ronda.");
-  if(["lobby","discussion","reveal"].indexOf(state.phase)<0)throw Error("La ronda actual sigue en votación.");
+  if(!roomId||!state||!state.can_act)throw Error("Ahora es el turno de otra persona.");
+  if(!["lobby","discussion"].includes(state.phase)||state.closing_open)throw Error("Esta ronda o la votación de cierre sigue abierta.");
+  if(state.stage==="pulse"){
+   if(Number(state.pulse_count)>=Number(state.pulse_goal))throw Error("El primer pulso ha terminado. Entrad al debate.");
+   id=choosePulseTopic();
+  }
+  if(!TOPICS[id])throw Error("Elige uno de los temas disponibles.");
   notice("DILEMA está preparando una pregunta diferente...");
   const prior=await rpc("politics_questions_used",{p_room:roomId});
   let p=null,mode="CATÁLOGO";
@@ -170,10 +192,11 @@ async function nextQuestion(id){
     result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
   }
   state=result;vote=null;angle=null;aura="ready";runFingerprint="";soloMessages=[];soloRound=null;
-  questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,question:p.question,A:p.a,B:p.b}]):[];
+  questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,kind:state.stage,question:p.question,A:p.a,B:p.b}]):[];
   questionCacheRoom=roomId;
   render();setTab("debate");
-  notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
+  requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
+  notice((state.stage==="pulse"?"PRIMER PULSO · ":"")+ (mode==="IA"?"Pregunta de DILEMA. Todos votáis.":"Pregunta del catálogo. Todos votáis."));
  });
 }
 async function loadQuestionHistory(){
@@ -216,6 +239,7 @@ function renderQuestionHistory(){
 function setTab(name){
  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===name)));
  ["hotpoints","debate","mapa"].forEach(x=>$(x).hidden=x!==name);
+ document.body.classList.toggle("noobs-fullscreen",!!state&&name==="debate");
  if(name==="mapa")renderMap();
 }
 function renderHotpoints(){
@@ -223,8 +247,8 @@ function renderHotpoints(){
  Object.entries(TOPICS).forEach(pair=>{
   const id=pair[0],t=pair[1],card=el("article","card");
   card.append(el("h3","",t.title),el("p","small muted",t.teaser));
-  const b=el("button","btn small","INICIAR OTRA RONDA");
-  if(!state||!state.host)b.disabled=true;
+  const b=el("button","btn small","DEBATIR ESTE TEMA");
+  if(!state||state.stage!=="debate"||!state.can_act||!["lobby","discussion"].includes(state.phase)||state.closing_open)b.disabled=true;
   b.onclick=()=>nextQuestion(id);
   card.append(b);root.append(card);
  });
@@ -236,89 +260,187 @@ function renderRoom(){
  $("roomInfo").hidden=!state;
  if(!state)return;
  $("roomCode").textContent=state.code;
+ $("noobsRoomMeta").textContent="SALA "+state.code+" · "+state.count+"/"+state.expected+" PERSONAS";
  const phases={lobby:"SALA PREPARADA",voting:"VOTACIÓN",discussion:"DEBATE",reveal:"SIGLAS REVELADAS"};
- $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(phases[state.phase]||state.phase);
+ $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(state.stage==="pulse"?"PRIMER PULSO · ":"")+(phases[state.phase]||state.phase);
  const root=$("members");root.replaceChildren();
  (state.participants||[]).forEach((m,i)=>root.append(el("span","person",(state.phase==="discussion"&&i===state.turn?"🎤 ":"")+m.name+(m.host?" · ANFITRIÓN":""))));
 }
+function renderPulseSummary(){
+ const isReady=!!state&&state.stage==="debate";
+ $("pulseSummary").hidden=!isReady;
+ const records=state?.history||[];
+ const pulse=records.filter(x=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(x.cycle)));
+ $("pulseSummaryText").textContent=pulse.length+" preguntas rápidas de temas distintos. No hay respuestas correctas ni se asignan etiquetas políticas.";
+ const out=$("pulseDivergences");out.replaceChildren();
+ const different=pulse.filter(x=>Number(x.A)>0&&Number(x.B)>0);
+ if(different.length){
+  out.append(el("p","small","Hubo opiniones diferentes en "+different.length+" pregunta"+(different.length===1?"":"s")+". Pueden servir para empezar a conversar."));
+  different.slice(0,4).forEach(x=>{
+   const q=questionCache.find(q=>Number(q.cycle)===Number(x.cycle));
+   out.append(el("div","result",((TOPICS[x.topic]||{}).title||x.topic)+" · "+(q?.question||"Pregunta "+x.cycle)));
+  });
+ }else out.append(el("p","small","En el primer pulso no surgieron respuestas opuestas entre A y B. El debate puede explorar los matices de esas elecciones."));
+}
 function renderDebate(){
- const active=!!state,phase=state&&state.phase;
- $("phaseTitle").textContent=active?(TOPICS[state.topic]&&TOPICS[state.topic].title||"DEBATE"):"Debate compartido";
- $("ballotBlock").hidden=phase!=="voting";
- $("discussionBlock").hidden=phase!=="discussion";
+ const active=!!state,phase=state?.phase,stage=state?.stage||"pulse";
+ const pulse=stage==="pulse",debating=stage==="debate",discussion=phase==="discussion",voting=phase==="voting";
+ const onTurn=!!state?.can_act,canInteract=debating&&discussion&&!state.closing_open&&onTurn;
+ const allowPulse=pulse&&onTurn&&["lobby","discussion"].includes(phase);
+ $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
+  (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
+ $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · UN VOTO · UN DEBATE"):"";
+ $("ballotBlock").hidden=!voting;
+ $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
- $("hostControls").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
- $("revote").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
- $("reveal").hidden=!state||!state.host||phase!=="discussion";
- $("another").hidden=!state||!state.host;
- $("nextTurn").hidden=!state||!state.host||Number(state.count)===1;
- $("politicsTools").hidden=phase!=="discussion"||!state?.host;
- $("soloComposer").hidden=!(phase==="discussion"&&Number(state?.count)===1);
- $("soloDialogue").hidden=!(phase==="discussion"&&Number(state?.count)===1);
- $("groupSummary").hidden=!(phase==="discussion"&&Number(state?.count)>1&&state.host);
- const sharedAura=phase==="discussion"&&typeof state?.twist==="string"
-   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":
-     /^PUNTO CIEGO:/i.test(state.twist)?"blind":
-     /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
- const currentAura=phase==="voting"?"vote":phase==="discussion"?(sharedAura||aura):"ready";
+ $("closingBlock").hidden=!(debating&&discussion&&state.closing_open);
+ $("discussionTurn").hidden=!canInteract&&!(debating&&discussion)||pulse||state?.closing_open;
+ $("pulseControls").hidden=!allowPulse;
+ $("nextPulse").hidden=!allowPulse||state.pulse_count>=state.pulse_goal;
+ $("nextPulse").disabled=!state||state.count<state.expected;
+ $("nextPulse").innerHTML='<span aria-hidden="true">⇢</span>'+(
+  Number(state?.pulse_count)===0?"EMPEZAR PULSO":"OTRA PREGUNTA CON VOTO");
+ $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("hostControls").hidden=!canInteract;
+ $("revote").hidden=!canInteract;
+ $("reveal").hidden=!canInteract;
+ $("another").hidden=!state?.host;
+ $("nextTurn").hidden=!canInteract||Number(state?.count)===1;
+ $("politicsTools").hidden=!canInteract;
+ $("soloComposer").hidden=!(canInteract&&Number(state?.count)===1);
+ $("soloDialogue").hidden=!(debating&&discussion&&Number(state?.count)===1&&!state.closing_open);
+ $("groupSummary").hidden=!(canInteract&&Number(state?.count)>1);
+ $("discussionTurn").hidden=!(debating&&discussion&&!state.closing_open);
+ if(!onTurn)$("nextTurn").hidden=true;
+ $("closingChoices").hidden=!(debating&&discussion&&state.closing_open);
+ $("closingStatus").textContent=state?.closing_open?
+  "Han votado "+state.closing_voted+" de "+state.count+". Cada persona decide si quiere terminar.":"";
+ const sharedAura=discussion&&typeof state?.twist==="string"
+  ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":/^PUNTO CIEGO:/i.test(state.twist)?"blind":
+  /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
+ const currentAura=voting?"vote":discussion?(sharedAura||aura):"ready";
  $("noobsShell").dataset.aura=currentAura;
- const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
- $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
- $("liveQuestionTitle").hidden=!active||phase==="lobby"||phase==="voting";
+ const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",
+  counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
+ $("dialogueStatus").textContent=pulse?"PRIMER PULSO · DILEMA PREGUNTA":
+  (titles[currentAura]||titles.ready);
+ $("liveQuestionTitle").hidden=!active||phase==="lobby"||voting;
  if(active){
   $("liveQuestionNumber").textContent=String(state.cycle);
   $("liveQuestionText").textContent=state.question||"";
  }
- if(phase==="discussion"&&Number(state.count)===1){
-  if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
-  renderSoloMessages();
- }
- document.querySelectorAll("[data-giro]").forEach(b=>b.disabled=!state||!state.host||phase!=="discussion");
+ renderPulseSummary();
+ document.querySelectorAll("[data-giro]").forEach(btn=>btn.disabled=!canInteract);
  if(!active){$("phaseDetail").textContent="Crea una sala o únete con su código para comenzar.";return;}
- if(phase==="lobby"){$("phaseDetail").textContent="El anfitrión abre un Hot Point. Después todos votáis, debatís y pasáis a otra pregunta.";return;}
- if(phase==="voting"){
-  $("phaseDetail").textContent="Han votado "+state.voted+" de "+state.count+". Los resultados se ocultan hasta que terminen todos.";
-  $("voteContext").textContent="VOTACIÓN "+state.cycle+" · SIN SIGLAS";
+ if(phase==="lobby"){
+  $("phaseDetail").textContent=pulse?
+    "Cuando todos estéis conectados, comenzad seis votaciones rápidas de temas distintos.":
+    "Ya tenemos el primer pulso. Elegid un Hot Point para empezar a debatir con más profundidad.";
+  return;
+ }
+ if(voting){
+  $("phaseDetail").textContent="Han votado "+state.voted+" de "+state.count+". Los resultados no aparecen hasta que voten todos.";
+  $("voteContext").textContent=(pulse?"PULSO "+state.pulse_count+" DE "+state.pulse_goal:
+   "DEBATE · PREGUNTA "+state.cycle)+" · VOTACIÓN SIN SIGLAS";
   $("voteQuestion").textContent=state.question;
-  $("twistText").textContent=state.cycle>1?(state.twist||"Nueva situación para debatir."):"Elige la postura que quieres defender.";
+  $("twistText").textContent=pulse?"Vota lo que te parezca. Ahora no hay que defender la respuesta.":
+   "Luego podrás explicar por qué has elegido tu opción.";
   const root=$("voteChoices");root.replaceChildren();
   [["A",state.A],["B",state.B],["N","DEPENDE / NECESITO MÁS INFORMACIÓN"]].forEach(pair=>{
-   const val=pair[0],lab=el("label","choice"),r=el("input");
-   r.type="radio";r.name="voto";r.value=val;r.checked=(vote||state.my_vote)===val;
-   r.onchange=()=>{vote=val;$("submitVote").disabled=false;};
-   lab.append(r,el("span","",pair[1]));root.append(lab);
+   const val=pair[0],lab=el("label","choice"),radio=el("input");
+   radio.type="radio";radio.name="voto";radio.value=val;radio.checked=(vote||state.my_vote)===val;
+   radio.onchange=()=>{vote=val;$("submitVote").disabled=false;};
+   lab.append(radio,el("span","",pair[1]));root.append(lab);
   });
   $("submitVote").disabled=!(vote||state.my_vote);
   $("submitVote").textContent=state.my_vote?"CAMBIAR MI VOTO":"VOTAR";
  }
- if(phase==="discussion"){
-  $("phaseDetail").textContent="Cada persona defiende su postura por turnos. Después podéis abrir otra pregunta y votar de nuevo.";
+ if(discussion){
+  $("phaseDetail").textContent=pulse?
+   (state.pulse_count>=state.pulse_goal?"Primer pulso terminado. Ahora empieza el debate.":"Votación cerrada. Todavía no debatimos: continuamos con otro tema."):
+   (state.closing_open?"La mesa está votando si termina el debate.":
+    onTurn?"Ahora tienes la palabra. Solo tú puedes pedir objeciones, pasar el turno o abrir otra pregunta.":
+    "Escucha a quien tiene la palabra. Podrás intervenir cuando te llegue el turno.");
   const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");out.replaceChildren();
   [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
    const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
    row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
   });
-  $("speaker").textContent=(state.participants[state.turn]||{}).name||"Participante";
-  $("moderatorQuestion").textContent=angle||state.twist||"¿Qué argumento te haría revisar tu respuesta?";
+  if(!pulse){
+   $("speaker").textContent=(state.participants[state.turn]||{}).name||"Participante";
+   $("moderatorQuestion").textContent=angle||state.twist||"¿Qué argumento te haría revisar tu respuesta?";
+  }
+  if(debating&&Number(state.count)===1){
+   if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
+   renderSoloMessages();
+  }
  }
  if(phase==="reveal"){
-  $("phaseDetail").textContent="Al cerrar el Hot Point aparecen las propuestas oficiales que hemos podido verificar.";
+  $("phaseDetail").textContent="La mesa ha decidido cerrar. DILEMA resume las diferencias y después revela las fuentes.";
+  $("sentenceText").textContent=state.sentence?
+   state.sentence+"\n\n"+(state.sentence_question||""):
+   (state.can_act?"DILEMA está preparando la sentencia...":"Esperando la sentencia del turno actual...");
+  $("requestSentence").hidden=!!state.sentence||!onTurn;
   renderSources();
+  if(onTurn&&!state.sentence&&sentenceAttemptedCycle!==state.cycle){
+   sentenceAttemptedCycle=state.cycle;
+   setTimeout(()=>requestSentence(),350);
+  }
  }
 }
 function renderSources(){
  const root=$("partySources");root.replaceChildren();
- const refs=EVIDENCE[state.topic]||[];
- PARTIES.forEach(p=>{
-  const item=el("div","result"),e=refs.find(x=>x.p===p);
-  item.append(el("b","",p),el("div","label",e?e.type:"PROPUESTAS PENDIENTES DE VERIFICAR"));
-  item.append(el("p","",e?e.t:"Aún no hay documentos electorales de 2026 contrastados para este Hot Point. No se atribuye una posición."));
-  if(e){
-   if(e.page)item.append(el("div","fine","Páginas del documento: "+e.page));
-   const a=el("a","","CONSULTAR FUENTE OFICIAL");a.href=e.url;a.target="_blank";a.rel="noopener noreferrer";item.append(a);
-  }
-  root.append(item);
+ const topics=[...new Set((questionCache||[]).map(q=>q.topic).filter(x=>TOPICS[x]))];
+ if(!topics.length&&state?.topic)topics.push(state.topic);
+ topics.forEach(topic=>{
+  const section=el("details","noobs-entry"),head=el("summary");
+  head.append(el("span","noobs-summary",(TOPICS[topic]||{}).title||topic),el("span","noobs-expand","›"));
+  section.append(head);
+  const body=el("div","noobs-entry-body"),refs=EVIDENCE[topic]||[];
+  PARTIES.forEach(p=>{
+   const item=el("div","result"),source=refs.find(x=>x.p===p);
+   item.append(el("b","",p));
+   if(source){
+    item.append(el("div","label",source.type),el("p","",source.t));
+    if(source.page)item.append(el("div","fine","Páginas: "+source.page));
+    const link=el("a","","VER PROGRAMA OFICIAL");link.href=source.url;
+    link.target="_blank";link.rel="noopener noreferrer";item.append(link);
+   }else item.append(el("p","","Esta propuesta todavía no está documentada para este tema. No se presupone ninguna postura."));
+   body.append(item);
+  });
+  section.append(body);root.append(section);
  });
+}
+function sentenceFallback(){
+ const rounds=state?.history||[];
+ const pulse=rounds.filter(h=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(h.cycle))).length;
+ const debated=rounds.length-pulse;
+ const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
+ return {
+  summary:"La mesa ha votado "+rounds.length+" preguntas, de ellas "+pulse+
+   " del primer pulso y "+debated+" del debate. En "+divisions+
+   " votaciones hubo respuestas distintas entre A y B. Ese resultado no basta para saber qué piensa cada participante sobre todo el programa de un partido. Lo valioso son los argumentos que habéis puesto sobre la mesa.",
+  question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
+ };
+}
+async function requestSentence(){
+ if(!roomId||!state||state.phase!=="reveal"||!state.can_act||state.sentence||sentencePending||working)return;
+ sentencePending=true;
+ try{
+  const fallback=sentenceFallback();
+  let statement=fallback;
+  try{
+   const r=await sb.functions.invoke("politics-moderator",{body:{action:"sentence",room_id:roomId}});
+   if(r.error)throw r.error;
+   if(typeof r.data?.summary==="string"&&typeof r.data?.openQuestions==="string"){
+    statement={summary:r.data.summary,question:r.data.openQuestions};
+   }
+  }catch(e){console.warn("No se pudo generar sentencia IA",String(e?.message||e));}
+  state=await rpc("politics_save_sentence",{p_room:roomId,p_summary:statement.summary,p_question:statement.question});
+  render();
+ }catch(e){notice("No se pudo guardar la sentencia: "+String(e?.message||e));}
+ finally{sentencePending=false;}
 }
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
@@ -348,14 +470,15 @@ async function refresh(){
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
   if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
-  const fp=JSON.stringify([s.cycle,s.phase,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist]);
+  const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence]);
   if(fp!==runFingerprint){
    runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;aura="ready";}render();
   }
  }catch(e){notice("No se pudo actualizar la sala: "+String(e&&e.message||"error"));}
 }
 function leave(){
- roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";
+ roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";sentenceAttemptedCycle=null;
+ document.body.classList.remove("noobs-fullscreen");
  session();history.replaceState(null,"",location.pathname);
  render();setTab("hotpoints");notice("Has salido. La sala seguirá hasta que el anfitrión la cierre.");
 }
@@ -369,12 +492,34 @@ async function init(){
   $("participantsExpected").append(opt);
  }
  $("roomJoin").value=(new URLSearchParams(location.search).get("room")||"").toUpperCase().slice(0,10);
+ function updateAgeHint(){
+  const count=Number($("participantsExpected").value)||1;
+  $("ageHint").textContent=(count===1?
+    "Indica tu edad en años. Ejemplo: 14.":
+    "Indica "+count+" edades separadas por comas. Ejemplo: 13, 15, 45, 48.")+
+    " Solo sirven para adaptar el lenguaje; no se guardan individualmente.";
+  $("ageList").placeholder=count===1?"14":count===2?"13, 45":count===4?"13, 15, 45, 48":"Una edad por participante";
+ }
+ $("participantsExpected").addEventListener("change",updateAgeHint);
+ function showAgeFields(){
+  const isJoining=$("roomJoin").value.trim().length>0;
+  $("agesBlock").hidden=isJoining;
+  $("participantsExpected").disabled=isJoining;
+ }
+ $("roomJoin").addEventListener("input",showAgeFields);
+ updateAgeHint();showAgeFields();
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
  $("create").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
-  await auth();const r=await rpc("politics_new_room_safe",{p_name:$("alias").value.trim(),p_expected:Number($("participantsExpected").value),p_consent:true});
-  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("hotpoints");
+  const expected=Number($("participantsExpected").value);
+  const typed=$("ageList").value.trim();
+  const ages=typed.split(/[;,\s]+/).filter(Boolean).map(Number);
+  if(ages.length!==expected||!ages.every(x=>Number.isInteger(x)&&x>=12&&x<=100)){
+    throw Error("Indica "+expected+" edad"+(expected===1?"":"es")+" (entre 12 y 100 años), separadas por comas.");
+  }
+  await auth();const r=await rpc("politics_new_room_ages",{p_name:$("alias").value.trim(),p_expected:expected,p_consent:true,p_ages:ages});
+  roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");
  });
  $("join").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
@@ -411,9 +556,12 @@ async function init(){
   }catch(e){console.warn("Diálogo IA no disponible; pregunta de apoyo",String(e&&e.message||e));}
   soloMessages.push({role:"DILEMA",text:response});renderSoloMessages();notice("");
  });
- $("nextTurn").onclick=()=>execute(async()=>{state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();});
+ $("nextTurn").onclick=()=>execute(async()=>{
+  if(!state?.can_act)throw Error("Debe pulsarlo quien está en turno.");
+  state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();
+ });
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
-  if(!state||state.phase!=="discussion"||!state.host)return;
+  if(!state||state.stage!=="debate"||state.phase!=="discussion"||!state.can_act||state.closing_open)return;
   const kind=b.dataset.giro;
   aura=kind==="contra"?"counter":kind==="ciego"?"blind":"view";
   $("noobsShell").dataset.aura=aura;
@@ -436,10 +584,31 @@ async function init(){
   angle=null;runFingerprint="";render();
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
- $("revote").onclick=()=>nextQuestion(state&&state.topic||"vivienda");
- $("reveal").onclick=()=>execute(async()=>{
-  state=await rpc("politics_manage",{p_room:roomId,p_action:"reveal"});render();
+ $("nextPulse").onclick=()=>nextQuestion(choosePulseTopic());
+ $("startDeepDebate").onclick=()=>execute(async()=>{
+  if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
+   throw Error("Hay que completar las seis preguntas del pulso.");
+  state=await rpc("politics_start_debate",{p_room:roomId});
+  render();setTab("hotpoints");
+  notice("Pulso completado. Elegid el tema que queréis debatir primero.");
  });
+ $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
+ $("reveal").onclick=()=>execute(async()=>{
+  if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
+  state=await rpc("politics_propose_close",{p_room:roomId});render();
+ });
+ async function closeVote(yes){
+  await execute(async()=>{
+   if(!state?.closing_open)throw Error("La votación de cierre no está abierta.");
+   state=await rpc("politics_close_vote",{p_room:roomId,p_accept:yes});
+   render();
+   if(state.phase==="reveal")notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");
+   else if(!state.closing_open)notice("La mesa ha decidido continuar el debate.");
+  });
+ }
+ $("acceptClose").onclick=()=>closeVote(true);
+ $("rejectClose").onclick=()=>closeVote(false);
+ $("requestSentence").onclick=()=>requestSentence();
  $("anotherTopic").onclick=()=>setTab("hotpoints");
  $("finishRoom").onclick=()=>execute(async()=>{
   if(!confirm("¿Cerrar la sala y eliminar sus votaciones?"))return;

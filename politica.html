@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0b0b">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b0b">
 <title>Política para Noobs · DILEMA</title><link rel="icon" href="./favicon.png">
 <style>
 *{box-sizing:border-box}:root{color-scheme:dark}
@@ -123,6 +123,49 @@ body.noobs-in-room .return{display:none}
  .noobs-entry-body{padding:0 10px 12px 56px}
  .noobs-number{flex-basis:36px;height:36px}
 }
+
+/* R124 · la conversación ocupa el área visible del móvil sin scroll en toda la página */
+.ages-block{margin:8px 0 15px}
+.ages-block .label{display:block}
+.noobs-room-meta{font-size:10px!important;color:#b0b0b0!important;letter-spacing:.02em!important;margin-top:2px}
+.noobs-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scroll-padding-bottom:14px;padding-right:2px}
+.noobs-scroll .noobs-current{margin-bottom:9px}
+.noobs-shell{display:flex;flex-direction:column}
+body.noobs-fullscreen{display:flex;flex-direction:column;width:100%;max-width:none;height:100dvh;min-height:100dvh;padding:0;overflow:hidden}
+body.noobs-fullscreen > header,body.noobs-fullscreen > .return,body.noobs-fullscreen > #roomInfo,
+body.noobs-fullscreen > #roomSetup,body.noobs-fullscreen > #noobsGlobalNav,
+body.noobs-fullscreen > .tabs,body.noobs-fullscreen > .important,
+body.noobs-fullscreen > footer{display:none!important}
+body.noobs-fullscreen > main{flex:1 1 auto;display:flex;min-height:0;width:100%;max-width:790px;margin:0 auto;padding:0}
+body.noobs-fullscreen #debate{display:flex!important;flex:1;min-height:0;width:100%;padding:0}
+body.noobs-fullscreen .noobs-shell{width:100%;height:100%;min-height:0;max-height:100%;padding:calc(11px + env(safe-area-inset-top,0px)) 12px calc(8px + env(safe-area-inset-bottom,0px));border-radius:17px;overflow:hidden}
+body.noobs-fullscreen .noobs-header{flex-shrink:0;min-height:44px}
+body.noobs-fullscreen .noobs-status{flex-shrink:0;margin:6px 0 3px;font-size:11px}
+body.noobs-fullscreen .noobs-topic{flex-shrink:0;margin:0 0 5px;font-size:12px}
+.noobs-stage-subtitle{font-size:11px;color:#bfbfbf;font-weight:650;margin:0 0 4px}
+#pulseSummary{border-color:#d5b05a;background:#15120a}
+#pulseDivergences .result{padding:7px 0}
+#closingBlock{border-color:#ff9f43}
+#sentenceText{line-height:1.6;white-space:pre-wrap}
+#startDeepDebate{min-height:46px}
+body.noobs-fullscreen .noobs-stage-subtitle{flex-shrink:0}
+body.noobs-fullscreen #questionHistory{margin:5px 0 10px}
+body.noobs-fullscreen .noobs-bottom{position:relative;flex:0 0 auto;bottom:auto;max-height:min(45dvh,350px);overflow-y:auto;z-index:2;margin:0;padding:7px 0 0;background:#090909}
+body.noobs-fullscreen .noobs-tool{min-height:53px;padding:5px 3px}
+body.noobs-fullscreen .noobs-tool span{font-size:20px}
+body.noobs-fullscreen .noobs-another{min-height:46px}
+body.noobs-fullscreen .noobs-round-actions{margin-top:7px}
+body.noobs-fullscreen .noobs-composer{margin-top:8px}
+body.noobs-fullscreen .noobs-compose-row textarea{min-height:45px;max-height:18dvh}
+body.noobs-fullscreen #notice{position:fixed;top:calc(61px + env(safe-area-inset-top,0px));left:13px;right:13px;z-index:12;background:#151515;border:1px solid #555;padding:9px 11px;border-radius:10px;min-height:0;font-size:12px;pointer-events:none;box-shadow:0 4px 18px #0009}
+body.noobs-fullscreen #notice:empty{display:none}
+@media(max-height:680px){
+ body.noobs-fullscreen .noobs-shell{padding-top:calc(5px + env(safe-area-inset-top,0px));padding-bottom:calc(3px + env(safe-area-inset-bottom,0px))}
+ body.noobs-fullscreen .noobs-status{margin:3px 0 2px}
+ body.noobs-fullscreen .noobs-topic{margin-bottom:3px}
+ body.noobs-fullscreen .noobs-tool{min-height:45px}
+ body.noobs-fullscreen .noobs-compose-row textarea{min-height:42px}
+}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -133,7 +176,12 @@ body.noobs-in-room .return{display:none}
   <label class="label" for="alias">TU APODO</label><input class="field" id="alias" maxlength="30" autocomplete="nickname" placeholder="Tu nombre o apodo">
   <div class="fields">
     <div><label class="label" for="roomJoin">CÓDIGO DE SALA (SI TE INVITAN)</label><input class="field" id="roomJoin" maxlength="10" placeholder="Código"></div>
-    <div><label class="label" for="participantsExpected">PARTICIPANTES</label><select id="participantsExpected" class="field"></select></div>
+    <div><label class="label" for="participantsExpected">¿CUÁNTOS PARTICIPÁIS?</label><select id="participantsExpected" class="field"></select></div>
+  </div>
+  <div id="agesBlock" class="ages-block">
+    <label class="label" for="ageList">¿QUÉ EDADES TENÉIS?</label>
+    <input class="field" type="text" id="ageList" inputmode="text" autocapitalize="off" autocomplete="off" placeholder="13, 15, 45, 48" maxlength="85">
+    <p class="fine" id="ageHint">Introduce 4 edades separadas por comas. Sirven para ajustar el lenguaje; no se guardarán las edades exactas.</p>
   </div>
   <label class="choice" style="font-size:12px"><input id="consent" type="checkbox">
     <span>Acepto participar en una sala privada donde se registran votos individuales para poder contarlos y se muestran <strong>solo resultados agregados</strong>. Los datos se eliminan al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
@@ -167,7 +215,7 @@ body.noobs-in-room .return{display:none}
   <div id="noobsShell" class="noobs-shell" data-aura="ready">
     <div class="noobs-header">
       <div class="noobs-mark" aria-hidden="true">▣</div>
-      <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span></div>
+      <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span><span id="noobsRoomMeta" class="noobs-room-meta"></span></div>
       <div class="noobs-icons">
         <button class="noobs-icon" type="button" data-open-tab="hotpoints" aria-label="Ver Hot Points" title="Hot Points">▤</button>
         <button class="noobs-icon" type="button" data-open-tab="mapa" aria-label="Ver mapa de ideas" title="Mapa de ideas">▥</button>
@@ -175,7 +223,15 @@ body.noobs-in-room .return{display:none}
       </div>
     </div>
     <p id="dialogueStatus" class="noobs-status">DILEMA · TE ESCUCHO</p>
+    <p id="stageSubtitle" class="noobs-stage-subtitle"></p>
     <h2 id="phaseTitle" class="noobs-topic">Debate</h2>
+    <div id="noobsScroll" class="noobs-scroll">
+    <div id="pulseSummary" class="box" hidden>
+      <h3>PRIMER PULSO DE LA MESA</h3>
+      <p id="pulseSummaryText" class="small muted"></p>
+      <div id="pulseDivergences"></div>
+      <p class="fine">Esto muestra diferencias de respuestas, no ideologías ni recomendaciones de voto.</p>
+    </div>
     <div id="questionHistory" class="noobs-history" aria-label="Preguntas anteriores"></div>
     <div id="activeRound" class="noobs-current" aria-live="polite">
       <div id="liveQuestionTitle" class="noobs-live-title" hidden>
@@ -215,8 +271,23 @@ body.noobs-in-room .return{display:none}
           <p id="moderatorQuestion"></p>
         </div>
       </div>
+      <div id="closingBlock" class="box" hidden>
+        <div class="eyebrow">LA MESA DECIDE</div>
+        <h3>¿CERRAMOS EL DEBATE?</h3>
+        <p class="small muted" id="closingStatus"></p>
+        <div class="actions" id="closingChoices">
+          <button type="button" class="btn primary" id="acceptClose">SÍ, TERMINAMOS</button>
+          <button type="button" class="btn" id="rejectClose">NO, SEGUIMOS</button>
+        </div>
+        <p class="fine">Cuando vote toda la mesa, una mayoría decidirá si se cierra. En caso de empate, se continúa.</p>
+      </div>
       <div id="revealBlock" hidden>
-        <div class="box"><div class="eyebrow">FINAL DEL HOT POINT</div>
+        <div class="box"><div class="eyebrow">DILEMA DICTA SENTENCIA</div>
+          <h2>LO QUE HA DICHO LA MESA</h2>
+          <div id="sentenceText" class="small"></div>
+          <button type="button" class="btn small" id="requestSentence">GENERAR SENTENCIA</button>
+        </div>
+        <div class="box"><div class="eyebrow">FUENTES DOCUMENTALES</div>
           <h2>AHORA, LAS SIGLAS</h2>
           <p class="small muted">Las siguientes posiciones proceden de documentos electorales identificados. No equivalen a una recomendación de voto.</p>
           <div id="partySources"></div>
@@ -227,15 +298,20 @@ body.noobs-in-room .return{display:none}
         </div>
       </div>
     </div>
+    </div>
     <div class="noobs-bottom">
       <div id="politicsTools" class="noobs-tools" hidden>
         <button type="button" class="noobs-tool tool-counter" data-giro="contra"><span aria-hidden="true">⇄</span>CONTRADÍCEME</button>
         <button type="button" class="noobs-tool tool-blind" data-giro="ciego"><span aria-hidden="true">◉</span>PUNTO CIEGO</button>
         <button type="button" class="noobs-tool tool-view" data-giro="otra"><span aria-hidden="true">✺</span>OTRA MIRADA</button>
       </div>
+      <div class="noobs-round-actions" id="pulseControls" hidden>
+        <button type="button" class="noobs-another" id="nextPulse"><span aria-hidden="true">⇢</span>OTRA PREGUNTA CON VOTO</button>
+        <button type="button" class="btn primary" id="startDeepDebate" hidden>ENTRAR AL DEBATE</button>
+      </div>
       <div class="noobs-round-actions" id="hostControls" hidden>
         <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
-        <button type="button" class="btn noobs-reveal" id="reveal">REVELAR SIGLAS</button>
+        <button type="button" class="btn noobs-reveal" id="reveal">PROPONER CIERRE</button>
       </div>
       <div id="soloComposer" class="noobs-composer" hidden>
         <label for="soloArgument" class="eyebrow">ESCRIBE A DILEMA</label>
@@ -256,8 +332,8 @@ body.noobs-in-room .return{display:none}
   <p class="small muted">Las propuestas de los partidos se contrastan en la pestaña DEBATE al revelar las siglas.</p>
 </section>
 </main>
-<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos individuales se almacenan en una zona privada de Supabase y solo se presentan agrupados. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
-<footer>DILEMA · POLÍTICA PARA NOOBS · VERSIÓN DE PRUEBAS</footer>
+<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos individuales se almacenan en una zona privada de Supabase y solo se presentan agrupados. Las edades solo se utilizan para calcular el nivel de lenguaje; las edades exactas no se guardan. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
+<footer>DILEMA · POLÍTICA PARA NOOBS · BETA R125</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./politica-noobs.js?v=R123" defer></script>
+<script src="./politica-noobs.js?v=R125" defer></script>
 </body></html>

@@ -45,3 +45,19 @@ Módulo de debate cívico y comparativa documental del 29N 2026, desarrollado de
 - Verificar accesibilidad visual y UX con menores bajo supervisión.
 
 **No se realizan tests de afinidad ideológica ni se ofrece recomendación de voto.**
+
+
+## Actualización R125: primer pulso, edades y mesa por turnos
+
+- Al abrir una sala, el anfitrión indica **una edad por participante**; el servidor conserva únicamente el tramo de lenguaje (`teen_early`, `teen`, `mixed`, `adult`), no las edades exactas.
+- **Primero seis preguntas rápidas de seis Hot Points distintos**. Todos votan A/B/Depende en cada pregunta y todavía no se abre el debate. La mesa puede comparar los resultados.
+- El anfitrión inicia la **fase de debate profundo**. Escoge Hot Point, DILEMA propone una pregunta nueva y todos vuelven a votar. El turno se asigna a una persona.
+- **Solo la persona que tiene el turno** puede pasar la palabra, pedir Contradíceme/Punto ciego/Otra mirada, abrir otra pregunta o proponer finalizar. Estas condiciones se verifican también mediante funciones SQL autenticadas.
+- La persona en turno puede proponer finalizar; **cada participante vota sí/no**. Con mayoría absoluta de respuestas afirmativas y tras votar todos, se cierra; los empates o rechazos mantienen el debate.
+- **DILEMA dicta sentencia** al cierre: resumen descriptivo de los temas, discrepancias y dudas del grupo a partir de resultados agregados; no recomienda partidos ni deduce tendencias de voto. Se conservan fuentes oficiales en la revelación.
+- Hay **96 situaciones nuevas redactadas para principiantes**, además del banco editorial anterior, y generación dinámica de preguntas que evita repeticiones en la misma sala.
+- Pantalla de debate `100dvh` con scroll interno de las preguntas, cabecera fija de la propia interfaz y herramientas/entrada debajo, sin desplazamiento de toda la página.
+- CSS mantiene la codificación de colores de los estados y botón **OTRA PREGUNTA** en naranja `#FF9F43`.
+- Las pruebas automatizadas con rollback han verificado pulso de seis preguntas, paso a debate, turno individual, prohibición de intervenir fuera de turno, consenso de cierre y escenario de empate.
+- **Pendiente:** prueba manual en Safari con varios teléfonos, verificación visual de teclado/área segura y revisión de privacidad antes de ampliar distribución.
+
