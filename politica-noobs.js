@@ -310,16 +310,23 @@ async function init(){
  $("roomJoin").value=(new URLSearchParams(location.search).get("room")||"").toUpperCase().slice(0,10);
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  $("create").onclick=()=>execute(async()=>{
-  await auth();const r=await rpc("politics_new_room",{p_name:$("alias").value.trim(),p_expected:Number($("participantsExpected").value)});
+  if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
+  await auth();const r=await rpc("politics_new_room_safe",{p_name:$("alias").value.trim(),p_expected:Number($("participantsExpected").value),p_consent:true});
   roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});render();setTab("hotpoints");
  });
  $("join").onclick=()=>execute(async()=>{
-  await auth();const r=await rpc("politics_join_room",{p_code:$("roomJoin").value.trim().toUpperCase(),p_name:$("alias").value.trim()});
+  if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
+  await auth();const r=await rpc("politics_join_room_safe",{p_code:$("roomJoin").value.trim().toUpperCase(),p_name:$("alias").value.trim(),p_consent:true});
   roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});render();setTab("debate");
  });
  $("share").onclick=()=>copy(location.origin+location.pathname+"?room="+encodeURIComponent(state&&state.code||""));
  $("refresh").onclick=refresh;
- $("leave").onclick=leave;
+ $("leave").onclick=()=>execute(async()=>{
+  if(!state||!roomId)return leave();
+  if(state.host&&!confirm("Si abandonas como anfitrión se cerrará esta sala y se eliminarán todos sus votos. ¿Continuar?"))return;
+  await rpc("politics_leave_room",{p_room:roomId});
+  leave();
+ });
  $("submitVote").onclick=()=>execute(async()=>{
   const c=vote||(state&&state.my_vote);if(!c)throw Error("Elige una opción.");
   state=await rpc("politics_vote",{p_room:roomId,p_choice:c});vote=null;angle=null;render();
