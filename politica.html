@@ -233,6 +233,10 @@ body.noobs-in-room .return{display:none}
         <button type="button" class="noobs-tool tool-blind" data-giro="ciego"><span aria-hidden="true">◉</span>PUNTO CIEGO</button>
         <button type="button" class="noobs-tool tool-view" data-giro="otra"><span aria-hidden="true">✺</span>OTRA MIRADA</button>
       </div>
+      <div class="noobs-round-actions" id="hostControls" hidden>
+        <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
+        <button type="button" class="btn noobs-reveal" id="reveal">REVELAR SIGLAS</button>
+      </div>
       <div id="soloComposer" class="noobs-composer" hidden>
         <label for="soloArgument" class="eyebrow">ESCRIBE A DILEMA</label>
         <div class="noobs-compose-row">
@@ -240,10 +244,6 @@ body.noobs-in-room .return{display:none}
           <button type="button" class="noobs-send" id="sendArgument" aria-label="Enviar argumento">↑</button>
         </div>
         <p class="fine">Tu texto se envía a la IA para responder. No se guarda en el historial de votos.</p>
-      </div>
-      <div class="noobs-round-actions" id="hostControls" hidden>
-        <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
-        <button type="button" class="btn noobs-reveal" id="reveal">REVELAR SIGLAS</button>
       </div>
     </div>
   </div>
