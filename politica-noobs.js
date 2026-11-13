@@ -264,69 +264,124 @@ function renderRoom(){
  const root=$("members");root.replaceChildren();
  (state.participants||[]).forEach((m,i)=>root.append(el("span","person",(state.phase==="discussion"&&i===state.turn?"🎤 ":"")+m.name+(m.host?" · ANFITRIÓN":""))));
 }
+function renderPulseSummary(){
+ const isReady=!!state&&state.stage==="debate";
+ $("pulseSummary").hidden=!isReady;
+ const records=state?.history||[];
+ const pulse=records.filter(x=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(x.cycle)));
+ $("pulseSummaryText").textContent=pulse.length+" preguntas rápidas de temas distintos. No hay respuestas correctas ni se asignan etiquetas políticas.";
+ const out=$("pulseDivergences");out.replaceChildren();
+ const different=pulse.filter(x=>Number(x.A)>0&&Number(x.B)>0);
+ if(different.length){
+  out.append(el("p","small","Hubo opiniones diferentes en "+different.length+" pregunta"+(different.length===1?"":"s")+". Pueden servir para empezar a conversar."));
+  different.slice(0,4).forEach(x=>{
+   const q=questionCache.find(q=>Number(q.cycle)===Number(x.cycle));
+   out.append(el("div","result",((TOPICS[x.topic]||{}).title||x.topic)+" · "+(q?.question||"Pregunta "+x.cycle)));
+  });
+ }else out.append(el("p","small","En el primer pulso no surgieron respuestas opuestas entre A y B. El debate puede explorar los matices de esas elecciones."));
+}
 function renderDebate(){
- const active=!!state,phase=state&&state.phase;
- $("phaseTitle").textContent=active?(TOPICS[state.topic]&&TOPICS[state.topic].title||"DEBATE"):"Debate compartido";
- $("ballotBlock").hidden=phase!=="voting";
- $("discussionBlock").hidden=phase!=="discussion";
+ const active=!!state,phase=state?.phase,stage=state?.stage||"pulse";
+ const pulse=stage==="pulse",debating=stage==="debate",discussion=phase==="discussion",voting=phase==="voting";
+ const onTurn=!!state?.can_act,canInteract=debating&&discussion&&!state.closing_open&&onTurn;
+ const allowPulse=pulse&&onTurn&&["lobby","discussion"].includes(phase);
+ $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
+  (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
+ $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · UN VOTO · UN DEBATE"):"";
+ $("ballotBlock").hidden=!voting;
+ $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
- $("hostControls").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
- $("revote").hidden=!state||!state.host||!["discussion","reveal"].includes(phase);
- $("reveal").hidden=!state||!state.host||phase!=="discussion";
- $("another").hidden=!state||!state.host;
- $("nextTurn").hidden=!state||!state.host||Number(state.count)===1;
- $("politicsTools").hidden=phase!=="discussion"||!state?.host;
- $("soloComposer").hidden=!(phase==="discussion"&&Number(state?.count)===1);
- $("soloDialogue").hidden=!(phase==="discussion"&&Number(state?.count)===1);
- $("groupSummary").hidden=!(phase==="discussion"&&Number(state?.count)>1&&state.host);
- const sharedAura=phase==="discussion"&&typeof state?.twist==="string"
-   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":
-     /^PUNTO CIEGO:/i.test(state.twist)?"blind":
-     /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
- const currentAura=phase==="voting"?"vote":phase==="discussion"?(sharedAura||aura):"ready";
+ $("closingBlock").hidden=!(debating&&discussion&&state.closing_open);
+ $("discussionTurn").hidden=!canInteract&&!(debating&&discussion)||pulse||state?.closing_open;
+ $("pulseControls").hidden=!allowPulse;
+ $("nextPulse").hidden=!allowPulse||state.pulse_count>=state.pulse_goal;
+ $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("hostControls").hidden=!canInteract;
+ $("revote").hidden=!canInteract;
+ $("reveal").hidden=!canInteract;
+ $("another").hidden=!state?.host;
+ $("nextTurn").hidden=!canInteract||Number(state?.count)===1;
+ $("politicsTools").hidden=!canInteract;
+ $("soloComposer").hidden=!(canInteract&&Number(state?.count)===1);
+ $("soloDialogue").hidden=!(debating&&discussion&&Number(state?.count)===1&&!state.closing_open);
+ $("groupSummary").hidden=!(canInteract&&Number(state?.count)>1);
+ $("discussionTurn").hidden=!(debating&&discussion&&!state.closing_open);
+ if(!onTurn)$("nextTurn").hidden=true;
+ $("closingChoices").hidden=!(debating&&discussion&&state.closing_open);
+ $("closingStatus").textContent=state?.closing_open?
+  "Han votado "+state.closing_voted+" de "+state.count+". Cada persona decide si quiere terminar.":"";
+ const sharedAura=discussion&&typeof state?.twist==="string"
+  ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":/^PUNTO CIEGO:/i.test(state.twist)?"blind":
+  /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
+ const currentAura=voting?"vote":discussion?(sharedAura||aura):"ready";
  $("noobsShell").dataset.aura=currentAura;
- const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
- $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
- $("liveQuestionTitle").hidden=!active||phase==="lobby"||phase==="voting";
+ const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",
+  counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
+ $("dialogueStatus").textContent=pulse?"PRIMER PULSO · DILEMA PREGUNTA":
+  (titles[currentAura]||titles.ready);
+ $("liveQuestionTitle").hidden=!active||phase==="lobby"||voting;
  if(active){
   $("liveQuestionNumber").textContent=String(state.cycle);
   $("liveQuestionText").textContent=state.question||"";
  }
- if(phase==="discussion"&&Number(state.count)===1){
-  if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
-  renderSoloMessages();
- }
- document.querySelectorAll("[data-giro]").forEach(b=>b.disabled=!state||!state.host||phase!=="discussion");
+ renderPulseSummary();
+ document.querySelectorAll("[data-giro]").forEach(btn=>btn.disabled=!canInteract);
  if(!active){$("phaseDetail").textContent="Crea una sala o únete con su código para comenzar.";return;}
- if(phase==="lobby"){$("phaseDetail").textContent="El anfitrión abre un Hot Point. Después todos votáis, debatís y pasáis a otra pregunta.";return;}
- if(phase==="voting"){
-  $("phaseDetail").textContent="Han votado "+state.voted+" de "+state.count+". Los resultados se ocultan hasta que terminen todos.";
-  $("voteContext").textContent="VOTACIÓN "+state.cycle+" · SIN SIGLAS";
+ if(phase==="lobby"){
+  $("phaseDetail").textContent=pulse?
+    "Cuando todos estéis conectados, comenzad seis votaciones rápidas de temas distintos.":
+    "Ya tenemos el primer pulso. Elegid un Hot Point para empezar a debatir con más profundidad.";
+  return;
+ }
+ if(voting){
+  $("phaseDetail").textContent="Han votado "+state.voted+" de "+state.count+". Los resultados no aparecen hasta que voten todos.";
+  $("voteContext").textContent=(pulse?"PULSO "+state.pulse_count+" DE "+state.pulse_goal:
+   "DEBATE · PREGUNTA "+state.cycle)+" · VOTACIÓN SIN SIGLAS";
   $("voteQuestion").textContent=state.question;
-  $("twistText").textContent=state.cycle>1?(state.twist||"Nueva situación para debatir."):"Elige la postura que quieres defender.";
+  $("twistText").textContent=pulse?"Vota lo que te parezca. Ahora no hay que defender la respuesta.":
+   "Luego podrás explicar por qué has elegido tu opción.";
   const root=$("voteChoices");root.replaceChildren();
   [["A",state.A],["B",state.B],["N","DEPENDE / NECESITO MÁS INFORMACIÓN"]].forEach(pair=>{
-   const val=pair[0],lab=el("label","choice"),r=el("input");
-   r.type="radio";r.name="voto";r.value=val;r.checked=(vote||state.my_vote)===val;
-   r.onchange=()=>{vote=val;$("submitVote").disabled=false;};
-   lab.append(r,el("span","",pair[1]));root.append(lab);
+   const val=pair[0],lab=el("label","choice"),radio=el("input");
+   radio.type="radio";radio.name="voto";radio.value=val;radio.checked=(vote||state.my_vote)===val;
+   radio.onchange=()=>{vote=val;$("submitVote").disabled=false;};
+   lab.append(radio,el("span","",pair[1]));root.append(lab);
   });
   $("submitVote").disabled=!(vote||state.my_vote);
   $("submitVote").textContent=state.my_vote?"CAMBIAR MI VOTO":"VOTAR";
  }
- if(phase==="discussion"){
-  $("phaseDetail").textContent="Cada persona defiende su postura por turnos. Después podéis abrir otra pregunta y votar de nuevo.";
+ if(discussion){
+  $("phaseDetail").textContent=pulse?
+   (state.pulse_count>=state.pulse_goal?"Primer pulso terminado. Ahora empieza el debate.":"Votación cerrada. Todavía no debatimos: continuamos con otro tema."):
+   (state.closing_open?"La mesa está votando si termina el debate.":
+    onTurn?"Ahora tienes la palabra. Solo tú puedes pedir objeciones, pasar el turno o abrir otra pregunta.":
+    "Escucha a quien tiene la palabra. Podrás intervenir cuando te llegue el turno.");
   const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");out.replaceChildren();
   [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
    const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
    row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
   });
-  $("speaker").textContent=(state.participants[state.turn]||{}).name||"Participante";
-  $("moderatorQuestion").textContent=angle||state.twist||"¿Qué argumento te haría revisar tu respuesta?";
+  if(!pulse){
+   $("speaker").textContent=(state.participants[state.turn]||{}).name||"Participante";
+   $("moderatorQuestion").textContent=angle||state.twist||"¿Qué argumento te haría revisar tu respuesta?";
+  }
+  if(debating&&Number(state.count)===1){
+   if(soloRound!==state.cycle){soloRound=state.cycle;soloMessages=[];$("soloArgument").value="";}
+   renderSoloMessages();
+  }
  }
  if(phase==="reveal"){
-  $("phaseDetail").textContent="Al cerrar el Hot Point aparecen las propuestas oficiales que hemos podido verificar.";
+  $("phaseDetail").textContent="La mesa ha decidido cerrar. DILEMA resume las diferencias y después revela las fuentes.";
+  $("sentenceText").textContent=state.sentence?
+   state.sentence+"\n\n"+(state.sentence_question||""):
+   (state.can_act?"DILEMA está preparando la sentencia...":"Esperando la sentencia del turno actual...");
+  $("requestSentence").hidden=!!state.sentence||!onTurn;
   renderSources();
+  if(onTurn&&!state.sentence&&sentenceAttemptedCycle!==state.cycle){
+   sentenceAttemptedCycle=state.cycle;
+   setTimeout(()=>requestSentence(),350);
+  }
  }
 }
 function renderSources(){
