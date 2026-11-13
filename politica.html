@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b0b0b">
+  <title>Política para Noobs · DILEMA</title>
+  <link rel="icon" href="./favicon.png">
+  <style>
+    *{box-sizing:border-box}
+    :root{color-scheme:dark}
+    html,body{margin:0;min-height:100%;background:#0b0b0b;color:#fff;font:15px/1.5 Arial,Helvetica,sans-serif}
+    body{max-width:700px;margin:0 auto;padding:24px 20px 65px}
+    button,textarea{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit}
+    .return{color:#999;text-decoration:none;font-size:13px}
+    header{padding:28px 0 22px;text-align:center;border-bottom:1px solid #252525}
+    header h1{margin:0;font-size:33px;font-weight:900;letter-spacing:.12em}
+    .kicker{font-size:11px;letter-spacing:.15em;color:#999;font-weight:700}
+    .subtitle{margin:10px auto 0;max-width:520px;color:#c6c6c6;font-size:14px}
+    .tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:24px 0}
+    .tab{padding:13px 5px;border:1px solid #404040;border-radius:10px;background:transparent;color:#aaa;font-size:12px;font-weight:800}
+    .tab[aria-selected="true"]{background:#fff;color:#0b0b0b;border-color:#fff}
+    h2{margin:0 0 9px;font-size:24px;line-height:1.2}
+    h3{margin:0 0 8px;font-size:17px}
+    p{margin:0 0 12px}
+    .muted{color:#aaa}
+    .fine{font-size:12px;color:#999}
+    .eyebrow{font-size:11px;color:#888;letter-spacing:.12em;font-weight:800}
+    .lead{color:#ccc;margin-bottom:20px}
+    .box{border:1px solid #333;border-radius:12px;padding:17px;margin:14px 0;background:#141414}
+    .card{border:1px solid #303030;border-radius:12px;padding:17px;margin:12px 0}
+    .card-title{font-weight:900;font-size:17px}
+    .pill{font-size:10px;letter-spacing:.06em;color:#aaa;font-weight:800}
+    .btn{border:1px solid #444;border-radius:10px;background:transparent;color:white;font-weight:800;padding:12px 15px;text-align:center;min-height:44px}
+    .btn.primary{background:white;color:#0b0b0b;border-color:white}
+    .btn:disabled{opacity:.35;cursor:default}
+    .btn.small{font-size:12px;padding:9px 11px;min-height:38px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .actions .grow{flex:1}
+    button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #fff;outline-offset:3px}
+    .question{font-size:21px;font-weight:900;line-height:1.35;margin:17px 0}
+    .options{display:grid;gap:9px}
+    .option{display:flex;gap:11px;align-items:center;padding:14px;border:1px solid #373737;border-radius:10px;cursor:pointer;line-height:1.4}
+    .option:has(input:checked){border-color:white;background:#202020}
+    .option input{accent-color:#fff;flex-shrink:0;width:17px;height:17px}
+    .option span{font-size:14px}
+    .detail{border-left:2px solid #777;padding-left:13px;margin:16px 0}
+    .progress{display:flex;gap:6px;margin:14px 0}
+    .progress span{flex:1;height:4px;background:#333;border-radius:4px}
+    .progress span.done{background:#fff}
+    textarea{display:block;width:100%;min-height:96px;resize:vertical;background:#151515;border:1px solid #444;border-radius:10px;padding:12px;color:white}
+    .sources{margin-top:20px}
+    .source-item{border-top:1px solid #2c2c2c;padding:12px 0}
+    .source-item b{font-size:14px}
+    .source-item p{font-size:13px;margin:5px 0;color:#ccc}
+    .source-item a{font-size:12px;text-decoration:underline;text-underline-offset:3px;color:#ddd}
+    .source-meta{font-size:11px;color:#999}
+    .map-topic{border-bottom:1px solid #2d2d2d;padding:13px 0}
+    .map-topic strong{display:block;margin-bottom:5px}
+    .map-topic p{font-size:13px;color:#ccc;margin:4px 0}
+    .privacy{padding:13px 0;border-top:1px solid #292929;font-size:12px;color:#999;margin-top:25px}
+    .status{font-size:13px;color:#d3d3d3;margin:12px 0;min-height:1.2em}
+    .hidden,[hidden]{display:none!important}
+    footer{text-align:center;color:#666;font-size:11px;letter-spacing:.08em;margin-top:35px}
+    @media(max-width:420px){body{padding:18px 16px 50px}header h1{font-size:29px}.question{font-size:19px}.tabs{gap:5px}.tab{font-size:11px}.card{padding:14px}}
+  </style>
+</head>
+<body>
+  <a class="return" href="./index.html">← VOLVER A DILEMA</a>
+  <header>
+    <div class="kicker">DILEMA · ELECCIONES 29N</div>
+    <h1>POLÍTICA PARA NOOBS</h1>
+    <p class="subtitle">Entiende las propuestas, descubre qué piensas y debate sin necesidad de saber de política.</p>
+  </header>
+  <nav class="tabs" role="tablist" aria-label="Secciones">
+    <button class="tab" type="button" data-tab="explorar" role="tab" aria-controls="explorar" aria-selected="true">HOT POINTS</button>
+    <button class="tab" type="button" data-tab="preguntas" role="tab" aria-controls="preguntas" aria-selected="false">PREGUNTAS</button>
+    <button class="tab" type="button" data-tab="mapa" role="tab" aria-controls="mapa" aria-selected="false">MIS IDEAS</button>
+  </nav>
+
+  <main>
+    <section id="explorar" role="tabpanel">
+      <h2>¿De qué hablamos?</h2>
+      <p class="lead">Cada Hot Point contiene una pregunta, los matices que merece la pena debatir y las fuentes electorales disponibles. Las siglas solo aparecen cuando hay un documento o anuncio contrastable.</p>
+      <div id="hotpointList"></div>
+      <section id="hotpointDetail" class="box" hidden aria-live="polite"></section>
+    </section>
+
+    <section id="preguntas" role="tabpanel" hidden>
+      <div class="eyebrow" id="questionCategory"></div>
+      <h2>Tu conversación</h2>
+      <p class="lead">No hay respuestas correctas. Puedes cambiar de opinión, pedir otra perspectiva o expresar dudas.</p>
+      <div class="progress" id="progress" aria-label="Progreso del tema"></div>
+      <div class="box">
+        <div class="eyebrow" id="questionStep"></div>
+        <div class="question" id="questionText"></div>
+        <div id="questionOptions" class="options"></div>
+        <div id="noteBlock" hidden>
+          <label for="questionNote" class="eyebrow">¿Quieres explicar por qué? (opcional)</label>
+          <textarea id="questionNote" maxlength="1400" placeholder="Tu argumento, dudas o condiciones..."></textarea>
+        </div>
+        <div id="feedback" class="detail" hidden></div>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn" id="prevQuestion">ANTERIOR</button>
+        <button type="button" class="btn primary grow" id="nextQuestion">CONTINUAR</button>
+      </div>
+      <div id="debateControls" hidden>
+        <p class="eyebrow" style="margin-top:24px">DALE UNA VUELTA</p>
+        <div class="actions">
+          <button type="button" class="btn small" data-debate="contra">CONTRADÍCEME</button>
+          <button type="button" class="btn small" data-debate="ciego">PUNTO CIEGO</button>
+          <button type="button" class="btn small" data-debate="otra">OTRA MIRADA</button>
+        </div>
+        <div id="debateReply" class="detail" role="status" aria-live="polite" hidden></div>
+      </div>
+      <p class="fine" style="margin-top:19px">Versión inicial: repreguntas adaptativas diseñadas de antemano. La IA generativa aún no está conectada.</p>
+    </section>
+
+    <section id="mapa" role="tabpanel" hidden>
+      <h2>Mi mapa de ideas</h2>
+      <p class="lead">Aquí aparecen tus posiciones expresadas por materias, sin asignarte etiquetas ideológicas, porcentajes de afinidad ni recomendaciones de voto.</p>
+      <div id="mapContent"></div>
+      <div class="actions" style="margin-top:18px">
+        <button type="button" class="btn primary" id="copyMap">COPIAR RESUMEN</button>
+        <button type="button" class="btn" id="saveMap">GUARDAR EN ESTE DISPOSITIVO</button>
+        <button type="button" class="btn" id="clearMap">BORRAR RESPUESTAS</button>
+      </div>
+      <p id="mapStatus" class="status" role="status"></p>
+      <div class="box">
+        <h3>Compartir con la familia</h3>
+        <p class="fine">Copia el resumen y decide tú a quién enviarlo. Esta versión no publica ni envía tus respuestas. Las salas y los resultados colectivos se incorporarán más adelante con controles de privacidad.</p>
+      </div>
+    </section>
+  </main>
+
+  <aside class="privacy">Privacidad: por defecto las respuestas solo permanecen en esta pestaña. No se suben a Supabase ni se comparten con otros participantes. Si eliges «Guardar», se almacenan únicamente en este navegador; puedes borrarlas cuando quieras.</aside>
+  <footer>DILEMA · POLÍTICA PARA NOOBS · VERSIÓN DE PRUEBAS</footer>
+  <script src="./politica-noobs.js" defer></script>
+</body>
+</html>
