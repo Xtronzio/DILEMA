@@ -98,10 +98,30 @@ async function nextQuestion(id){
  await execute(async()=>{
   if(!roomId||!state||!state.host)throw Error("Solo el anfitrión puede abrir la ronda.");
   if(["lobby","discussion","reveal"].indexOf(state.phase)<0)throw Error("La ronda actual sigue en votación.");
-  const prior=await rpc("politics_questions_used",{p_room:roomId}),p=chooseQuestion(id,prior);
-  state=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
-  vote=null;angle=null;runFingerprint="";
-  render();setTab("debate");notice("Nueva pregunta. Todos deben votar otra vez.");
+  notice("DILEMA está preparando una pregunta diferente...");
+  const prior=await rpc("politics_questions_used",{p_room:roomId});
+  let p=null,mode="CATÁLOGO";
+  try{
+   const res=await sb.functions.invoke("politics-moderator",{body:{action:"next",room_id:roomId,topic:id}});
+   if(res.error)throw res.error;
+   const c=res.data&&res.data.card;
+   if(c&&typeof c.q==="string"&&typeof c.a==="string"&&typeof c.b==="string"&&typeof c.twist==="string"&&
+      c.q.length>18&&c.a.length>10&&c.b.length>10&&
+      !prior.some(x=>x.question.trim().toLocaleLowerCase("es")===c.q.trim().toLocaleLowerCase("es"))){
+     p={question:c.q,a:c.a,b:c.b,twist:c.twist};mode="IA";
+   }
+  }catch(err){console.warn("IA no disponible; utilizando banco editorial",String(err&&err.message||err));}
+  if(!p)p=chooseQuestion(id,prior);
+  let result;
+  try{result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});}
+  catch(err){
+    if(mode!=="IA")throw err;
+    p=chooseQuestion(id,prior);mode="CATÁLOGO";
+    result=await rpc("politics_advance",{p_room:roomId,p_topic:id,p_question:p.question,p_a:p.a,p_b:p.b,p_twist:p.twist});
+  }
+  state=result;vote=null;angle=null;runFingerprint="";
+  render();setTab("debate");
+  notice(mode==="IA"?"Nueva pregunta generada por DILEMA. Todos deben votar.":"Nueva pregunta del catálogo. Todos deben votar.");
  });
 }
 function setTab(name){
@@ -139,6 +159,7 @@ function renderDebate(){
  $("hostControls").hidden=!state||!state.host;
  $("another").hidden=!state||!state.host;
  $("nextTurn").hidden=!state||!state.host;
+ document.querySelectorAll("[data-giro]").forEach(b=>b.disabled=!state||!state.host||phase!=="discussion");
  if(!active){$("phaseDetail").textContent="Crea una sala o únete con su código para comenzar.";return;}
  if(phase==="lobby"){$("phaseDetail").textContent="El anfitrión abre un Hot Point. Después todos votáis, debatís y pasáis a otra pregunta.";return;}
  if(phase==="voting"){
@@ -239,14 +260,27 @@ async function init(){
   state=await rpc("politics_vote",{p_room:roomId,p_choice:c});vote=null;angle=null;render();
  });
  $("nextTurn").onclick=()=>execute(async()=>{state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();});
- document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>{
-  if(!state||state.phase!=="discussion")return;
-  const k=b.dataset.giro;
-  angle=k==="contra"?"Defiende un argumento contrario a tu postura. ¿Cuál sería más difícil de rebatir?":
-    k==="ciego"?"¿Quién podría pagar el coste de tu propuesta sin haber participado en la decisión?":
-    "Imagina que cambian los recursos o las circunstancias. ¿Cuándo cambiarías de opinión?";
-  $("moderatorQuestion").textContent=angle;
- });
+ document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
+  if(!state||state.phase!=="discussion"||!state.host)return;
+  const kind=b.dataset.giro;
+  notice("DILEMA está preparando una objeción para todo el grupo...");
+  let question=null,mode="CATÁLOGO";
+  try{
+    const res=await sb.functions.invoke("politics-moderator",{body:{action:"pressure",room_id:roomId,style:kind}});
+    if(res.error)throw res.error;
+    if(res.data&&typeof res.data.question==="string"&&res.data.question.length>18){
+      question=res.data.question;mode="IA";
+    }
+  }catch(err){console.warn("IA de repreguntas no disponible",String(err&&err.message||err));}
+  if(!question){
+    question=kind==="contra"?"¿Cuál sería la objeción más fuerte contra cualquiera de las dos opciones?":
+     kind==="ciego"?"¿Quién queda fuera de esta discusión y qué consecuencia soportaría?":
+     "Si cambias una condición importante, ¿cuándo dejaría de convencerte la opción elegida?";
+  }
+  state=await rpc("politics_set_pressure",{p_room:roomId,p_question:question});
+  angle=null;runFingerprint="";render();
+  notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
+ }));
  $("revote").textContent="SIGUIENTE PREGUNTA · NUEVA VOTACIÓN";
  $("revote").onclick=()=>nextQuestion(state&&state.topic||"vivienda");
  $("reveal").onclick=()=>execute(async()=>{
