@@ -55,6 +55,9 @@ footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacin
     <div><label class="label" for="roomJoin">CÓDIGO DE SALA (SI TE INVITAN)</label><input class="field" id="roomJoin" maxlength="10" placeholder="Código"></div>
     <div><label class="label" for="participantsExpected">PARTICIPANTES</label><select id="participantsExpected" class="field"></select></div>
   </div>
+  <label class="choice" style="font-size:12px"><input id="consent" type="checkbox">
+    <span>Acepto participar en una sala privada donde se registran votos individuales para poder contarlos y se muestran <strong>solo resultados agregados</strong>. Los datos se eliminan al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
+  </label>
   <div class="actions"><button class="btn" id="join">UNIRME</button><button class="btn primary" id="create">CREAR SALA</button></div>
 </section>
 <section class="box" id="roomInfo" hidden>
@@ -124,7 +127,7 @@ footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacin
   <p class="small muted">Las propuestas de los partidos se contrastan en la pestaña DEBATE al revelar las siglas.</p>
 </section>
 </main>
-<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Las votaciones se almacenan temporalmente en una sala privada y solo se muestran agregadas. Usa apodos; no facilites datos sensibles. Este módulo está en pruebas y sus documentos electorales todavía se están completando. Para impedir usos no deseados, la sala solo admite el número de participantes seleccionado.</p>
+<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos individuales se almacenan en una zona privada de Supabase y solo se presentan agrupados. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
 <footer>DILEMA · POLÍTICA PARA NOOBS · VERSIÓN DE PRUEBAS</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./politica-noobs.js" defer></script>
