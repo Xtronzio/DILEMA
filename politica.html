@@ -82,6 +82,8 @@ body.noobs-in-room .return{display:none}
 .noobs-entry-body p{margin:4px 0 8px}
 .noobs-current{border:1px solid #303030;border-radius:15px;background:#101010;padding:14px 13px;margin-bottom:12px}
 .noobs-current:has(#ballotBlock:not([hidden])){border-color:var(--noobs-aura)}
+.noobs-live-title{display:flex;align-items:center;gap:10px;margin:0 0 15px;font-size:16px;font-weight:850}
+.noobs-live-title #liveQuestionText{flex:1;line-height:1.4}
 .noobs-current #phaseDetail{font-size:12px;margin-bottom:10px}
 .noobs-current .box{background:#0b0b0b}
 .noobs-current #voteQuestion{font-size:19px;font-weight:800;line-height:1.35;margin:14px 0}
@@ -176,6 +178,10 @@ body.noobs-in-room .return{display:none}
     <h2 id="phaseTitle" class="noobs-topic">Debate</h2>
     <div id="questionHistory" class="noobs-history" aria-label="Preguntas anteriores"></div>
     <div id="activeRound" class="noobs-current" aria-live="polite">
+      <div id="liveQuestionTitle" class="noobs-live-title" hidden>
+        <span id="liveQuestionNumber" class="noobs-number">1</span>
+        <div id="liveQuestionText"></div>
+      </div>
       <div id="phaseDetail" class="small muted"></div>
       <div class="box" id="ballotBlock" hidden>
         <div class="eyebrow" id="voteContext">VOTACIÓN SECRETA</div>
