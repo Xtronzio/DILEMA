@@ -545,9 +545,12 @@ async function init(){
   }catch(e){console.warn("Diálogo IA no disponible; pregunta de apoyo",String(e&&e.message||e));}
   soloMessages.push({role:"DILEMA",text:response});renderSoloMessages();notice("");
  });
- $("nextTurn").onclick=()=>execute(async()=>{state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();});
+ $("nextTurn").onclick=()=>execute(async()=>{
+  if(!state?.can_act)throw Error("Debe pulsarlo quien está en turno.");
+  state=await rpc("politics_manage",{p_room:roomId,p_action:"turn"});render();
+ });
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
-  if(!state||state.phase!=="discussion"||!state.host)return;
+  if(!state||state.stage!=="debate"||state.phase!=="discussion"||!state.can_act||state.closing_open)return;
   const kind=b.dataset.giro;
   aura=kind==="contra"?"counter":kind==="ciego"?"blind":"view";
   $("noobsShell").dataset.aura=aura;
@@ -570,10 +573,31 @@ async function init(){
   angle=null;runFingerprint="";render();
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
- $("revote").onclick=()=>nextQuestion(state&&state.topic||"vivienda");
- $("reveal").onclick=()=>execute(async()=>{
-  state=await rpc("politics_manage",{p_room:roomId,p_action:"reveal"});render();
+ $("nextPulse").onclick=()=>nextQuestion(choosePulseTopic());
+ $("startDeepDebate").onclick=()=>execute(async()=>{
+  if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
+   throw Error("Hay que completar las seis preguntas del pulso.");
+  state=await rpc("politics_start_debate",{p_room:roomId});
+  render();setTab("hotpoints");
+  notice("Pulso completado. Elegid el tema que queréis debatir primero.");
  });
+ $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
+ $("reveal").onclick=()=>execute(async()=>{
+  if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
+  state=await rpc("politics_propose_close",{p_room:roomId});render();
+ });
+ async function closeVote(yes){
+  await execute(async()=>{
+   if(!state?.closing_open)throw Error("La votación de cierre no está abierta.");
+   state=await rpc("politics_close_vote",{p_room:roomId,p_accept:yes});
+   render();
+   if(state.phase==="reveal")notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");
+   else if(!state.closing_open)notice("La mesa ha decidido continuar el debate.");
+  });
+ }
+ $("acceptClose").onclick=()=>closeVote(true);
+ $("rejectClose").onclick=()=>closeVote(false);
+ $("requestSentence").onclick=()=>requestSentence();
  $("anotherTopic").onclick=()=>setTab("hotpoints");
  $("finishRoom").onclick=()=>execute(async()=>{
   if(!confirm("¿Cerrar la sala y eliminar sus votaciones?"))return;
