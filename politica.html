@@ -92,6 +92,20 @@ footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacin
       <p class="small muted">Defiende tu argumento oralmente. Los demás pueden intervenir al terminar su turno.</p>
       <button class="btn" id="nextTurn">SIGUIENTE TURNO</button>
     </div>
+    <div id="soloDialogue" class="box" hidden>
+      <div class="eyebrow">DEBATE INDIVIDUAL CON DILEMA</div>
+      <p class="small muted">Escribe tu argumento. DILEMA te planteará preguntas para examinarlo, no para decirte qué pensar.</p>
+      <div id="soloMessages" role="log" aria-live="polite"></div>
+      <label for="soloArgument" class="label">TU ARGUMENTO</label>
+      <textarea class="field" id="soloArgument" maxlength="700" rows="3" placeholder="¿Por qué piensas eso?"></textarea>
+      <button type="button" class="btn primary" id="sendArgument">DEBATIR CON DILEMA</button>
+      <p class="fine">El texto se envía al servicio de IA para obtener una respuesta; no se incorpora al historial de votos ni se guarda en la base de datos de DILEMA.</p>
+    </div>
+    <div id="groupSummary" class="box" hidden>
+      <label for="argumentSummary" class="eyebrow">RESUMEN OPCIONAL DEL DEBATE</label>
+      <p class="small muted">El anfitrión puede resumir una idea del grupo, sin nombres, para que DILEMA plantee una objeción contextualizada.</p>
+      <textarea class="field" id="argumentSummary" maxlength="500" rows="2" placeholder="Argumentos principales que se han mencionado..."></textarea>
+    </div>
     <div class="box"><div class="eyebrow">DILEMA TE PREGUNTA</div><p id="moderatorQuestion"></p>
       <div class="actions"><button class="btn small" data-giro="contra">CONTRADÍCEME</button><button class="btn small" data-giro="ciego">PUNTO CIEGO</button><button class="btn small" data-giro="otra">OTRA MIRADA</button></div>
     </div>
