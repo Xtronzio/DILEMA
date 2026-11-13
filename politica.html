@@ -43,9 +43,87 @@ pre{white-space:pre-wrap}.important{color:#e8e8e8;font-size:12px;line-height:1.5
 #notice{min-height:22px;font-size:13px;color:#ddd;margin:10px 0}
 footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacing:.08em}
 @media(max-width:400px){.brand{font-size:27px}.btn{font-size:12px}body{padding:18px 14px 48px}}
+
+/* POLÍTICA PARA NOOBS R123 · interfaz de Debate Unitario
+   Los estados se representan por aura; naranja únicamente para OTRA PREGUNTA. */
+:root{--noobs-orange:#ff9f43}
+body{max-width:760px;padding-top:14px}
+body.noobs-in-room .tabs{display:none}
+body.noobs-in-room header{padding:8px 0 12px;border-bottom:0}
+body.noobs-in-room header .brand{font-size:18px;letter-spacing:.14em}
+body.noobs-in-room header .sub{display:none}
+body.noobs-in-room header .eyebrow{display:none}
+body.noobs-in-room .return{display:none}
+.noobs-shell{--noobs-aura:#6ee7a0;border:2px solid var(--noobs-aura);border-radius:25px;background:#090909;padding:18px 16px 12px;min-height:70dvh;transition:border-color .18s}
+.noobs-shell[data-aura="vote"]{--noobs-aura:#ffffff}
+.noobs-shell[data-aura="ready"]{--noobs-aura:#6ee7a0}
+.noobs-shell[data-aura="counter"],.noobs-shell[data-aura="pressure"]{--noobs-aura:#ff7373}
+.noobs-shell[data-aura="blind"]{--noobs-aura:#72b7ff}
+.noobs-shell[data-aura="view"]{--noobs-aura:#f179e5}
+.noobs-shell[data-aura="order"]{--noobs-aura:#facc15}
+.noobs-header{display:flex;gap:10px;align-items:center;min-height:58px}
+.noobs-mark,.noobs-icon{border:2px solid var(--noobs-aura);color:var(--noobs-aura);border-radius:15px;display:flex;align-items:center;justify-content:center;flex:0 0 50px;height:50px;font-size:28px;background:transparent;text-decoration:none;transition:border-color .18s,color .18s}
+.noobs-heading{flex:1;min-width:0;color:var(--noobs-aura)}
+.noobs-heading b{display:block;font-size:19px;letter-spacing:.06em}
+.noobs-heading span{display:block;font-size:10px;letter-spacing:.06em;color:#b6b6b6}
+.noobs-icons{display:flex;gap:6px}
+.noobs-icon{width:45px;flex-basis:45px;font-size:23px;cursor:pointer}
+.noobs-status{font-size:13px;font-weight:800;letter-spacing:.12em;color:var(--noobs-aura);margin:20px 0 12px;text-transform:uppercase}
+.noobs-topic{font-size:15px;letter-spacing:.1em;font-weight:800;color:#c9c9c9;margin:0 0 14px}
+.noobs-history{display:grid;gap:10px;margin:10px 0 16px}
+.noobs-entry{border:2px solid var(--noobs-aura);border-radius:17px;background:#0b0b0b;min-width:0;overflow:hidden}
+.noobs-entry summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:13px;padding:13px;min-height:70px;font-weight:750}
+.noobs-entry summary::-webkit-details-marker{display:none}
+.noobs-number{display:flex;align-items:center;justify-content:center;flex:0 0 40px;height:40px;border:2px solid var(--noobs-aura);border-radius:50%;font-size:13px;color:var(--noobs-aura)}
+.noobs-summary{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.noobs-expand{color:var(--noobs-aura);font-size:21px;font-weight:bold}
+.noobs-entry[open] .noobs-expand{transform:rotate(90deg)}
+.noobs-entry-body{padding:0 15px 17px 66px;font-size:13px;color:#ccc}
+.noobs-entry-body p{margin:4px 0 8px}
+.noobs-current{border:1px solid #303030;border-radius:15px;background:#101010;padding:14px 13px;margin-bottom:12px}
+.noobs-current:has(#ballotBlock:not([hidden])){border-color:var(--noobs-aura)}
+.noobs-current #phaseDetail{font-size:12px;margin-bottom:10px}
+.noobs-current .box{background:#0b0b0b}
+.noobs-current #voteQuestion{font-size:19px;font-weight:800;line-height:1.35;margin:14px 0}
+.noobs-current #ballotBlock{border:0;background:transparent;padding:0;margin:0}
+.noobs-current #voteChoices .choice{background:#151515}
+.noobs-bottom{position:sticky;bottom:0;padding:12px 0 max(6px,env(safe-area-inset-bottom));background:#090909;border-top:1px solid var(--noobs-aura);z-index:3}
+.noobs-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.noobs-tool{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:66px;border:2px solid currentColor;border-radius:12px;background:transparent;font-size:10px;font-weight:900;line-height:1.1;cursor:pointer;padding:7px 3px}
+.noobs-tool span{font-size:24px;line-height:1.2}
+.tool-counter{color:#ff7373}.tool-blind{color:#72b7ff}.tool-view{color:#f179e5}
+.noobs-composer{margin-top:12px}
+.noobs-compose-row{display:flex;gap:10px;align-items:stretch}
+.noobs-compose-row textarea{margin:0;min-height:64px;border:2px solid #fff;background:#090909;border-radius:14px;color:#fff;resize:vertical}
+.noobs-send{min-width:54px;border:2px solid #fff;border-radius:14px;background:#090909;color:#fff;font-size:30px;cursor:pointer}
+.noobs-round-actions{display:flex;gap:9px;margin-top:11px}
+.noobs-another{display:flex;align-items:center;justify-content:center;gap:7px;flex:1;min-height:53px;border:2px solid var(--noobs-orange);color:var(--noobs-orange);background:#100d08;border-radius:13px;font-size:12px;font-weight:900;cursor:pointer}
+.noobs-another span{font-size:26px}
+.noobs-reveal{flex:1;font-size:12px}
+#roomInfo{border-color:#454545;background:#101010;margin-top:10px}
+#roomInfo h2{font-size:19px}
+#roomInfo #members{display:flex;gap:4px;flex-wrap:wrap}
+#discussionTurn{padding:12px}
+.noobs-moderator{border-color:var(--noobs-aura)}
+#soloMessages .detail{border-left:2px solid var(--noobs-aura)}
+.noobs-current #submitVote{width:100%}
+#notice{font-size:12px}
+.noobs-global-nav{display:flex;gap:8px;justify-content:space-between;margin:10px 0}
+.noobs-global-nav button{flex:1}
+@media(max-width:460px){
+ body{padding:8px 10px 45px}
+ .noobs-shell{padding:13px 11px;border-radius:20px}
+ .noobs-heading b{font-size:16px}
+ .noobs-mark{flex-basis:42px;height:43px;border-radius:11px;font-size:23px}
+ .noobs-icon{width:38px;flex-basis:38px;height:43px;border-radius:11px;font-size:22px}
+ .noobs-tool{font-size:9px;min-height:61px}
+ .noobs-entry summary{gap:9px;padding:10px;min-height:64px}
+ .noobs-entry-body{padding:0 10px 12px 56px}
+ .noobs-number{flex-basis:36px;height:36px}
+}
 </style></head>
 <body>
-<a class="return" href="./index.html">← VOLVER A DILEMA</a>
+<a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
 <header><div class="eyebrow">DILEMA · ELECCIONES 29N</div><div class="brand">POLÍTICA PARA NOOBS</div><p class="sub">Primero las ideas. Después las siglas. Vota, debate, escucha un giro y vuelve a pensar.</p></header>
 <section class="box" id="roomSetup">
   <h2>¿Quiénes debatimos?</h2>
@@ -68,6 +146,11 @@ footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacin
   <div class="actions"><button class="btn small" id="share">COPIAR ENLACE</button><button class="btn small" id="refresh">ACTUALIZAR</button><button class="btn small" id="leave">SALIR</button></div>
 </section>
 <p id="notice" role="status" aria-live="polite"></p>
+<div class="noobs-global-nav" id="noobsGlobalNav">
+  <button type="button" class="btn small" data-open-tab="hotpoints">HOT POINTS</button>
+  <button type="button" class="btn small" data-open-tab="debate">DEBATE</button>
+  <button type="button" class="btn small" data-open-tab="mapa">MAPA DE IDEAS</button>
+</div>
 <nav class="tabs" role="tablist" aria-label="Secciones">
   <button type="button" class="tab" data-tab="hotpoints" role="tab" aria-controls="hotpoints" aria-selected="true">HOT POINTS</button>
   <button type="button" class="tab" data-tab="debate" role="tab" aria-controls="debate" aria-selected="false">DEBATE</button>
@@ -79,44 +162,84 @@ footer{font-size:11px;color:#777;text-align:center;margin-top:32px;letter-spacin
   <div id="hotpointCards"></div>
 </section>
 <section id="debate" role="tabpanel" hidden>
-  <h2 id="phaseTitle">Tu debate</h2>
-  <div id="phaseDetail"></div>
-  <div class="box" id="ballotBlock" hidden>
-    <div class="eyebrow" id="voteContext">VOTACIÓN SECRETA</div>
-    <h3 id="voteQuestion"></h3><p id="twistText" class="muted small"></p>
-    <div id="voteChoices"></div>
-    <button class="btn primary" id="submitVote">VOTAR</button>
-    <p class="fine">Puedes seleccionar «depende / necesito más información». Los votos individuales no se muestran a los demás.</p>
-  </div>
-  <div id="discussionBlock" hidden>
-    <div class="box"><div class="eyebrow">EL GRUPO HA VOTADO</div><div id="voteResults"></div></div>
-    <div class="box">
-      <div class="eyebrow">TURNO DE DEBATE</div><h3 id="speaker"></h3>
-      <p class="small muted">Defiende tu argumento oralmente. Los demás pueden intervenir al terminar su turno.</p>
-      <button class="btn" id="nextTurn">SIGUIENTE TURNO</button>
+  <div id="noobsShell" class="noobs-shell" data-aura="ready">
+    <div class="noobs-header">
+      <div class="noobs-mark" aria-hidden="true">▣</div>
+      <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span></div>
+      <div class="noobs-icons">
+        <button class="noobs-icon" type="button" data-open-tab="hotpoints" aria-label="Ver Hot Points" title="Hot Points">▤</button>
+        <button class="noobs-icon" type="button" data-open-tab="mapa" aria-label="Ver mapa de ideas" title="Mapa de ideas">▥</button>
+        <a class="noobs-icon" href="./test-v0.1.16.html" aria-label="Volver al Hall de DILEMA" title="Volver a DILEMA">⌂</a>
+      </div>
     </div>
-    <div id="soloDialogue" class="box" hidden>
-      <div class="eyebrow">DEBATE INDIVIDUAL CON DILEMA</div>
-      <p class="small muted">Escribe tu argumento. DILEMA te planteará preguntas para examinarlo, no para decirte qué pensar.</p>
-      <div id="soloMessages" role="log" aria-live="polite"></div>
-      <label for="soloArgument" class="label">TU ARGUMENTO</label>
-      <textarea class="field" id="soloArgument" maxlength="700" rows="3" placeholder="¿Por qué piensas eso?"></textarea>
-      <button type="button" class="btn primary" id="sendArgument">DEBATIR CON DILEMA</button>
-      <p class="fine">El texto se envía al servicio de IA para obtener una respuesta; no se incorpora al historial de votos ni se guarda en la base de datos de DILEMA.</p>
+    <p id="dialogueStatus" class="noobs-status">DILEMA · TE ESCUCHO</p>
+    <h2 id="phaseTitle" class="noobs-topic">Debate</h2>
+    <div id="questionHistory" class="noobs-history" aria-label="Preguntas anteriores"></div>
+    <div id="activeRound" class="noobs-current" aria-live="polite">
+      <div id="phaseDetail" class="small muted"></div>
+      <div class="box" id="ballotBlock" hidden>
+        <div class="eyebrow" id="voteContext">VOTACIÓN SECRETA</div>
+        <h3 id="voteQuestion"></h3>
+        <p id="twistText" class="muted small"></p>
+        <div id="voteChoices"></div>
+        <button type="button" class="btn primary" id="submitVote">VOTAR</button>
+        <p class="fine">Una votación por pregunta. Los resultados no se muestran hasta que hayan votado todos.</p>
+      </div>
+      <div id="discussionBlock" hidden>
+        <div class="box">
+          <div class="eyebrow">RESULTADO DE LA PREGUNTA</div>
+          <div id="voteResults"></div>
+        </div>
+        <div class="box" id="discussionTurn">
+          <div class="eyebrow">TURNO DE DEBATE</div>
+          <h3 id="speaker"></h3>
+          <p class="small muted">Explicad vuestros argumentos. La IA puede ponerlos a prueba sin favorecer ninguna postura.</p>
+          <button type="button" class="btn" id="nextTurn">SIGUIENTE TURNO</button>
+        </div>
+        <div id="soloDialogue" class="box" hidden>
+          <div class="eyebrow">CONVERSACIÓN INDIVIDUAL</div>
+          <div id="soloMessages" role="log" aria-live="polite"></div>
+        </div>
+        <div id="groupSummary" class="box" hidden>
+          <label for="argumentSummary" class="eyebrow">SI QUIERES, RESUME UN ARGUMENTO DEL GRUPO</label>
+          <textarea class="field" id="argumentSummary" maxlength="500" rows="2" placeholder="Sin nombres ni datos personales..."></textarea>
+        </div>
+        <div class="box noobs-moderator">
+          <div class="eyebrow">DILEMA TE PREGUNTA</div>
+          <p id="moderatorQuestion"></p>
+        </div>
+      </div>
+      <div id="revealBlock" hidden>
+        <div class="box"><div class="eyebrow">FINAL DEL HOT POINT</div>
+          <h2>AHORA, LAS SIGLAS</h2>
+          <p class="small muted">Las siguientes posiciones proceden de documentos electorales identificados. No equivalen a una recomendación de voto.</p>
+          <div id="partySources"></div>
+        </div>
+        <div class="actions" id="another" hidden>
+          <button class="btn primary" id="anotherTopic">OTRO HOT POINT</button>
+          <button class="btn" id="finishRoom">CERRAR SALA</button>
+        </div>
+      </div>
     </div>
-    <div id="groupSummary" class="box" hidden>
-      <label for="argumentSummary" class="eyebrow">RESUMEN OPCIONAL DEL DEBATE</label>
-      <p class="small muted">El anfitrión puede resumir una idea del grupo, sin nombres, para que DILEMA plantee una objeción contextualizada.</p>
-      <textarea class="field" id="argumentSummary" maxlength="500" rows="2" placeholder="Argumentos principales que se han mencionado..."></textarea>
+    <div class="noobs-bottom">
+      <div id="politicsTools" class="noobs-tools" hidden>
+        <button type="button" class="noobs-tool tool-counter" data-giro="contra"><span aria-hidden="true">⇄</span>CONTRADÍCEME</button>
+        <button type="button" class="noobs-tool tool-blind" data-giro="ciego"><span aria-hidden="true">◉</span>PUNTO CIEGO</button>
+        <button type="button" class="noobs-tool tool-view" data-giro="otra"><span aria-hidden="true">✺</span>OTRA MIRADA</button>
+      </div>
+      <div id="soloComposer" class="noobs-composer" hidden>
+        <label for="soloArgument" class="eyebrow">ESCRIBE A DILEMA</label>
+        <div class="noobs-compose-row">
+          <textarea class="field" id="soloArgument" maxlength="700" rows="2" placeholder="Escribe tu argumento..."></textarea>
+          <button type="button" class="noobs-send" id="sendArgument" aria-label="Enviar argumento">↑</button>
+        </div>
+        <p class="fine">Tu texto se envía a la IA para responder. No se guarda en el historial de votos.</p>
+      </div>
+      <div class="noobs-round-actions" id="hostControls" hidden>
+        <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
+        <button type="button" class="btn noobs-reveal" id="reveal">REVELAR SIGLAS</button>
+      </div>
     </div>
-    <div class="box"><div class="eyebrow">DILEMA TE PREGUNTA</div><p id="moderatorQuestion"></p>
-      <div class="actions"><button class="btn small" data-giro="contra">CONTRADÍCEME</button><button class="btn small" data-giro="ciego">PUNTO CIEGO</button><button class="btn small" data-giro="otra">OTRA MIRADA</button></div>
-    </div>
-    <div class="actions" id="hostControls" hidden><button class="btn" id="revote">INTRODUCIR GIRO Y REVOTAR</button><button class="btn primary" id="reveal">REVELAR SIGLAS</button></div>
-  </div>
-  <div id="revealBlock" hidden>
-    <div class="box"><div class="eyebrow">FINAL DEL HOT POINT</div><h2>Ahora, las siglas</h2><p class="small muted">Las siguientes medidas corresponden a fuentes oficiales. No se infiere a qué partido votaría nadie.</p><div id="partySources"></div></div>
-    <div class="actions" id="another" hidden><button class="btn primary" id="anotherTopic">ELEGIR OTRO HOT POINT</button><button class="btn" id="finishRoom">CERRAR SALA</button></div>
   </div>
 </section>
 <section id="mapa" role="tabpanel" hidden>
