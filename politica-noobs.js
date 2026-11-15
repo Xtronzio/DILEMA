@@ -1,7 +1,7 @@
 "use strict";
 /* DILEMA · POLÍTICA PARA NOOBS · prototipo multirronda.
-   Cada ronda contiene una pregunta nueva, votación privada y debate.
-   Las preguntas actuales proceden de un banco editorial, NO de IA generativa.
+   Pulso anónimo con prioridades y debate por turnos con IA.
+   La IA genera preguntas; se usa el catálogo como alternativa si falla.
 */
 (()=>{
 const sb=window.supabase.createClient("https://cioydzndfvskzubyjcgs.supabase.co","sb_publishable_XrqG0cXWS2vlJIa3jw70Ng_33Gftqes");
@@ -519,11 +519,11 @@ function sentenceFallback(){
  const rounds=state?.history||[];
  const pulse=rounds.filter(h=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(h.cycle))).length;
  const debated=rounds.length-pulse;
- const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
+ const divisions=rounds.filter(x=>{const v=voteSummary(x);return v.a>0&&v.b>0;}).length;
  return {
   summary:"La mesa ha abordado "+rounds.length+" preguntas: "+pulse+
    " del pulso inicial y "+debated+" del debate por turnos. En "+divisions+
-   " preguntas hubo elecciones diferentes entre A y B. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
+   " preguntas aparecieron prioridades distintas. Priorizar una medida no significa rechazar otra. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
   question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
  };
 }
