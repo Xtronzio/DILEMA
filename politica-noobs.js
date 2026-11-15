@@ -289,10 +289,21 @@ function renderQuestionHistory(){
   root.append(item);
  });
 }
+function updateViewportSizing(){
+ const visual=window.visualViewport;
+ const h=Math.min(window.innerHeight||10000,visual?.height||window.innerHeight||10000);
+ if(Number.isFinite(h)&&h>240)document.documentElement.style.setProperty("--noobs-live-height",Math.floor(h)+"px");
+ const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+ const standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+ const focused=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName||"");
+ const clearance=ios&&!standalone&&!focused?74:0;
+ document.documentElement.style.setProperty("--noobs-chrome-clearance",clearance+"px");
+}
 function setTab(name){
  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===name)));
  ["hotpoints","debate","mapa"].forEach(x=>$(x).hidden=x!==name);
  document.body.classList.toggle("noobs-fullscreen",!!state&&name==="debate");
+ updateViewportSizing();
  if(name==="mapa")renderMap();
 }
 function renderHotpoints(){
@@ -562,7 +573,7 @@ function renderSoloMessages(){
   card.append(el("div","label",x.role),el("p","small",x.text));
   root.append(card);
  });
- $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=5;
+ $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=(state?.debate_mode==="mixed"?1:3);
 }
 function render(){renderRoom();renderHotpoints();renderQuestionHistory();renderDebate();renderMap();}
 async function refresh(){
@@ -611,6 +622,12 @@ async function init(){
  updateAgeHint();showAgeFields();
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
+ updateViewportSizing();
+ window.addEventListener("resize",updateViewportSizing,{passive:true});
+ window.visualViewport?.addEventListener("resize",updateViewportSizing,{passive:true});
+ window.visualViewport?.addEventListener("scroll",updateViewportSizing,{passive:true});
+ document.addEventListener("focusin",updateViewportSizing);
+ document.addEventListener("focusout",()=>setTimeout(updateViewportSizing,160));
  $("create").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
   const expected=Number($("participantsExpected").value);
@@ -645,7 +662,8 @@ async function init(){
   const argument=$("soloArgument").value.trim();
   if(argument.length<12)throw Error("Escribe un argumento algo más detallado.");
   const seq=soloMessages.filter(x=>x.role==="TÚ").length+1;
-  if(seq>5)throw Error("Ya has completado los cinco intercambios de esta ronda. Puedes iniciar otra pregunta.");
+  const limit=state?.debate_mode==="mixed"?1:3;
+  if(seq>limit)throw Error("Ya hemos explorado esta pregunta. En lugar de insistir, prueba otro tema.");
   soloMessages.push({role:"TÚ",text:argument});$("soloArgument").value="";renderSoloMessages();
   notice("DILEMA está analizando tu argumento...");
   let response="¿Qué hecho o ejemplo concreto pondría a prueba el argumento que acabas de defender?";
@@ -671,6 +689,10 @@ async function init(){
  });
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
   if(!state||state.stage!=="debate"||state.phase!=="discussion"||!state.can_act||state.closing_open)return;
+  if(Number(state.pressure_count||0)>=Number(state.pressure_limit||2)){
+   notice("Ya se ha explorado suficientemente esta cuestión. Mejor continuar con otra pregunta.");
+   return;
+  }
   const kind=b.dataset.giro;
   aura=kind==="contra"?"counter":kind==="ciego"?"blind":"view";
   $("noobsShell").dataset.aura=aura;
@@ -694,13 +716,20 @@ async function init(){
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
  $("nextPulse").onclick=()=>nextQuestion(choosePulseTopic());
- $("startDeepDebate").onclick=()=>execute(async()=>{
-  if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
-   throw Error("Hay que completar las seis preguntas del pulso.");
-  state=await rpc("politics_start_debate",{p_room:roomId});
-  render();setTab("hotpoints");
-  notice("Pulso completado. Elegid el tema que queréis debatir primero.");
- });
+ async function beginDebateMode(mode){
+  await execute(async()=>{
+   if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
+    throw Error("Hay que completar las seis preguntas del pulso.");
+   state=await rpc("politics_start_debate_mode",{p_room:roomId,p_mode:mode});
+   render();
+   setTab(mode==="mixed"?"debate":"hotpoints");
+   notice(mode==="mixed"?"Debate mixto: una pregunta breve de cada tema y una repregunta como máximo.":
+    "Profundizar: elegid el primer tema que queréis explorar.");
+  });
+ }
+ $("startDeepDebate").onclick=()=>beginDebateMode("focus");
+ $("startMixedDebate").onclick=()=>beginDebateMode("mixed");
+ $("launchMixed").onclick=()=>nextQuestion("vivienda");
  $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
  $("reveal").onclick=()=>execute(async()=>{
   if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
