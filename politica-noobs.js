@@ -273,14 +273,13 @@ function renderQuestionHistory(){
   body.append(el("p","","A · "+q.A),el("p","","B · "+q.B));
   const row=closed.find(x=>Number(x.cycle)===n);
   if(row){
-   const total=Number(row.A||0)+Number(row.B||0)+Number(row.N||0);
-   const pct=x=>total?Math.round(Number(row[x]||0)*100/total):0;
-   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"));
+   const totals=voteSummary(row),pct=x=>totals.total?Math.round(x*100/totals.total):0;
+   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · Prioridad A "+pct(totals.a)+" % · Prioridad B "+pct(totals.b)+" % · Ambas "+pct(totals.equal)+" % · Dudas "+pct(totals.depends)+" %"));
   }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
     const answer=el("div","result");
-    answer.append(el("b","",a.name+" · "+(a.choice==="N"?"DEPENDE":a.choice)));
+    answer.append(el("b","",a.name+" · "+voteLabel(a.choice)));
     if(a.argument)answer.append(el("p","",a.argument));
     body.append(answer);
    });
@@ -327,7 +326,7 @@ function renderPulseSummary(){
  const pulse=records.filter(x=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(x.cycle)));
  $("pulseSummaryText").textContent=pulse.length+" preguntas rápidas de temas distintos. No hay respuestas correctas ni se asignan etiquetas políticas.";
  const out=$("pulseDivergences");out.replaceChildren();
- const different=pulse.filter(x=>Number(x.A)>0&&Number(x.B)>0);
+ const different=pulse.filter(x=>{const v=voteSummary(x);return v.a>0&&v.b>0;});
  if(different.length){
   out.append(el("p","small","Hubo opiniones diferentes en "+different.length+" pregunta"+(different.length===1?"":"s")+". Pueden servir para empezar a conversar."));
   different.slice(0,4).forEach(x=>{
@@ -533,14 +532,23 @@ async function requestSentence(){
 }
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
- if(!state||!state.history||!state.history.length){root.append(el("div","box","Aquí aparecerán los porcentajes de cada votación cerrada."));return;}
+ if(!state?.history?.length){
+  root.append(el("div","box","Aquí aparecerán las prioridades del pulso y las respuestas de cada pregunta del debate."));
+  return;
+ }
  state.history.forEach(h=>{
-  const n=Number(h.A||0)+Number(h.B||0)+Number(h.N||0);
-  const pct=k=>n?Math.round(Number(h[k]||0)*100/n):0,c=el("div","card");
-  c.append(el("div","label",(TOPICS[h.topic]&&TOPICS[h.topic].title||h.topic)+" · RONDA "+h.cycle),
-   el("h3","","A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"),
-   el("p","fine",n+" "+(questionCache.find(q=>Number(q.cycle)===Number(h.cycle))?.kind==="debate"?"respuestas registradas":"votos del pulso")+". Estos porcentajes no equivalen a afinidad con partidos."));
-  root.append(c);
+  const stats=voteSummary(h),pct=n=>stats.total?Math.round(n*100/stats.total):0;
+  const card=el("div","card");
+  const question=questionCache.find(q=>Number(q.cycle)===Number(h.cycle));
+  card.append(
+    el("div","label",((TOPICS[h.topic]||{}).title||h.topic)+" · PREGUNTA "+h.cycle),
+    el("p","small",question?.question||"Pregunta de debate"),
+    el("h3","","A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" %"),
+    el("p","small","Ambas sin prioridad "+pct(stats.equal)+" % · Depende "+pct(stats.depends)+" %"),
+    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos de pulso")+
+      ". Una prioridad no significa rechazar la otra, salvo cuando se eligió expresamente «solo A» o «solo B».")
+  );
+  root.append(card);
  });
 }
 function renderSoloMessages(){
