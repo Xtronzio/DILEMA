@@ -341,9 +341,10 @@ function renderDebate(){
  const onTurn=!!state?.can_act,canInteract=debating&&discussion&&!state.closing_open&&onTurn;
  const allowPulse=pulse&&onTurn&&["lobby","discussion"].includes(phase);
  $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
-  (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
+  (state.debate_mode==="mixed"?"DEBATE MIXTO · ":"")+(TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
  $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
-  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · RESPONDEMOS POR TURNOS"):"";
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":
+   (state.debate_mode==="mixed"?"VARIOS TEMAS · INTERVENCIONES BREVES":"PROFUNDIZAMOS · CON ARGUMENTOS") ):"";
  $("ballotBlock").hidden=!voting;
  $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
@@ -355,8 +356,11 @@ function renderDebate(){
  $("nextPulse").innerHTML='<span aria-hidden="true">⇢</span>'+(
   Number(state?.pulse_count)===0?"EMPEZAR PULSO":"OTRA PREGUNTA CON VOTO");
  $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("startMixedDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("mixedStartControls").hidden=!(debating&&state.debate_mode==="mixed"&&phase==="lobby"&&onTurn);
  const allAnswered=!!state?.response_complete;
  $("hostControls").hidden=!canInteract||!allAnswered;
+ $("revote").textContent=state?.debate_mode==="mixed"?"OTRO TEMA":"OTRA PREGUNTA";
  $("revote").hidden=!canInteract||!allAnswered;
  $("reveal").hidden=!canInteract||!allAnswered;
  $("another").hidden=!state?.host;
@@ -364,7 +368,7 @@ function renderDebate(){
  $("speakerForm").hidden=!canInteract||!!state.my_answer_registered;
  $("deepAnswerLog").hidden=!(debating&&discussion);
  $("groupVoteResult").hidden=!(pulse&&discussion);
- $("politicsTools").hidden=!canInteract;
+ $("politicsTools").hidden=!canInteract||Number(state.pressure_count||0)>=Number(state.pressure_limit||2);
  $("soloComposer").hidden=!(canInteract&&Number(state?.count)===1);
  $("soloDialogue").hidden=!(debating&&discussion&&Number(state?.count)===1&&!state.closing_open);
  $("groupSummary").hidden=!(canInteract&&Number(state?.count)>1);
@@ -393,7 +397,9 @@ function renderDebate(){
  if(phase==="lobby"){
   $("phaseDetail").textContent=pulse?
     "Cuando todos estéis conectados, comenzad seis votaciones rápidas de temas distintos.":
-    "Ya tenemos el primer pulso. Elegid un Hot Point para empezar a debatir con más profundidad.";
+    state.debate_mode==="mixed"?
+      "DILEMA recorrerá temas distintos con preguntas cortas. Una repregunta como máximo por cuestión.":
+      "Ahora podéis elegir un tema de la lista para debatirlo con más profundidad.";
   return;
  }
  if(voting){
@@ -404,11 +410,14 @@ function renderDebate(){
   $("twistText").textContent=pulse?"Vota lo que te parezca. Ahora no hay que defender la respuesta.":
    "Luego podrás explicar por qué has elegido tu opción.";
   const root=$("voteChoices");root.replaceChildren();
-  [["A",state.A],["B",state.B],["N","DEPENDE / NECESITO MÁS INFORMACIÓN"]].forEach(pair=>{
-   const val=pair[0],lab=el("label","choice"),radio=el("input");
-   radio.type="radio";radio.name="voto";radio.value=val;radio.checked=(vote||state.my_vote)===val;
-   radio.onchange=()=>{vote=val;$("submitVote").disabled=false;};
-   lab.append(radio,el("span","",pair[1]));root.append(lab);
+  const legend=el("div","detail");
+  legend.append(el("p","small","A · "+state.A),el("p","small","B · "+state.B));
+  root.append(legend);
+  BALLOT_OPTIONS.forEach(([value,text])=>{
+   const label=el("label","choice"),radio=el("input");
+   radio.type="radio";radio.name="voto";radio.value=value;radio.checked=(vote||state.my_vote)===value;
+   radio.onchange=()=>{vote=value;$("submitVote").disabled=false;};
+   label.append(radio,el("span","",text));root.append(label);
   });
   $("submitVote").disabled=!(vote||state.my_vote);
   $("submitVote").textContent=state.my_vote?"CAMBIAR MI VOTO":"VOTAR";
@@ -421,12 +430,7 @@ function renderDebate(){
     (onTurn?"Te toca responder. Los demás pueden opinar, pero solo tu respuesta se guarda en este turno.":
     "Ahora responde "+(state.speaker||"otro participante")+". Puedes opinar oralmente, pero tu respuesta se registrará cuando te toque."));
   if(pulse){
-   const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");
-   out.replaceChildren();
-   [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
-    const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
-    row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
-   });
+   displayVoteSummary($("voteResults"),state.tally||{});
   }else{
    $("speaker").textContent=state.speaker||"Participante";
    $("turnHint").textContent=allAnswered?"Todos han respondido a esta pregunta. Podéis comentarla antes de continuar.":
@@ -451,7 +455,7 @@ function renderDebate(){
    const history=$("registeredAnswers");history.replaceChildren();
    (state.answers||[]).forEach(item=>{
     const answer=el("div","result");
-    const choice=item.choice==="N"?"DEPENDE":item.choice;
+    const choice=voteLabel(item.choice);
     answer.append(el("b","",item.name+" · "+choice));
     if(item.argument)answer.append(el("p","answer-text",item.argument));
     history.append(answer);
