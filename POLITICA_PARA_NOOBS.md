@@ -74,3 +74,36 @@ Módulo de debate cívico y comparativa documental del 29N 2026, desarrollado de
 - **QA:** pruebas SQL transaccionales de cuatro participantes para sorteo completo, bloqueo de participación fuera de turno, registro único de cada respuesta, cierre por mayoría, historial y nueva ronda. También se probó la salida de un participante durante una pregunta.
 - **Pendiente de validar manualmente:** experiencia en Safari móvil con varios dispositivos y resultado real de la API de IA. El frontend es una beta.
 
+
+
+## Actualización R127 — pantalla iPhone, prioridades y debate mixto
+
+### Interfaz
+- Cabecera del debate con navegación **TEMAS, MAPA y HALL** (texto legible, no iconos abstractos).
+- El marco del debate ocupa el alto útil del iPhone y el historial se desplaza dentro del marco.
+- Se calcula la altura del área visible del navegador, reservando espacio adicional para controles inferiores del navegador integrado de iOS; se reduce esa reserva al abrir el teclado.
+- Mantiene los colores de las herramientas/estados y **OTRA PREGUNTA** en naranja `#FF9F43`.
+
+### Qué significa un voto
+Las medidas de cada pregunta pueden ser complementarias. En lugar de obligar a elegir dos medidas como si fueran incompatibles, se registran seis respuestas:
+- **Primero A; también B** (`AB`).
+- **Primero B; también A** (`BA`).
+- **Ambas igual de importantes** (`EQ`).
+- **Solo A**, rechazo de B (`A_ONLY`).
+- **Solo B**, rechazo de A (`B_ONLY`).
+- **Depende/no lo sé** (`N`).
+
+Los votos históricos `A` y `B` siguen admitidos y se interpretan como preferencias exclusivas en el recuento. El porcentaje de «Prioridad A» agrupa `AB` + `A_ONLY` (y legado `A`), mientras que «Prioridad B» agrupa `BA` + `B_ONLY` (y legado `B`). El apartado «ambas igual» no se atribuye a una prioridad concreta. Los resultados no interpretan «primero A» como rechazo de B.
+
+### Después del primer pulso
+La mesa puede elegir dos modalidades:
+- **PROFUNDIZAR:** elige un Hot Point y discute casos diferentes dentro de ese tema, hasta un máximo de dos repreguntas de DILEMA por pregunta y tres intercambios escritos para el modo individual.
+- **DEBATE MIXTO:** DILEMA alterna automáticamente Hot Points para explorar perspectivas variadas sin insistir en una sola cuestión. Máximo de una repregunta por pregunta y un intercambio escrito individual.
+
+El sorteo de participantes, la respuesta propia A/B/Depende con nuevas variantes de prioridad y el cierre consensuado siguen funcionando en ambas modalidades. La IA no utiliza las opciones para generar perfiles de afiliación política ni recomendar el voto.
+
+### Verificaciones
+- Backend: pruebas transaccionales de sala de dos personas con prioridades `AB`, `BA`, `EQ`, `A_ONLY`, selección de modo mixto, máximo de una repregunta y contador reiniciado al cambiar de pregunta.
+- Frontend: JavaScript sintácticamente correcto, identificadores únicos sin referencias inexistentes, acceso R127 desde la portada y el Hall.
+- **Pendiente:** verificación visual manual en Safari y navegador integrado de ChatGPT/iOS tras publicar.
+
