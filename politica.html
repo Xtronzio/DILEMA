@@ -180,6 +180,53 @@ body.noobs-fullscreen #notice:empty{display:none}
 #speakerForm #speakerArgument{font-size:16px}
 #speakerForm #nextTurn{width:100%;margin-top:8px}
 #deepAnswerLog{border-color:#39493e}
+
+/* R127 · iPhone: altura visual real, barras del navegador y navegación textual */
+:root{--noobs-live-height:100dvh;--noobs-chrome-clearance:0px}
+body.noobs-fullscreen{
+  position:fixed!important;inset:0!important;
+  width:100%!important;max-width:none!important;
+  height:var(--noobs-live-height,100dvh)!important;
+  min-height:0!important;overflow:hidden!important;
+  margin:0!important;padding:0!important;
+}
+body.noobs-fullscreen > main,body.noobs-fullscreen #debate{
+  min-width:0!important;min-height:0!important;max-height:100%!important;overflow:hidden!important;
+}
+body.noobs-fullscreen .noobs-shell{
+  width:100%!important;height:100%!important;max-height:100%!important;min-height:0!important;
+  box-sizing:border-box!important;overflow:hidden!important;
+  border-radius:14px;
+  padding:calc(8px + env(safe-area-inset-top,0px)) 12px
+    calc(8px + env(safe-area-inset-bottom,0px) + var(--noobs-chrome-clearance,0px))!important;
+}
+.noobs-header{flex-wrap:wrap;gap:7px;align-content:start}
+.noobs-heading{flex:1 1 calc(100% - 74px)}
+.noobs-mark{flex:0 0 45px;height:45px;font-size:30px;font-weight:800}
+.noobs-icons{width:100%;flex:0 0 100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.noobs-icon{width:100%;min-width:0;flex:none;height:38px;min-height:38px;padding:5px 3px;
+ display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:850;
+ border-radius:11px;letter-spacing:.05em;line-height:1.1}
+.noobs-status{margin:8px 0 4px}
+.noobs-topic{margin:0 0 5px}
+.noobs-shell .noobs-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
+.noobs-bottom{flex-shrink:0;min-height:0}
+body.noobs-fullscreen .noobs-bottom{flex:0 0 auto;max-height:min(47dvh,310px);overflow-y:auto}
+body.noobs-fullscreen .noobs-another{min-height:44px}
+body.noobs-fullscreen .noobs-tool{min-height:48px}
+body.noobs-fullscreen .noobs-round-actions{margin-top:6px}
+body.noobs-fullscreen .noobs-stage-subtitle{font-size:10px}
+body.noobs-fullscreen .noobs-status{font-size:11px}
+body.noobs-fullscreen .noobs-topic{font-size:12px}
+.noobs-choice-list p{margin:5px 0}
+.noobs-round-actions{flex-wrap:wrap}
+.noobs-round-actions button{flex:1 1 120px}
+@media(max-width:410px){
+ .noobs-heading b{font-size:16px}
+ .noobs-heading span{font-size:10px}
+ .noobs-mark{flex-basis:42px;width:42px;height:42px}
+ .noobs-icon{font-size:11px}
+}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -228,13 +275,13 @@ body.noobs-fullscreen #notice:empty{display:none}
 <section id="debate" role="tabpanel" hidden>
   <div id="noobsShell" class="noobs-shell" data-aura="ready">
     <div class="noobs-header">
-      <div class="noobs-mark" aria-hidden="true">▣</div>
+      <div class="noobs-mark" aria-hidden="true">?</div>
       <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span><span id="noobsRoomMeta" class="noobs-room-meta"></span></div>
-      <div class="noobs-icons">
-        <button class="noobs-icon" type="button" data-open-tab="hotpoints" aria-label="Ver Hot Points" title="Hot Points">▤</button>
-        <button class="noobs-icon" type="button" data-open-tab="mapa" aria-label="Ver mapa de ideas" title="Mapa de ideas">▥</button>
-        <a class="noobs-icon" href="./test-v0.1.16.html" aria-label="Volver al Hall de DILEMA" title="Volver a DILEMA">⌂</a>
-      </div>
+      <nav class="noobs-icons" aria-label="Navegación">
+        <button class="noobs-icon" type="button" data-open-tab="hotpoints" title="Elegir temática">TEMAS</button>
+        <button class="noobs-icon" type="button" data-open-tab="mapa" title="Mapa de ideas">MAPA</button>
+        <a class="noobs-icon" href="./test-v0.1.16.html?refresh=R127" title="Volver al Hall de DILEMA">HALL</a>
+      </nav>
     </div>
     <p id="dialogueStatus" class="noobs-status">DILEMA · TE ESCUCHO</p>
     <p id="stageSubtitle" class="noobs-stage-subtitle"></p>
@@ -258,6 +305,7 @@ body.noobs-fullscreen #notice:empty{display:none}
         <h3 id="voteQuestion"></h3>
         <p id="twistText" class="muted small"></p>
         <div id="voteChoices"></div>
+        <p class="fine">Priorizar una medida no significa rechazar la otra. También puedes elegir que ambas importan por igual o que solo apoyarías una.</p>
         <button type="button" class="btn primary" id="submitVote">VOTAR</button>
         <p class="fine">En el pulso, todos votan; el resultado se muestra cuando ha votado la mesa.</p>
       </div>
@@ -278,10 +326,15 @@ body.noobs-fullscreen #notice:empty{display:none}
           <p class="small muted" id="turnHint">Los demás podéis debatir oralmente. Solo quien tiene el turno puede registrar su respuesta.</p>
           <div id="speakerForm" hidden>
             <div class="eyebrow">¿QUÉ RESPONDES TÚ?</div>
-            <div class="noobs-choice-list">
-              <label class="choice"><input type="radio" name="speakerChoice" value="A"><span>A · <span id="speakerA"></span></span></label>
-              <label class="choice"><input type="radio" name="speakerChoice" value="B"><span>B · <span id="speakerB"></span></span></label>
-              <label class="choice"><input type="radio" name="speakerChoice" value="N"><span>DEPENDE / NECESITO MÁS INFORMACIÓN</span></label>
+            <div class="noobs-choice-list" id="speakerChoiceList">
+              <p class="small muted">A · <span id="speakerA"></span></p>
+              <p class="small muted">B · <span id="speakerB"></span></p>
+              <label class="choice"><input type="radio" name="speakerChoice" value="AB"><span>Primero A, pero también B</span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="BA"><span>Primero B, pero también A</span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="EQ"><span>Las dos me parecen igual de importantes</span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="A_ONLY"><span>Solo A: no apoyaría B</span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="B_ONLY"><span>Solo B: no apoyaría A</span></label>
+              <label class="choice"><input type="radio" name="speakerChoice" value="N"><span>Depende / necesito más información</span></label>
             </div>
             <label class="eyebrow" for="speakerArgument">¿POR QUÉ? (OPCIONAL)</label>
             <textarea class="field" id="speakerArgument" maxlength="700" rows="2" placeholder="Resume tu argumento con tus palabras..."></textarea>
@@ -338,7 +391,11 @@ body.noobs-fullscreen #notice:empty{display:none}
       </div>
       <div class="noobs-round-actions" id="pulseControls" hidden>
         <button type="button" class="noobs-another" id="nextPulse"><span aria-hidden="true">⇢</span>OTRA PREGUNTA CON VOTO</button>
-        <button type="button" class="btn primary" id="startDeepDebate" hidden>ENTRAR AL DEBATE</button>
+        <button type="button" class="btn primary" id="startDeepDebate" hidden>PROFUNDIZAR</button>
+        <button type="button" class="btn" id="startMixedDebate" hidden>DEBATE MIXTO</button>
+      </div>
+      <div class="noobs-round-actions" id="mixedStartControls" hidden>
+        <button type="button" class="noobs-another" id="launchMixed">EMPEZAR DEBATE MIXTO</button>
       </div>
       <div class="noobs-round-actions" id="hostControls" hidden>
         <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
