@@ -1,7 +1,7 @@
 "use strict";
 /* DILEMA · POLÍTICA PARA NOOBS · prototipo multirronda.
-   Cada ronda contiene una pregunta nueva, votación privada y debate.
-   Las preguntas actuales proceden de un banco editorial, NO de IA generativa.
+   Pulso anónimo con prioridades y debate por turnos con IA.
+   La IA genera preguntas; se usa el catálogo como alternativa si falla.
 */
 (()=>{
 const sb=window.supabase.createClient("https://cioydzndfvskzubyjcgs.supabase.co","sb_publishable_XrqG0cXWS2vlJIa3jw70Ng_33Gftqes");
@@ -136,7 +136,14 @@ async function auth(){
  if(ret.error)throw ret.error;
  return ret.data.user;
 }
-async function rpc(fn,arg){const r=await sb.rpc(fn,arg);if(r.error)throw r.error;return r.data;}
+async function rpc(fn,arg){
+ const r=await sb.rpc(fn,arg);if(r.error)throw r.error;
+ if(fn!=="politics_game_state"&&r.data?.room_id&&!Object.prototype.hasOwnProperty.call(r.data,"debate_mode")){
+  const enriched=await sb.rpc("politics_game_state",{p_room:r.data.room_id});
+  if(!enriched.error)return enriched.data;
+ }
+ return r.data;
+}
 async function execute(fn){
  if(working)return;
  working=true;
@@ -144,6 +151,43 @@ async function execute(fn){
  finally{working=false;}
 }
 function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
+const BALLOT_OPTIONS=[
+ ["AB","Primero A, pero también B"],["BA","Primero B, pero también A"],
+ ["EQ","Las dos, sin dar prioridad a ninguna"],
+ ["A_ONLY","Solo A: no apoyaría B"],["B_ONLY","Solo B: no apoyaría A"],
+ ["N","Depende / necesito más información"]
+];
+const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,["A","Solo A"],["B","Solo B"]]);
+function voteLabel(code){return VOTE_LABELS[String(code)]||"Sin especificar";}
+function voteSummary(data){
+ const n=k=>Number(data?.[k]||0);
+ const a=n("AB")+n("A_ONLY")+n("A"),b=n("BA")+n("B_ONLY")+n("B");
+ return {a,b,equal:n("EQ"),depends:n("N"),onlyA:n("A_ONLY")+n("A"),onlyB:n("B_ONLY")+n("B"),
+ total:a+b+n("EQ")+n("N")};
+}
+function displayVoteSummary(root,data){
+ root.replaceChildren();
+ const t=voteSummary(data),pct=n=>t.total?Math.round(n*100/t.total):0;
+ [["Primero A (incluye solo A)",t.a],["Primero B (incluye solo B)",t.b],
+ ["Ambas sin prioridad",t.equal],["Depende / dudas",t.depends]].forEach(([label,n])=>{
+  const item=el("div","result");
+  item.append(el("b","",label+" · "+pct(n)+" %"),
+   el("p","fine",n+" respuesta"+(n===1?"":"s")));
+  root.append(item);
+ });
+ if(t.onlyA||t.onlyB)root.append(el("p","fine",
+  "Dentro de esas prioridades, "+t.onlyA+" eligieron exclusivamente A y "+t.onlyB+" exclusivamente B."));
+ return t;
+}
+function chooseMixedTopic(prior){
+ const used=(prior||[]).filter(x=>x.kind==="debate"),count={};
+ for(const id of Object.keys(TOPICS))count[id]=used.filter(x=>x.topic===id).length;
+ const previous=used.length?used[used.length-1].topic:null;
+ const least=Math.min(...Object.values(count));
+ const fresh=Object.keys(TOPICS).filter(id=>count[id]===least&&id!==previous);
+ const opts=fresh.length?fresh:Object.keys(TOPICS).filter(id=>id!==previous);
+ return opts[rand(opts.length)];
+}
 function chooseQuestion(id,prior){
  const t=TOPICS[id];
  const used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLocaleLowerCase("es")));
@@ -172,6 +216,7 @@ async function nextQuestion(id){
   if(!TOPICS[id])throw Error("Elige uno de los temas disponibles.");
   notice("DILEMA está preparando una pregunta diferente...");
   const prior=await rpc("politics_questions_used",{p_room:roomId});
+  if(state.stage==="debate"&&state.debate_mode==="mixed")id=chooseMixedTopic(prior);
   let p=null,mode="CATÁLOGO";
   try{
    const res=await sb.functions.invoke("politics-moderator",{body:{action:"next",room_id:roomId,topic:id}});
@@ -228,14 +273,13 @@ function renderQuestionHistory(){
   body.append(el("p","","A · "+q.A),el("p","","B · "+q.B));
   const row=closed.find(x=>Number(x.cycle)===n);
   if(row){
-   const total=Number(row.A||0)+Number(row.B||0)+Number(row.N||0);
-   const pct=x=>total?Math.round(Number(row[x]||0)*100/total):0;
-   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"));
+   const totals=voteSummary(row),pct=x=>totals.total?Math.round(x*100/totals.total):0;
+   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · Prioridad A "+pct(totals.a)+" % · Prioridad B "+pct(totals.b)+" % · Ambas "+pct(totals.equal)+" % · Dudas "+pct(totals.depends)+" %"));
   }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
     const answer=el("div","result");
-    answer.append(el("b","",a.name+" · "+(a.choice==="N"?"DEPENDE":a.choice)));
+    answer.append(el("b","",a.name+" · "+voteLabel(a.choice)));
     if(a.argument)answer.append(el("p","",a.argument));
     body.append(answer);
    });
@@ -245,10 +289,21 @@ function renderQuestionHistory(){
   root.append(item);
  });
 }
+function updateViewportSizing(){
+ const visual=window.visualViewport;
+ const h=Math.min(window.innerHeight||10000,visual?.height||window.innerHeight||10000);
+ if(Number.isFinite(h)&&h>240)document.documentElement.style.setProperty("--noobs-live-height",Math.floor(h)+"px");
+ const ios=/iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+ const standalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+ const focused=/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName||"");
+ const clearance=ios&&!standalone&&!focused?74:0;
+ document.documentElement.style.setProperty("--noobs-chrome-clearance",clearance+"px");
+}
 function setTab(name){
  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.tab===name)));
  ["hotpoints","debate","mapa"].forEach(x=>$(x).hidden=x!==name);
  document.body.classList.toggle("noobs-fullscreen",!!state&&name==="debate");
+ updateViewportSizing();
  if(name==="mapa")renderMap();
 }
 function renderHotpoints(){
@@ -282,7 +337,7 @@ function renderPulseSummary(){
  const pulse=records.filter(x=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(x.cycle)));
  $("pulseSummaryText").textContent=pulse.length+" preguntas rápidas de temas distintos. No hay respuestas correctas ni se asignan etiquetas políticas.";
  const out=$("pulseDivergences");out.replaceChildren();
- const different=pulse.filter(x=>Number(x.A)>0&&Number(x.B)>0);
+ const different=pulse.filter(x=>{const v=voteSummary(x);return v.a>0&&v.b>0;});
  if(different.length){
   out.append(el("p","small","Hubo opiniones diferentes en "+different.length+" pregunta"+(different.length===1?"":"s")+". Pueden servir para empezar a conversar."));
   different.slice(0,4).forEach(x=>{
@@ -297,9 +352,10 @@ function renderDebate(){
  const onTurn=!!state?.can_act,canInteract=debating&&discussion&&!state.closing_open&&onTurn;
  const allowPulse=pulse&&onTurn&&["lobby","discussion"].includes(phase);
  $("phaseTitle").textContent=active?(pulse?"PRIMER PULSO · "+state.pulse_count+"/"+state.pulse_goal:
-  (TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
+  (state.debate_mode==="mixed"?"DEBATE MIXTO · ":"")+(TOPICS[state.topic]?.title||"DEBATE")):"DEBATE COMPARTIDO";
  $("stageSubtitle").textContent=active?(pulse?"VOTAMOS PRIMERO · HABLAMOS DESPUÉS":
-  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":"UNA PREGUNTA · RESPONDEMOS POR TURNOS"):"";
+  phase==="reveal"?"SENTENCIA DE DILEMA · PROGRAMAS REALES":
+   (state.debate_mode==="mixed"?"VARIOS TEMAS · INTERVENCIONES BREVES":"PROFUNDIZAMOS · CON ARGUMENTOS") ):"";
  $("ballotBlock").hidden=!voting;
  $("discussionBlock").hidden=!discussion;
  $("revealBlock").hidden=phase!=="reveal";
@@ -311,8 +367,11 @@ function renderDebate(){
  $("nextPulse").innerHTML='<span aria-hidden="true">⇢</span>'+(
   Number(state?.pulse_count)===0?"EMPEZAR PULSO":"OTRA PREGUNTA CON VOTO");
  $("startDeepDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("startMixedDebate").hidden=!allowPulse||state.pulse_count<state.pulse_goal;
+ $("mixedStartControls").hidden=!(debating&&state.debate_mode==="mixed"&&phase==="lobby"&&onTurn);
  const allAnswered=!!state?.response_complete;
  $("hostControls").hidden=!canInteract||!allAnswered;
+ $("revote").textContent=state?.debate_mode==="mixed"?"OTRO TEMA":"OTRA PREGUNTA";
  $("revote").hidden=!canInteract||!allAnswered;
  $("reveal").hidden=!canInteract||!allAnswered;
  $("another").hidden=!state?.host;
@@ -320,7 +379,7 @@ function renderDebate(){
  $("speakerForm").hidden=!canInteract||!!state.my_answer_registered;
  $("deepAnswerLog").hidden=!(debating&&discussion);
  $("groupVoteResult").hidden=!(pulse&&discussion);
- $("politicsTools").hidden=!canInteract;
+ $("politicsTools").hidden=!canInteract||Number(state.pressure_count||0)>=Number(state.pressure_limit||2);
  $("soloComposer").hidden=!(canInteract&&Number(state?.count)===1);
  $("soloDialogue").hidden=!(debating&&discussion&&Number(state?.count)===1&&!state.closing_open);
  $("groupSummary").hidden=!(canInteract&&Number(state?.count)>1);
@@ -349,7 +408,9 @@ function renderDebate(){
  if(phase==="lobby"){
   $("phaseDetail").textContent=pulse?
     "Cuando todos estéis conectados, comenzad seis votaciones rápidas de temas distintos.":
-    "Ya tenemos el primer pulso. Elegid un Hot Point para empezar a debatir con más profundidad.";
+    state.debate_mode==="mixed"?
+      "DILEMA recorrerá temas distintos con preguntas cortas. Una repregunta como máximo por cuestión.":
+      "Ahora podéis elegir un tema de la lista para debatirlo con más profundidad.";
   return;
  }
  if(voting){
@@ -360,11 +421,14 @@ function renderDebate(){
   $("twistText").textContent=pulse?"Vota lo que te parezca. Ahora no hay que defender la respuesta.":
    "Luego podrás explicar por qué has elegido tu opción.";
   const root=$("voteChoices");root.replaceChildren();
-  [["A",state.A],["B",state.B],["N","DEPENDE / NECESITO MÁS INFORMACIÓN"]].forEach(pair=>{
-   const val=pair[0],lab=el("label","choice"),radio=el("input");
-   radio.type="radio";radio.name="voto";radio.value=val;radio.checked=(vote||state.my_vote)===val;
-   radio.onchange=()=>{vote=val;$("submitVote").disabled=false;};
-   lab.append(radio,el("span","",pair[1]));root.append(lab);
+  const legend=el("div","detail");
+  legend.append(el("p","small","A · "+state.A),el("p","small","B · "+state.B));
+  root.append(legend);
+  BALLOT_OPTIONS.forEach(([value,text])=>{
+   const label=el("label","choice"),radio=el("input");
+   radio.type="radio";radio.name="voto";radio.value=value;radio.checked=(vote||state.my_vote)===value;
+   radio.onchange=()=>{vote=value;$("submitVote").disabled=false;};
+   label.append(radio,el("span","",text));root.append(label);
   });
   $("submitVote").disabled=!(vote||state.my_vote);
   $("submitVote").textContent=state.my_vote?"CAMBIAR MI VOTO":"VOTAR";
@@ -377,12 +441,7 @@ function renderDebate(){
     (onTurn?"Te toca responder. Los demás pueden opinar, pero solo tu respuesta se guarda en este turno.":
     "Ahora responde "+(state.speaker||"otro participante")+". Puedes opinar oralmente, pero tu respuesta se registrará cuando te toque."));
   if(pulse){
-   const count=Number(state.count)||1,t=state.tally||{A:0,B:0,N:0},out=$("voteResults");
-   out.replaceChildren();
-   [["A",state.A],["B",state.B],["N","Depende / no lo sé"]].forEach(pair=>{
-    const n=Number(t[pair[0]]||0),pct=count?Math.round(100*n/count):0,row=el("div","result");
-    row.append(el("b","",pair[0]+" · "+pct+" % · "+n+" voto"+(n===1?"":"s")),el("p","",pair[1]));out.append(row);
-   });
+   displayVoteSummary($("voteResults"),state.tally||{});
   }else{
    $("speaker").textContent=state.speaker||"Participante";
    $("turnHint").textContent=allAnswered?"Todos han respondido a esta pregunta. Podéis comentarla antes de continuar.":
@@ -407,7 +466,7 @@ function renderDebate(){
    const history=$("registeredAnswers");history.replaceChildren();
    (state.answers||[]).forEach(item=>{
     const answer=el("div","result");
-    const choice=item.choice==="N"?"DEPENDE":item.choice;
+    const choice=voteLabel(item.choice);
     answer.append(el("b","",item.name+" · "+choice));
     if(item.argument)answer.append(el("p","answer-text",item.argument));
     history.append(answer);
@@ -460,11 +519,11 @@ function sentenceFallback(){
  const rounds=state?.history||[];
  const pulse=rounds.filter(h=>questionCache.some(q=>q.kind==="pulse"&&Number(q.cycle)===Number(h.cycle))).length;
  const debated=rounds.length-pulse;
- const divisions=rounds.filter(x=>Number(x.A)>0&&Number(x.B)>0).length;
+ const divisions=rounds.filter(x=>{const v=voteSummary(x);return v.a>0&&v.b>0;}).length;
  return {
   summary:"La mesa ha abordado "+rounds.length+" preguntas: "+pulse+
    " del pulso inicial y "+debated+" del debate por turnos. En "+divisions+
-   " preguntas hubo elecciones diferentes entre A y B. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
+   " preguntas aparecieron prioridades distintas. Priorizar una medida no significa rechazar otra. Una respuesta a un dilema no permite saber a qué partido votaría nadie. Lo valioso es escuchar los argumentos.",
   question:"¿Qué pregunta volveríais a debatir después de escuchar las razones de todos?"
  };
 }
@@ -488,14 +547,23 @@ async function requestSentence(){
 }
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
- if(!state||!state.history||!state.history.length){root.append(el("div","box","Aquí aparecerán los porcentajes de cada votación cerrada."));return;}
+ if(!state?.history?.length){
+  root.append(el("div","box","Aquí aparecerán las prioridades del pulso y las respuestas de cada pregunta del debate."));
+  return;
+ }
  state.history.forEach(h=>{
-  const n=Number(h.A||0)+Number(h.B||0)+Number(h.N||0);
-  const pct=k=>n?Math.round(Number(h[k]||0)*100/n):0,c=el("div","card");
-  c.append(el("div","label",(TOPICS[h.topic]&&TOPICS[h.topic].title||h.topic)+" · RONDA "+h.cycle),
-   el("h3","","A "+pct("A")+" % · B "+pct("B")+" % · DUDAS "+pct("N")+" %"),
-   el("p","fine",n+" "+(questionCache.find(q=>Number(q.cycle)===Number(h.cycle))?.kind==="debate"?"respuestas registradas":"votos del pulso")+". Estos porcentajes no equivalen a afinidad con partidos."));
-  root.append(c);
+  const stats=voteSummary(h),pct=n=>stats.total?Math.round(n*100/stats.total):0;
+  const card=el("div","card");
+  const question=questionCache.find(q=>Number(q.cycle)===Number(h.cycle));
+  card.append(
+    el("div","label",((TOPICS[h.topic]||{}).title||h.topic)+" · PREGUNTA "+h.cycle),
+    el("p","small",question?.question||"Pregunta de debate"),
+    el("h3","","A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" %"),
+    el("p","small","Ambas sin prioridad "+pct(stats.equal)+" % · Depende "+pct(stats.depends)+" %"),
+    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos de pulso")+
+      ". Una prioridad no significa rechazar la otra, salvo cuando se eligió expresamente «solo A» o «solo B».")
+  );
+  root.append(card);
  });
 }
 function renderSoloMessages(){
@@ -505,7 +573,7 @@ function renderSoloMessages(){
   card.append(el("div","label",x.role),el("p","small",x.text));
   root.append(card);
  });
- $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=5;
+ $("sendArgument").disabled=soloMessages.filter(x=>x.role==="TÚ").length>=(state?.debate_mode==="mixed"?1:3);
 }
 function render(){renderRoom();renderHotpoints();renderQuestionHistory();renderDebate();renderMap();}
 async function refresh(){
@@ -554,6 +622,12 @@ async function init(){
  updateAgeHint();showAgeFields();
  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
  document.querySelectorAll("[data-open-tab]").forEach(b=>b.onclick=()=>setTab(b.dataset.openTab));
+ updateViewportSizing();
+ window.addEventListener("resize",updateViewportSizing,{passive:true});
+ window.visualViewport?.addEventListener("resize",updateViewportSizing,{passive:true});
+ window.visualViewport?.addEventListener("scroll",updateViewportSizing,{passive:true});
+ document.addEventListener("focusin",updateViewportSizing);
+ document.addEventListener("focusout",()=>setTimeout(updateViewportSizing,160));
  $("create").onclick=()=>execute(async()=>{
   if(!$("consent").checked)throw Error("Marca el consentimiento de participación para continuar.");
   const expected=Number($("participantsExpected").value);
@@ -588,7 +662,8 @@ async function init(){
   const argument=$("soloArgument").value.trim();
   if(argument.length<12)throw Error("Escribe un argumento algo más detallado.");
   const seq=soloMessages.filter(x=>x.role==="TÚ").length+1;
-  if(seq>5)throw Error("Ya has completado los cinco intercambios de esta ronda. Puedes iniciar otra pregunta.");
+  const limit=state?.debate_mode==="mixed"?1:3;
+  if(seq>limit)throw Error("Ya hemos explorado esta pregunta. En lugar de insistir, prueba otro tema.");
   soloMessages.push({role:"TÚ",text:argument});$("soloArgument").value="";renderSoloMessages();
   notice("DILEMA está analizando tu argumento...");
   let response="¿Qué hecho o ejemplo concreto pondría a prueba el argumento que acabas de defender?";
@@ -614,6 +689,10 @@ async function init(){
  });
  document.querySelectorAll("[data-giro]").forEach(b=>b.onclick=()=>execute(async()=>{
   if(!state||state.stage!=="debate"||state.phase!=="discussion"||!state.can_act||state.closing_open)return;
+  if(Number(state.pressure_count||0)>=Number(state.pressure_limit||2)){
+   notice("Ya se ha explorado suficientemente esta cuestión. Mejor continuar con otra pregunta.");
+   return;
+  }
   const kind=b.dataset.giro;
   aura=kind==="contra"?"counter":kind==="ciego"?"blind":"view";
   $("noobsShell").dataset.aura=aura;
@@ -637,13 +716,20 @@ async function init(){
   notice(mode==="IA"?"Nueva pregunta compartida por DILEMA.":"Nueva perspectiva compartida.");
  }));
  $("nextPulse").onclick=()=>nextQuestion(choosePulseTopic());
- $("startDeepDebate").onclick=()=>execute(async()=>{
-  if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
-   throw Error("Hay que completar las seis preguntas del pulso.");
-  state=await rpc("politics_start_debate",{p_room:roomId});
-  render();setTab("hotpoints");
-  notice("Pulso completado. Elegid el tema que queréis debatir primero.");
- });
+ async function beginDebateMode(mode){
+  await execute(async()=>{
+   if(!state?.host||state.stage!=="pulse"||state.pulse_count<state.pulse_goal)
+    throw Error("Hay que completar las seis preguntas del pulso.");
+   state=await rpc("politics_start_debate_mode",{p_room:roomId,p_mode:mode});
+   render();
+   setTab(mode==="mixed"?"debate":"hotpoints");
+   notice(mode==="mixed"?"Debate mixto: una pregunta breve de cada tema y una repregunta como máximo.":
+    "Profundizar: elegid el primer tema que queréis explorar.");
+  });
+ }
+ $("startDeepDebate").onclick=()=>beginDebateMode("focus");
+ $("startMixedDebate").onclick=()=>beginDebateMode("mixed");
+ $("launchMixed").onclick=()=>nextQuestion("vivienda");
  $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
  $("reveal").onclick=()=>execute(async()=>{
   if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
