@@ -136,7 +136,14 @@ async function auth(){
  if(ret.error)throw ret.error;
  return ret.data.user;
 }
-async function rpc(fn,arg){const r=await sb.rpc(fn,arg);if(r.error)throw r.error;return r.data;}
+async function rpc(fn,arg){
+ const r=await sb.rpc(fn,arg);if(r.error)throw r.error;
+ if(fn!=="politics_game_state"&&r.data?.room_id&&!Object.prototype.hasOwnProperty.call(r.data,"debate_mode")){
+  const enriched=await sb.rpc("politics_game_state",{p_room:r.data.room_id});
+  if(!enriched.error)return enriched.data;
+ }
+ return r.data;
+}
 async function execute(fn){
  if(working)return;
  working=true;
@@ -144,6 +151,43 @@ async function execute(fn){
  finally{working=false;}
 }
 function rand(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}
+const BALLOT_OPTIONS=[
+ ["AB","Primero A, pero también B"],["BA","Primero B, pero también A"],
+ ["EQ","Las dos, sin dar prioridad a ninguna"],
+ ["A_ONLY","Solo A: no apoyaría B"],["B_ONLY","Solo B: no apoyaría A"],
+ ["N","Depende / necesito más información"]
+];
+const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,["A","Solo A"],["B","Solo B"]]);
+function voteLabel(code){return VOTE_LABELS[String(code)]||"Sin especificar";}
+function voteSummary(data){
+ const n=k=>Number(data?.[k]||0);
+ const a=n("AB")+n("A_ONLY")+n("A"),b=n("BA")+n("B_ONLY")+n("B");
+ return {a,b,equal:n("EQ"),depends:n("N"),onlyA:n("A_ONLY")+n("A"),onlyB:n("B_ONLY")+n("B"),
+ total:a+b+n("EQ")+n("N")};
+}
+function displayVoteSummary(root,data){
+ root.replaceChildren();
+ const t=voteSummary(data),pct=n=>t.total?Math.round(n*100/t.total):0;
+ [["Primero A (incluye solo A)",t.a],["Primero B (incluye solo B)",t.b],
+ ["Ambas sin prioridad",t.equal],["Depende / dudas",t.depends]].forEach(([label,n])=>{
+  const item=el("div","result");
+  item.append(el("b","",label+" · "+pct(n)+" %"),
+   el("p","fine",n+" respuesta"+(n===1?"":"s")));
+  root.append(item);
+ });
+ if(t.onlyA||t.onlyB)root.append(el("p","fine",
+  "Dentro de esas prioridades, "+t.onlyA+" eligieron exclusivamente A y "+t.onlyB+" exclusivamente B."));
+ return t;
+}
+function chooseMixedTopic(prior){
+ const used=(prior||[]).filter(x=>x.kind==="debate"),count={};
+ for(const id of Object.keys(TOPICS))count[id]=used.filter(x=>x.topic===id).length;
+ const previous=used.length?used[used.length-1].topic:null;
+ const least=Math.min(...Object.values(count));
+ const fresh=Object.keys(TOPICS).filter(id=>count[id]===least&&id!==previous);
+ const opts=fresh.length?fresh:Object.keys(TOPICS).filter(id=>id!==previous);
+ return opts[rand(opts.length)];
+}
 function chooseQuestion(id,prior){
  const t=TOPICS[id];
  const used=new Set((prior||[]).map(x=>String(x.question||"").trim().toLocaleLowerCase("es")));
@@ -172,6 +216,7 @@ async function nextQuestion(id){
   if(!TOPICS[id])throw Error("Elige uno de los temas disponibles.");
   notice("DILEMA está preparando una pregunta diferente...");
   const prior=await rpc("politics_questions_used",{p_room:roomId});
+  if(state.stage==="debate"&&state.debate_mode==="mixed")id=chooseMixedTopic(prior);
   let p=null,mode="CATÁLOGO";
   try{
    const res=await sb.functions.invoke("politics-moderator",{body:{action:"next",room_id:roomId,topic:id}});
