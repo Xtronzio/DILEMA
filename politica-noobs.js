@@ -67,54 +67,77 @@ const PDF={
  PP:"https://www.pp.es/wp-content/uploads/2026/11/LA-RECONSTRUCCION-NACIONAL.pdf",
  Vox:"https://www.voxespana.es/wp-content/uploads/2026/11/Programa-completo-A5-1.pdf",
  PNV:"https://www.eaj-pnv.eus/es/adjuntos-documentos/21765/pdf/programa-electoral-29n",
- SALF:"https://www.seacabolafiesta.com/SALF_Contrato_Electoral_29N.pdf?v=073425b9522d"
+ SALF:"https://www.seacabolafiesta.com/SALF_Contrato_Electoral_29N.pdf?v=073425b9522d",
+ PSOE:"https://www.psoe.es/media-content/2026/11/PROGRAMAPSOE29N26.pdf",
+ FA:"https://frenteamplio.info/programa/todas/",
+ FAV:"https://frenteamplio.info/noticias/frente-amplio-propone-impuesto-acumulacion-vivienda/",
+ FAT:"https://frenteamplio.info/programa/tax-the-rich/",
+ PODEMOS:"https://pazcasaytrabajo.es/"
 };
 const EVIDENCE={
  vivienda:[
   {p:"PP",type:"Programa 29N 2026 · medidas 144–156",t:"Propone aumentar la construcción, agilizar licencias y facilitar la primera vivienda de los jóvenes mediante medidas fiscales y avales.",url:PDF.PP,page:"53–56"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 26–34",t:"Plantea ampliar suelo y vivienda protegida, derogar la Ley de Vivienda y establecer prioridad nacional en vivienda social y ayudas.",url:PDF.Vox,page:"23–25"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.1",t:"Propone facilitar nuevas viviendas, rehabilitar y movilizar viviendas vacías, y regular los alquileres temporales y turísticos.",url:PDF.PNV,page:"7–8"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 1",t:"Promete eliminar la carga fiscal de la primera vivienda, simplificar licencias y facilitar financiación hipotecaria; los efectos de ahorro son afirmaciones del propio partido.",url:PDF.SALF,page:"4–6"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 1",t:"Promete eliminar la carga fiscal de la primera vivienda, simplificar licencias y facilitar financiación hipotecaria; los efectos de ahorro son afirmaciones del propio partido.",url:PDF.SALF,page:"4–6"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 37–43 y 59–62",t:"Ampliar vivienda pública, construir y rehabilitar vivienda asequible, movilizar suelo y reforzar la estabilidad del alquiler.",url:PDF.PSOE,page:"28–32"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · vivienda",t:"Impuesto sobre acumulación de viviendas para favorecer su puesta en alquiler asequible, junto con más vivienda pública mediante construcción, compra y rehabilitación. Las estimaciones de resultados son del propio partido.",url:PDF.FAV},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 01",t:"Defiende precios de vivienda asequibles y limitar las compras de casas destinadas a especular. Documento de medidas, no programa completo.",url:PDF.PODEMOS}
  ],
  inmigracion:[
   {p:"PP",type:"Programa 29N 2026 · medida 35",t:"Propone una autoridad única para coordinar entrada, permanencia, retorno e integración y evaluar sus efectos.",url:PDF.PP,page:"21"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 9–17",t:"Plantea prohibir regularizaciones masivas, suprimir el arraigo y reforzar controles y repatriaciones.",url:PDF.Vox,page:"15–16"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 3.2",t:"Propone más competencias vascas en gestión migratoria, vías legales y ordenadas, acogida e integración laboral.",url:PDF.PNV,page:"24–25"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 4",t:"Plantea limitar la inmigración a vías legales y agilizar expulsiones en los supuestos que describe.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 4",t:"Plantea limitar la inmigración a vías legales y agilizar expulsiones en los supuestos que describe.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 388–391",t:"Simplificar trámites, ampliar vías legales de residencia y trabajo y reforzar la acogida, el asilo y la integración.",url:PDF.PSOE,page:"93–94"}
  ],
  sanidad:[
   {p:"PP",type:"Programa 29N 2026 · medidas 219–223",t:"Propone un plan de reducción de listas de espera, más personal de atención primaria, prevención y refuerzo de salud mental.",url:PDF.PP,page:"69–70"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 60–65",t:"Propone tarjeta sanitaria común, refuerzo de atención primaria y un plan nacional para reducir listas de espera.",url:PDF.Vox,page:"37–38"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 4.2",t:"Propone ajustar la formación de especialistas a las necesidades sanitarias y completar competencias sanitarias de Euskadi.",url:PDF.PNV,page:"31–32"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 6",t:"Propone una central de compras sanitarias, reducir la espera quirúrgica y revisar remuneraciones profesionales.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 6",t:"Propone una central de compras sanitarias, reducir la espera quirúrgica y revisar remuneraciones profesionales.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 136–144",t:"Reducir listas de espera, fortalecer centros de salud, ampliar atención dental pública y mejorar el acceso a la atención psicológica.",url:PDF.PSOE,page:"50–51"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · sanidad",t:"Incluir atención dental, gafas y audífonos entre las prestaciones sanitarias públicas.",url:PDF.FA},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 03 y 05",t:"Reforzar la sanidad pública, aumentando profesionales y mejorando sus condiciones; prioriza servicios públicos frente a más gasto militar.",url:PDF.PODEMOS}
  ],
  educacion:[
   {p:"PP",type:"Programa 29N 2026 · medidas 209–218",t:"Propone refuerzo temprano en lectura y cálculo, apoyo a alumnado con dificultades y una revisión del marco educativo.",url:PDF.PP,page:"67–69"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 66–69",t:"Propone currículo y evaluaciones comunes, libertad de elección de centro, cambios legislativos y refuerzo de becas.",url:PDF.Vox,page:"41"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.4",t:"Defiende las competencias educativas de Euskadi y una educación inclusiva, plurilingüe e intercultural.",url:PDF.PNV,page:"10"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 9",t:"Propone una ley educativa de larga duración, garantías de escolarización en castellano y financiación vinculada al alumno.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 9",t:"Propone una ley educativa de larga duración, garantías de escolarización en castellano y financiación vinculada al alumno.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 157–163",t:"Ampliar escuelas infantiles públicas de 0 a 3 años y becas, reducir tamaño de grupos escolares y reforzar la orientación educativa.",url:PDF.PSOE,page:"52–53"},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 05",t:"Dedicar más recursos a la educación pública y mejorar las condiciones de sus profesionales.",url:PDF.PODEMOS}
  ],
  impuestos:[
   {p:"PP",type:"Programa 29N 2026 · medidas 177–185",t:"Propone bajar el IRPF para rentas medias y bajas, actualizar mínimos personales y familiares y deflactar la tarifa.",url:PDF.PP,page:"61–62"},
   {p:"Vox",type:"Programa 29N 2026 · medida 2",t:"Propone simplificar y reducir el IRPF, bajar parte del IVA y cuotas de autónomos según ingresos.",url:PDF.Vox,page:"9–10"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 2.7",t:"Propone revisar el IVA de ciertos bienes esenciales y reforzar la autonomía fiscal y financiera de Euskadi.",url:PDF.PNV,page:"20–21"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 3",t:"Propone una exención de IRPF para los primeros 35.000 euros de renta.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 3",t:"Propone una exención de IRPF para los primeros 35.000 euros de renta.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 130–132",t:"Aumentar tributación de rentas del capital elevadas, gravar más a grandes tecnológicas y aplicar un impuesto a determinados viajes de lujo.",url:PDF.PSOE,page:"49–50"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · grandes fortunas",t:"Aumentar impuestos sobre grandes patrimonios, con una tributación mínima del 2 % a partir de ciertos importes y del 3 % por encima de 50 millones de euros.",url:PDF.FAT}
  ],
  empleo:[
   {p:"PP",type:"Programa 29N 2026 · medidas 170–174",t:"Propone incentivos para nuevos autónomos, beneficios a primeras contrataciones y menos cotización para empresas con estabilidad laboral.",url:PDF.PP,page:"59–60"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 2 y 8",t:"Plantea menores cargas fiscales a empresas y autónomos, incentivos a la innovación y una política de reindustrialización.",url:PDF.Vox,page:"9–12"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.3",t:"Defiende un salario mínimo propio en Euskadi, negociación colectiva y la protección del empleo estable.",url:PDF.PNV,page:"9"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 8",t:"Plantea reducir cargas laborales, un contrato único con mochila y eliminar la cuota de autónomos.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 8",t:"Plantea reducir cargas laborales, un contrato único con mochila y eliminar la cuota de autónomos.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 112–118",t:"Reforzar la protección de becarios, autónomos y seguridad laboral y apoyar el primer empleo y emprendimiento juvenil.",url:PDF.PSOE,page:"42–44"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · pequeño comercio",t:"Simplificar trámites, dar más protección al alquiler de locales comerciales y bonificar cuotas de autónomos de ingresos bajos.",url:PDF.FA},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 04",t:"Establecer un salario mínimo de 1.800 euros mensuales y una jornada de trabajo de 30 horas semanales.",url:PDF.PODEMOS}
  ],
  medioambiente:[
   {p:"PP",type:"Programa 29N 2026 · medida 228",t:"Propone revisar el calendario de cierre nuclear y combinar nuclear, renovables, almacenamiento y respaldo eléctrico.",url:PDF.PP,page:"71"},
   {p:"Vox",type:"Programa 29N 2026 · medida 8",t:"Propone revisar normas del Pacto Verde, prorrogar centrales nucleares y reducir los impuestos sobre la energía.",url:PDF.Vox,page:"11–12"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 2.4",t:"Propone rehabilitación energética, autoconsumo compartido, electrificación y adaptación al cambio climático.",url:PDF.PNV,page:"16–17"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 2.4",t:"Propone rehabilitación energética, autoconsumo compartido, electrificación y adaptación al cambio climático.",url:PDF.PNV,page:"16–17"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 235–244",t:"Desplegar más renovables, autoconsumo y almacenamiento; mantener el cierre nuclear programado hasta 2035 y apoyar a hogares vulnerables.",url:PDF.PSOE,page:"66–67"},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 05",t:"Incluye la lucha contra el cambio climático entre sus prioridades; su página de campaña no contiene un plan técnico completo.",url:PDF.PODEMOS}
  ],
  seguridad:[
   {p:"Vox",type:"Programa 29N 2026 · medidas 79–91",t:"Propone aumentar recursos policiales y de defensa, endurecer ciertas respuestas penales y reforzar ciberseguridad.",url:PDF.Vox,page:"45–47"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 3.1",t:"Plantea más capacidad operativa para la Ertzaintza, cooperación policial europea y medidas contra la multirreincidencia.",url:PDF.PNV,page:"23–24"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 425–426",t:"Reforzar las plantillas y presencia territorial de Policía Nacional y Guardia Civil, mejorar respuesta a ciberdelitos y reformar la normativa de seguridad ciudadana.",url:PDF.PSOE,page:"99–100"},
+  {p:"Frente Amplio",type:"Nota oficial 13/11/2026 · contratación pública",t:"Impedir durante 20 años que empresas condenadas por corrupción contraten con administraciones públicas.",url:"https://frenteamplio.info/noticias/frente-amplio-propone-expulsar-20-anos-contratacion-publica-empresas-corruptoras/"}
  ]
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
@@ -157,26 +180,54 @@ const BALLOT_OPTIONS=[
  ["A_ONLY","Solo A: no apoyaría B"],["B_ONLY","Solo B: no apoyaría A"],
  ["N","Depende / necesito más información"]
 ];
-const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,["A","Solo A"],["B","Solo B"]]);
+const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,
+ ["A","A preferida (voto anterior, sin información sobre B)"],
+ ["B","B preferida (voto anterior, sin información sobre A)"]]);
 function voteLabel(code){return VOTE_LABELS[String(code)]||"Sin especificar";}
 function voteSummary(data){
- const n=k=>Number(data?.[k]||0);
- const a=n("AB")+n("A_ONLY")+n("A"),b=n("BA")+n("B_ONLY")+n("B");
- return {a,b,equal:n("EQ"),depends:n("N"),onlyA:n("A_ONLY")+n("A"),onlyB:n("B_ONLY")+n("B"),
- total:a+b+n("EQ")+n("N")};
+ const n=k=>Math.max(0,Number(data?.[k]||0));
+ const firstAB=n("AB"),firstBA=n("BA"),equal=n("EQ");
+ const onlyA=n("A_ONLY"),onlyB=n("B_ONLY");
+ const legacyA=n("A"),legacyB=n("B"),depends=n("N");
+ const a=firstAB+onlyA+legacyA,b=firstBA+onlyB+legacyB;
+ const total=a+b+equal+depends;
+ return {a,b,equal,depends,total,onlyA,onlyB,legacyA,legacyB,
+  secondaryA:firstBA,secondaryB:firstAB,
+  supportA:a+firstBA+equal,
+  supportB:b+firstAB+equal};
+}
+function voteBreakdown(stats){
+ const pct=n=>stats.total?Math.round(n*100/stats.total):0;
+ return {
+  priorityText:"A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" % · Ambas por igual "+pct(stats.equal)+" % · Dudas "+pct(stats.depends)+" %",
+  supportText:"Apoyo total A "+pct(stats.supportA)+" % · Apoyo total B "+pct(stats.supportB)+" % (pueden sumar más de 100 %)",
+  secondaryText:"Como segunda opción: A "+stats.secondaryA+" · B "+stats.secondaryB,
+  exclusiveText:"Solo A "+stats.onlyA+" · Solo B "+stats.onlyB,
+  legacyText:stats.legacyA+stats.legacyB>0?"Hay "+(stats.legacyA+stats.legacyB)+" votos antiguos A/B cuya compatibilidad con la otra medida no se conoce.":""
+ };
 }
 function displayVoteSummary(root,data){
  root.replaceChildren();
- const t=voteSummary(data),pct=n=>t.total?Math.round(n*100/t.total):0;
- [["Primero A (incluye solo A)",t.a],["Primero B (incluye solo B)",t.b],
- ["Ambas sin prioridad",t.equal],["Depende / dudas",t.depends]].forEach(([label,n])=>{
-  const item=el("div","result");
-  item.append(el("b","",label+" · "+pct(n)+" %"),
-   el("p","fine",n+" respuesta"+(n===1?"":"s")));
-  root.append(item);
+ const t=voteSummary(data),p=n=>t.total?Math.round(n*100/t.total):0;
+ const subheading=(txt)=>root.append(el("div","label",txt));
+ subheading("PRIORIDAD · CADA PERSONA CUENTA UNA VEZ");
+ [["Primero A",t.a],["Primero B",t.b],["Ambas por igual",t.equal],["Depende",t.depends]].forEach(([label,count])=>{
+   const item=el("div","result");
+   item.append(el("b","",label+" · "+p(count)+" %"),
+    el("p","fine",count+" voto"+(count===1?"":"s")));
+   root.append(item);
  });
- if(t.onlyA||t.onlyB)root.append(el("p","fine",
-  "Dentro de esas prioridades, "+t.onlyA+" eligieron exclusivamente A y "+t.onlyB+" exclusivamente B."));
+ subheading("APOYO A LAS MEDIDAS · INCLUYE OPCIONES PARCIALES");
+ [["A respaldada en cualquier orden",t.supportA],
+  ["B respaldada en cualquier orden",t.supportB]].forEach(([label,count])=>{
+   const item=el("div","result");
+   item.append(el("b","",label+" · "+p(count)+" %"),el("p","fine",count+" apoyos de "+t.total+" personas"));
+   root.append(item);
+ });
+ root.append(el("p","fine","Una persona puede apoyar las dos medidas. Por eso estos últimos porcentajes pueden sumar más del 100 %."));
+ const part=voteBreakdown(t);
+ root.append(el("p","fine",part.secondaryText+" · "+part.exclusiveText));
+ if(part.legacyText)root.append(el("p","fine",part.legacyText));
  return t;
 }
 function chooseMixedTopic(prior){
@@ -240,7 +291,7 @@ async function nextQuestion(id){
   questionCache=Array.isArray(prior)?prior.concat([{cycle:Number(state.cycle),topic:id,kind:state.stage,question:p.question,A:p.a,B:p.b}]):[];
   questionCacheRoom=roomId;
   render();setTab("debate");
-  requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=pane.scrollHeight;});
+  requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=0;});
   notice(state.stage==="pulse"?(mode==="IA"?"PRIMER PULSO · Todos votáis.":"PRIMER PULSO · Nueva votación para todos."):
   (mode==="IA"?"DILEMA ha sorteado el turno. Cada persona registrará su respuesta.":"Nueva pregunta. DILEMA ha sorteado el turno."));
  });
@@ -274,7 +325,11 @@ function renderQuestionHistory(){
   const row=closed.find(x=>Number(x.cycle)===n);
   if(row){
    const totals=voteSummary(row),pct=x=>totals.total?Math.round(x*100/totals.total):0;
-   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · Prioridad A "+pct(totals.a)+" % · Prioridad B "+pct(totals.b)+" % · Ambas "+pct(totals.equal)+" % · Dudas "+pct(totals.depends)+" %"));
+   const breakdown=voteBreakdown(totals);
+   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · "+breakdown.priorityText));
+   body.append(el("p","fine",breakdown.supportText));
+   body.append(el("p","fine",breakdown.secondaryText+" · "+breakdown.exclusiveText));
+   if(breakdown.legacyText)body.append(el("p","fine",breakdown.legacyText));
   }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
@@ -324,7 +379,8 @@ function renderRoom(){
  $("roomInfo").hidden=!state;
  if(!state)return;
  $("roomCode").textContent=state.code;
- $("noobsRoomMeta").textContent="SALA "+state.code+" · "+state.count+"/"+state.expected+" PERSONAS";
+ $("noobsRoomCode").textContent=state.code;
+ $("noobsRoomCount").textContent=state.count+"/"+state.expected+" PERSONAS";
  const phases={lobby:"SALA PREPARADA",voting:"VOTACIÓN",discussion:"DEBATE",reveal:"SIGLAS REVELADAS"};
  $("roomStatus").textContent=state.count+" de "+state.expected+" participantes · "+(state.stage==="pulse"?"PRIMER PULSO · ":"")+(phases[state.phase]||state.phase);
  const root=$("members");root.replaceChildren();
@@ -391,12 +447,21 @@ function renderDebate(){
  const sharedAura=discussion&&typeof state?.twist==="string"
   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":/^PUNTO CIEGO:/i.test(state.twist)?"blind":
   /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
- const currentAura=voting?"vote":discussion?(sharedAura||aura):"ready";
+ // El color tiene una única fuente de verdad: el estado compartido de la sala.
+ // Un color de una intervención anterior nunca debe quedarse al cambiar de turno.
+ const currentAura=voting?"vote":discussion?(sharedAura||"ready"):"ready";
  $("noobsShell").dataset.aura=currentAura;
- const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",
-  counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
- $("dialogueStatus").textContent=pulse?"PRIMER PULSO · DILEMA PREGUNTA":
-  (titles[currentAura]||titles.ready);
+ const titles={
+  ready:pulse?"PULSO · ESPERANDO LA SIGUIENTE PREGUNTA":phase==="reveal"?"SENTENCIA · DEBATE FINALIZADO":
+    (discussion?(onTurn?"TU TURNO · DILEMA TE ESCUCHA":"TURNO DE "+(state?.speaker||"LA MESA")):"DILEMA · LISTO"),
+  vote:"VOTACIÓN ABIERTA · MARCO BLANCO",
+  counter:"CONTRADÍCEME · MARCO ROJO",
+  blind:"PUNTO CIEGO · MARCO AZUL",
+  view:"OTRA MIRADA · MARCO MAGENTA",
+  pressure:"APRIÉTAME · MARCO ROJO",
+  order:"ORDENA ESTO · MARCO AMARILLO"
+ };
+ $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
  $("liveQuestionTitle").hidden=!active||phase==="lobby"||voting;
  if(active){
   $("liveQuestionNumber").textContent=String(state.cycle);
@@ -455,7 +520,8 @@ function renderDebate(){
     document.querySelectorAll('input[name="speakerChoice"]').forEach(input=>{input.checked=false;});
    }
    $("nextTurn").disabled=!document.querySelector('input[name="speakerChoice"]:checked');
-   $("nextTurn").textContent=Number(state.answers_count)+1>=Number(state.answers_total)?"REGISTRAR MI RESPUESTA":"REGISTRAR Y PASAR TURNO";
+   const isLast=Number(state.answers_count)+1>=Number(state.answers_total);
+   $("nextTurn").textContent=isLast?"GUARDAR MI ELECCIÓN":"GUARDAR ELECCIÓN Y PASAR";
    $("answerProgress").textContent=(state.answers_count||0)+" de "+(state.answers_total||state.count)+" respuestas registradas.";
    const order=$("answerOrder");order.replaceChildren();
    (state.answer_order||[]).forEach(item=>{
@@ -548,21 +614,22 @@ async function requestSentence(){
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
  if(!state?.history?.length){
-  root.append(el("div","box","Aquí aparecerán las prioridades del pulso y las respuestas de cada pregunta del debate."));
+  root.append(el("div","box","Aquí aparecerán prioridades, apoyos parciales y respuestas de cada pregunta."));
   return;
  }
  state.history.forEach(h=>{
-  const stats=voteSummary(h),pct=n=>stats.total?Math.round(n*100/stats.total):0;
-  const card=el("div","card");
+  const stats=voteSummary(h),breakdown=voteBreakdown(stats),card=el("div","card");
   const question=questionCache.find(q=>Number(q.cycle)===Number(h.cycle));
   card.append(
     el("div","label",((TOPICS[h.topic]||{}).title||h.topic)+" · PREGUNTA "+h.cycle),
     el("p","small",question?.question||"Pregunta de debate"),
-    el("h3","","A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" %"),
-    el("p","small","Ambas sin prioridad "+pct(stats.equal)+" % · Depende "+pct(stats.depends)+" %"),
-    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos de pulso")+
-      ". Una prioridad no significa rechazar la otra, salvo cuando se eligió expresamente «solo A» o «solo B».")
+    el("h3","",breakdown.priorityText),
+    el("p","small",breakdown.supportText),
+    el("p","fine",breakdown.secondaryText+" · "+breakdown.exclusiveText),
+    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos del pulso")+
+      ". Los porcentajes de apoyo pueden sumar más de 100 %: una persona puede apoyar ambas medidas.")
   );
+  if(breakdown.legacyText)card.append(el("p","fine",breakdown.legacyText));
   root.append(card);
  });
 }
@@ -583,6 +650,7 @@ async function refresh(){
   state=s;
   if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
   const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence,s.answers_count,s.answers_total,s.response_complete]);
+  if(was!==s.cycle)requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=0;});
   if(fp!==runFingerprint){
    runFingerprint=fp;if(was!==s.cycle||phase!==s.phase){vote=null;angle=null;aura="ready";}render();
   }
@@ -644,6 +712,7 @@ async function init(){
   await auth();const r=await rpc("politics_join_room_safe",{p_code:$("roomJoin").value.trim().toUpperCase(),p_name:$("alias").value.trim(),p_consent:true});
   roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");
  });
+ $("copyRoomCode").onclick=()=>copy(state?.code||"");
  $("share").onclick=()=>copy(location.origin+location.pathname+"?room="+encodeURIComponent(state&&state.code||""));
  $("refresh").onclick=refresh;
  $("leave").onclick=()=>execute(async()=>{
@@ -680,7 +749,7 @@ async function init(){
   if(!state?.can_act||state.stage!=="debate"||state.phase!=="discussion")throw Error("DILEMA ha dado el turno a otra persona.");
   if(state.my_answer_registered)throw Error("Tu respuesta ya está registrada.");
   const selected=document.querySelector('input[name="speakerChoice"]:checked');
-  if(!selected)throw Error("Elige A, B o Depende.");
+  if(!selected)throw Error("Elige primero una respuesta (A, B, ambas o depende). No necesitas escribir un argumento.");
   state=await rpc("politics_answer",{p_room:roomId,p_choice:selected.value,p_argument:$("speakerArgument").value.trim()});
   $("speakerArgument").value="";
   document.querySelectorAll('input[name="speakerChoice"]').forEach(x=>x.checked=false);
