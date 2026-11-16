@@ -180,26 +180,54 @@ const BALLOT_OPTIONS=[
  ["A_ONLY","Solo A: no apoyaría B"],["B_ONLY","Solo B: no apoyaría A"],
  ["N","Depende / necesito más información"]
 ];
-const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,["A","Solo A"],["B","Solo B"]]);
+const VOTE_LABELS=Object.fromEntries([...BALLOT_OPTIONS,
+ ["A","A preferida (voto anterior, sin información sobre B)"],
+ ["B","B preferida (voto anterior, sin información sobre A)"]]);
 function voteLabel(code){return VOTE_LABELS[String(code)]||"Sin especificar";}
 function voteSummary(data){
- const n=k=>Number(data?.[k]||0);
- const a=n("AB")+n("A_ONLY")+n("A"),b=n("BA")+n("B_ONLY")+n("B");
- return {a,b,equal:n("EQ"),depends:n("N"),onlyA:n("A_ONLY")+n("A"),onlyB:n("B_ONLY")+n("B"),
- total:a+b+n("EQ")+n("N")};
+ const n=k=>Math.max(0,Number(data?.[k]||0));
+ const firstAB=n("AB"),firstBA=n("BA"),equal=n("EQ");
+ const onlyA=n("A_ONLY"),onlyB=n("B_ONLY");
+ const legacyA=n("A"),legacyB=n("B"),depends=n("N");
+ const a=firstAB+onlyA+legacyA,b=firstBA+onlyB+legacyB;
+ const total=a+b+equal+depends;
+ return {a,b,equal,depends,total,onlyA,onlyB,legacyA,legacyB,
+  secondaryA:firstBA,secondaryB:firstAB,
+  supportA:a+firstBA+equal,
+  supportB:b+firstAB+equal};
+}
+function voteBreakdown(stats){
+ const pct=n=>stats.total?Math.round(n*100/stats.total):0;
+ return {
+  priorityText:"A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" % · Ambas por igual "+pct(stats.equal)+" % · Dudas "+pct(stats.depends)+" %",
+  supportText:"Apoyo total A "+pct(stats.supportA)+" % · Apoyo total B "+pct(stats.supportB)+" % (pueden sumar más de 100 %)",
+  secondaryText:"Como segunda opción: A "+stats.secondaryA+" · B "+stats.secondaryB,
+  exclusiveText:"Solo A "+stats.onlyA+" · Solo B "+stats.onlyB,
+  legacyText:stats.legacyA+stats.legacyB>0?"Hay "+(stats.legacyA+stats.legacyB)+" votos antiguos A/B cuya compatibilidad con la otra medida no se conoce.":""
+ };
 }
 function displayVoteSummary(root,data){
  root.replaceChildren();
- const t=voteSummary(data),pct=n=>t.total?Math.round(n*100/t.total):0;
- [["Primero A (incluye solo A)",t.a],["Primero B (incluye solo B)",t.b],
- ["Ambas sin prioridad",t.equal],["Depende / dudas",t.depends]].forEach(([label,n])=>{
-  const item=el("div","result");
-  item.append(el("b","",label+" · "+pct(n)+" %"),
-   el("p","fine",n+" respuesta"+(n===1?"":"s")));
-  root.append(item);
+ const t=voteSummary(data),p=n=>t.total?Math.round(n*100/t.total):0;
+ const subheading=(txt)=>root.append(el("div","label",txt));
+ subheading("PRIORIDAD · CADA PERSONA CUENTA UNA VEZ");
+ [["Primero A",t.a],["Primero B",t.b],["Ambas por igual",t.equal],["Depende",t.depends]].forEach(([label,count])=>{
+   const item=el("div","result");
+   item.append(el("b","",label+" · "+p(count)+" %"),
+    el("p","fine",count+" voto"+(count===1?"":"s")));
+   root.append(item);
  });
- if(t.onlyA||t.onlyB)root.append(el("p","fine",
-  "Dentro de esas prioridades, "+t.onlyA+" eligieron exclusivamente A y "+t.onlyB+" exclusivamente B."));
+ subheading("APOYO A LAS MEDIDAS · INCLUYE OPCIONES PARCIALES");
+ [["A respaldada en cualquier orden",t.supportA],
+  ["B respaldada en cualquier orden",t.supportB]].forEach(([label,count])=>{
+   const item=el("div","result");
+   item.append(el("b","",label+" · "+p(count)+" %"),el("p","fine",count+" apoyos de "+t.total+" personas"));
+   root.append(item);
+ });
+ root.append(el("p","fine","Una persona puede apoyar las dos medidas. Por eso estos últimos porcentajes pueden sumar más del 100 %."));
+ const part=voteBreakdown(t);
+ root.append(el("p","fine",part.secondaryText+" · "+part.exclusiveText));
+ if(part.legacyText)root.append(el("p","fine",part.legacyText));
  return t;
 }
 function chooseMixedTopic(prior){
@@ -297,7 +325,11 @@ function renderQuestionHistory(){
   const row=closed.find(x=>Number(x.cycle)===n);
   if(row){
    const totals=voteSummary(row),pct=x=>totals.total?Math.round(x*100/totals.total):0;
-   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · Prioridad A "+pct(totals.a)+" % · Prioridad B "+pct(totals.b)+" % · Ambas "+pct(totals.equal)+" % · Dudas "+pct(totals.depends)+" %"));
+   const breakdown=voteBreakdown(totals);
+   body.append(el("p","fine",(q.kind==="debate"?"RESPUESTAS":"VOTOS")+" · "+breakdown.priorityText));
+   body.append(el("p","fine",breakdown.supportText));
+   body.append(el("p","fine",breakdown.secondaryText+" · "+breakdown.exclusiveText));
+   if(breakdown.legacyText)body.append(el("p","fine",breakdown.legacyText));
   }else body.append(el("p","fine","Esta pregunta ya se ha cerrado."));
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
@@ -414,12 +446,21 @@ function renderDebate(){
  const sharedAura=discussion&&typeof state?.twist==="string"
   ?(/^CONTRADÍCEME:/i.test(state.twist)?"counter":/^PUNTO CIEGO:/i.test(state.twist)?"blind":
   /^OTRA MIRADA:/i.test(state.twist)?"view":null):null;
- const currentAura=voting?"vote":discussion?(sharedAura||aura):"ready";
+ // El color tiene una única fuente de verdad: el estado compartido de la sala.
+ // Un color de una intervención anterior nunca debe quedarse al cambiar de turno.
+ const currentAura=voting?"vote":discussion?(sharedAura||"ready"):"ready";
  $("noobsShell").dataset.aura=currentAura;
- const titles={ready:"DILEMA · TE ESCUCHO",vote:"DILEMA · VOTACIÓN",
-  counter:"CONTRADÍCEME",blind:"PUNTO CIEGO",view:"OTRA MIRADA",pressure:"APRIÉTAME",order:"ORDENA ESTO"};
- $("dialogueStatus").textContent=pulse?"PRIMER PULSO · DILEMA PREGUNTA":
-  (titles[currentAura]||titles.ready);
+ const titles={
+  ready:pulse?"PULSO · ESPERANDO LA SIGUIENTE PREGUNTA":phase==="reveal"?"SENTENCIA · DEBATE FINALIZADO":
+    (discussion?(onTurn?"TU TURNO · DILEMA TE ESCUCHA":"TURNO DE "+(state?.speaker||"LA MESA")):"DILEMA · LISTO"),
+  vote:"VOTACIÓN ABIERTA · MARCO BLANCO",
+  counter:"CONTRADÍCEME · MARCO ROJO",
+  blind:"PUNTO CIEGO · MARCO AZUL",
+  view:"OTRA MIRADA · MARCO MAGENTA",
+  pressure:"APRIÉTAME · MARCO ROJO",
+  order:"ORDENA ESTO · MARCO AMARILLO"
+ };
+ $("dialogueStatus").textContent=titles[currentAura]||titles.ready;
  $("liveQuestionTitle").hidden=!active||phase==="lobby"||voting;
  if(active){
   $("liveQuestionNumber").textContent=String(state.cycle);
@@ -571,21 +612,22 @@ async function requestSentence(){
 function renderMap(){
  const root=$("ideaMap");root.replaceChildren();
  if(!state?.history?.length){
-  root.append(el("div","box","Aquí aparecerán las prioridades del pulso y las respuestas de cada pregunta del debate."));
+  root.append(el("div","box","Aquí aparecerán prioridades, apoyos parciales y respuestas de cada pregunta."));
   return;
  }
  state.history.forEach(h=>{
-  const stats=voteSummary(h),pct=n=>stats.total?Math.round(n*100/stats.total):0;
-  const card=el("div","card");
+  const stats=voteSummary(h),breakdown=voteBreakdown(stats),card=el("div","card");
   const question=questionCache.find(q=>Number(q.cycle)===Number(h.cycle));
   card.append(
     el("div","label",((TOPICS[h.topic]||{}).title||h.topic)+" · PREGUNTA "+h.cycle),
     el("p","small",question?.question||"Pregunta de debate"),
-    el("h3","","A primero "+pct(stats.a)+" % · B primero "+pct(stats.b)+" %"),
-    el("p","small","Ambas sin prioridad "+pct(stats.equal)+" % · Depende "+pct(stats.depends)+" %"),
-    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos de pulso")+
-      ". Una prioridad no significa rechazar la otra, salvo cuando se eligió expresamente «solo A» o «solo B».")
+    el("h3","",breakdown.priorityText),
+    el("p","small",breakdown.supportText),
+    el("p","fine",breakdown.secondaryText+" · "+breakdown.exclusiveText),
+    el("p","fine",stats.total+" "+(question?.kind==="debate"?"respuestas por turnos":"votos del pulso")+
+      ". Los porcentajes de apoyo pueden sumar más de 100 %: una persona puede apoyar ambas medidas.")
   );
+  if(breakdown.legacyText)card.append(el("p","fine",breakdown.legacyText));
   root.append(card);
  });
 }
