@@ -712,6 +712,7 @@ async function init(){
   await auth();const r=await rpc("politics_join_room_safe",{p_code:$("roomJoin").value.trim().toUpperCase(),p_name:$("alias").value.trim(),p_consent:true});
   roomId=r.room_id;session();state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");
  });
+ $("copyRoomCode").onclick=()=>copy(state?.code||"");
  $("share").onclick=()=>copy(location.origin+location.pathname+"?room="+encodeURIComponent(state&&state.code||""));
  $("refresh").onclick=refresh;
  $("leave").onclick=()=>execute(async()=>{
