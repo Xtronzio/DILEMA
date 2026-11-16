@@ -334,7 +334,7 @@ function renderQuestionHistory(){
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
     const answer=el("div","result");
-    answer.append(el("b","",a.name+" · "+voteLabel(a.choice)));
+    answer.append(el("b","","TU OPINIÓN PRIVADA · "+voteLabel(a.choice)));
     if(a.argument)answer.append(el("p","",a.argument));
     body.append(answer);
    });
@@ -533,11 +533,20 @@ function renderDebate(){
    (state.answers||[]).forEach(item=>{
     const answer=el("div","result");
     const choice=voteLabel(item.choice);
-    answer.append(el("b","",item.name+" · "+choice));
+    answer.append(el("b","","TU OPINIÓN PRIVADA · "+choice));
     if(item.argument)answer.append(el("p","answer-text",item.argument));
     history.append(answer);
    });
-   if(!(state.answers||[]).length)history.append(el("p","fine","Aún no hay respuestas registradas."));
+   if(!(state.answers||[]).length)history.append(el("p","fine","Tu opinión todavía no está registrada. Las opiniones individuales de los demás son privadas."));
+   if(state.response_complete){
+    const groupResult=(state.history||[]).find(x=>Number(x.cycle)===Number(state.cycle));
+    if(groupResult){
+      const aggregate=el("div","detail");
+      aggregate.append(el("div","label","RESULTADO CONJUNTO DE ESTA PREGUNTA"));
+      displayVoteSummary(aggregate,groupResult);
+      history.append(aggregate);
+    }
+   }
    $("moderatorQuestion").textContent=angle||state.twist||"¿Qué detalle te haría pensar de otra manera?";
   }
   if(debating&&Number(state.count)===1){
@@ -551,12 +560,32 @@ function renderDebate(){
    state.sentence+"\n\n"+(state.sentence_question||""):
    (state.can_act?"DILEMA está preparando la sentencia...":"Esperando la sentencia del turno actual...");
   $("requestSentence").hidden=!!state.sentence||!onTurn;
+  renderMyRecordedChoices();
   renderSources();
   if(onTurn&&!state.sentence&&sentenceAttemptedCycle!==state.cycle){
    sentenceAttemptedCycle=state.cycle;
    setTimeout(()=>requestSentence(),350);
   }
  }
+}
+function renderMyRecordedChoices(){
+ const root=$("myRecordedChoices");root.replaceChildren();
+ const questions=questionCacheRoom===roomId?questionCache:[];
+ if(!questions.length){
+  root.append(el("p","fine","No hay opiniones registradas."));
+  return;
+ }
+ questions.forEach(q=>{
+  if(!q.my_choice)return;
+  const item=el("div","result");
+  item.append(el("div","label",((TOPICS[q.topic]||{}).title||q.topic)+" · PREGUNTA "+q.cycle),
+    el("p","small",q.question));
+  item.append(el("p","my-private-choice",voteLabel(q.my_choice)));
+  const own=(q.answers||[])[0];
+  if(own?.argument)item.append(el("p","private-note",own.argument));
+  root.append(item);
+ });
+ if(!root.children.length)root.append(el("p","fine","Todavía no has registrado opiniones."));
 }
 function renderSources(){
  const root=$("partySources");root.replaceChildren();
