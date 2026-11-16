@@ -269,6 +269,20 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
  .noobs-room-label{font-size:11px!important}
  .noobs-room-count{flex-basis:100%;margin-top:-2px}
 }
+
+/* R128: código de sala accesible en la pantalla completa y copiable */
+.noobs-room-code{font-size:25px!important;letter-spacing:.085em!important;line-height:1.15;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  -webkit-text-size-adjust:100%;user-select:all}
+.noobs-room-line{align-items:center;gap:5px 9px}
+.noobs-room-label{font-size:13px!important}
+.noobs-copy-code{font-size:11px;font-weight:850;letter-spacing:.04em;padding:7px 9px;
+ border-radius:9px;border:1px solid #e2e2e2;background:#191919;color:#fff;min-height:36px}
+.noobs-copy-code:focus-visible{outline:2px solid #fff;outline-offset:3px}
+@media(max-width:420px){
+ .noobs-room-code{font-size:24px!important;letter-spacing:.045em!important}
+ .noobs-room-count{flex-basis:auto!important}
+}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -321,6 +335,7 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
       <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span>
         <div class="noobs-room-line"><span class="noobs-room-label">SALA</span>
           <strong id="noobsRoomCode" class="noobs-room-code" aria-label="Código de la sala"></strong>
+          <button type="button" id="copyRoomCode" class="noobs-copy-code" title="Copiar código para invitar a la mesa">COPIAR</button>
           <span id="noobsRoomCount" class="noobs-room-count"></span>
         </div>
       </div>
