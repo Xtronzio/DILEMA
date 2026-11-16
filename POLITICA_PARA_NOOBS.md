@@ -107,3 +107,14 @@ El sorteo de participantes, la respuesta propia A/B/Depende con nuevas variantes
 - Frontend: JavaScript sintácticamente correcto, identificadores únicos sin referencias inexistentes, acceso R127 desde la portada y el Hall.
 - **Pendiente:** verificación visual manual en Safari y navegador integrado de ChatGPT/iOS tras publicar.
 
+
+
+## R128 — documentación electoral y correcciones de experiencia
+
+- Fuentes 29N incorporadas: programa electoral completo del **PSOE** (15/11/2026, PDF con referencias de página) y propuestas oficiales publicadas por **Frente Amplio** y **Podemos** (webs de campaña, no confundir con programas completos en PDF). Se presentan en las fichas de cada Hot Point con enlaces, sin inferir programas o posiciones no publicados.
+- **Votos parciales:** se separa prioridad principal, apoyo a una medida como segunda opción, apoyo a ambas por igual, apoyo exclusivo y dudas. Los resultados presentan tanto el reparto de prioridades (suma 100 %) como el respaldo total a A y B por separado (puede superar 100 % al sumarlos). Los votos legados A/B no se interpretan automáticamente como rechazo expreso a la otra medida.
+- **PULSO visible primero:** la pregunta activa se coloca por encima del historial. Al abrir otra pregunta se devuelve el scroll del debate a la zona superior para no obligar a buscar la votación.
+- **Código de sala accesible:** mostrado en la cabecera en un tamaño grande (24–25 px) y con botón COPIAR, también en pantalla completa.
+- **Argumentar es opcional:** para pasar al siguiente participante solo se exige elegir una opción de prioridad. La explicación escrita puede quedar vacía, como ya permite el backend.
+- **Colores de estado:** el marco no hereda el último color de una intervención cuando esta termina. El estado va acompañado de un texto («VOTACIÓN ABIERTA», «PUNTO CIEGO», etc.) y hay un desplegable «¿POR QUÉ EL COLOR?» con leyenda de estados y herramientas. Nunca depende de la opción A/B elegida.
+- **QA pendiente de usuario:** comprobar Safari/navegador integrado en iPhone, que los nuevos botones no queden tapados por la barra del navegador y que la IA responda correctamente desde una sala real.
