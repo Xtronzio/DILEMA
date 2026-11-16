@@ -137,7 +137,7 @@ const EVIDENCE={
   {p:"PNV",type:"Programa 29N 2026 · apartado 3.1",t:"Plantea más capacidad operativa para la Ertzaintza, cooperación policial europea y medidas contra la multirreincidencia.",url:PDF.PNV,page:"23–24"},
   {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"},
   {p:"PSOE",type:"Programa 29N completo · compromisos 425–426",t:"Reforzar las plantillas y presencia territorial de Policía Nacional y Guardia Civil, mejorar respuesta a ciberdelitos y reformar la normativa de seguridad ciudadana.",url:PDF.PSOE,page:"99–100"},
-  {p:"Frente Amplio",type:"Nota oficial 13/11/2026 · contratación pública",t:"Impedir durante 20 años que empresas condenadas por corrupción contraten con administraciones públicas.",url:"https://frenteamplio.info/"}
+  {p:"Frente Amplio",type:"Nota oficial 13/11/2026 · contratación pública",t:"Impedir durante 20 años que empresas condenadas por corrupción contraten con administraciones públicas.",url:"https://frenteamplio.info/noticias/frente-amplio-propone-expulsar-20-anos-contratacion-publica-empresas-corruptoras/"}
  ]
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
