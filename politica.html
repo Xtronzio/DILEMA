@@ -227,6 +227,28 @@ body.noobs-fullscreen .noobs-topic{font-size:12px}
  .noobs-mark{flex-basis:42px;width:42px;height:42px}
  .noobs-icon{font-size:11px}
 }
+
+/* R128 · La razón del color queda explícita sin alterar los estados de DILEMA. */
+.noobs-color-row{display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;min-width:0;margin:6px 0}
+.noobs-color-row .noobs-status{margin:0!important;flex:1 1 auto;min-width:0;font-size:11px!important;line-height:1.35}
+.noobs-color-help{position:relative;flex:0 0 auto}
+.noobs-color-help summary{list-style:none;cursor:pointer;color:#bbb;background:#151515;
+  border:1px solid #5b5b5b;border-radius:9px;padding:7px 9px;
+  font-size:9px;font-weight:800;letter-spacing:.025em;line-height:1.25;white-space:nowrap}
+.noobs-color-help summary::-webkit-details-marker{display:none}
+.noobs-color-help summary:focus-visible{outline:2px solid white;outline-offset:2px}
+.noobs-color-legend{position:absolute;z-index:100;right:0;top:calc(100% + 8px);
+  width:min(340px,calc(100vw - 28px));max-height:min(380px,65dvh);
+  overflow-y:auto;background:#141414;color:#f1f1f1;border:1px solid #777;border-radius:12px;
+  padding:13px 14px;box-shadow:0 12px 35px #000e;font-size:12px;line-height:1.45}
+.noobs-color-legend strong{display:block;font-size:12px;line-height:1.5;margin-bottom:12px}
+.noobs-color-legend p{display:flex;gap:10px;align-items:baseline;margin:6px 0 11px}
+.noobs-color-legend i{display:inline-block;width:11px;height:11px;border-radius:50%;flex:0 0 11px;background:currentColor;align-self:center}
+.noobs-color-legend .c-ready{color:#6ee7a0}.noobs-color-legend .c-vote{color:white}
+.noobs-color-legend .c-counter{color:#ff7373}.noobs-color-legend .c-blind{color:#72b7ff}
+.noobs-color-legend .c-view{color:#f179e5}.noobs-color-legend .c-order{color:#facc15}
+.noobs-color-legend .c-next{color:#ff9f43}
+body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -283,7 +305,22 @@ body.noobs-fullscreen .noobs-topic{font-size:12px}
         <a class="noobs-icon" href="./test-v0.1.16.html?refresh=R127" title="Volver al Hall de DILEMA">HALL</a>
       </nav>
     </div>
-    <p id="dialogueStatus" class="noobs-status">DILEMA · TE ESCUCHO</p>
+    <div class="noobs-color-row">
+      <p id="dialogueStatus" class="noobs-status" role="status" aria-live="polite">DILEMA · TE ESCUCHO</p>
+      <details id="noobsColorHelp" class="noobs-color-help">
+        <summary title="Por qué cambia el color del marco">¿POR QUÉ EL COLOR?</summary>
+        <div class="noobs-color-legend" role="note">
+          <strong>El marco señala qué está haciendo DILEMA. No depende de tus respuestas ni de ningún partido.</strong>
+          <p><i class="c-ready"></i> Verde · Escuchando o esperando turno</p>
+          <p><i class="c-vote"></i> Blanco · Votación abierta</p>
+          <p><i class="c-counter"></i> Rojo · Contradíceme o Apriétame</p>
+          <p><i class="c-blind"></i> Azul · Punto ciego</p>
+          <p><i class="c-view"></i> Magenta · Otra mirada</p>
+          <p><i class="c-order"></i> Amarillo · Ordenar argumentos (cuando esté disponible)</p>
+          <p><i class="c-next"></i> Naranja · Botón Otra pregunta</p>
+        </div>
+      </details>
+    </div>
     <p id="stageSubtitle" class="noobs-stage-subtitle"></p>
     <h2 id="phaseTitle" class="noobs-topic">Debate</h2>
     <div id="noobsScroll" class="noobs-scroll">
