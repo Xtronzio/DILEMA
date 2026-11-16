@@ -162,7 +162,7 @@ async function auth(){
 }
 async function rpc(fn,arg){
  const r=await sb.rpc(fn,arg);if(r.error)throw r.error;
- if(fn!=="politics_game_state"&&r.data?.room_id&&!Object.prototype.hasOwnProperty.call(r.data,"debate_mode")){
+ if(fn!=="politics_game_state"&&r.data?.room_id){
   const enriched=await sb.rpc("politics_game_state",{p_room:r.data.room_id});
   if(!enriched.error)return enriched.data;
  }
