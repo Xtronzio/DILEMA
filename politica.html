@@ -249,6 +249,26 @@ body.noobs-fullscreen .noobs-topic{font-size:12px}
 .noobs-color-legend .c-view{color:#f179e5}.noobs-color-legend .c-order{color:#facc15}
 .noobs-color-legend .c-next{color:#ff9f43}
 body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
+
+/* R128 · cuestión y voto del pulso siempre antes del historial de respuestas */
+.noobs-scroll{display:flex!important;flex-direction:column!important;gap:8px}
+.noobs-scroll > #activeRound{order:0!important;flex:0 0 auto}
+.noobs-scroll > #pulseSummary{order:1!important;flex:0 0 auto}
+.noobs-scroll > #questionHistory{order:2!important;flex:0 0 auto}
+.noobs-scroll #activeRound[hidden],.noobs-scroll #pulseSummary[hidden],.noobs-scroll #questionHistory[hidden]{display:none!important}
+.noobs-scroll .noobs-current{margin-top:0;margin-bottom:0}
+.noobs-scroll .noobs-history{margin:6px 0 0}
+.noobs-room-line{display:flex;align-items:baseline;flex-wrap:wrap;gap:5px 9px;margin-top:5px;line-height:1.25}
+.noobs-room-label{font-weight:750;font-size:12px!important;color:#9ba8a0!important;letter-spacing:.06em!important}
+.noobs-room-code{display:inline-block;font-weight:900;font-size:20px;color:#fff;letter-spacing:.065em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.noobs-room-count{font-size:11px;color:#c2c2c2;white-space:nowrap}
+.noobs-skip-note{margin:7px 0 11px!important;color:#e0e0e0!important;font-size:12px!important}
+#nextTurn{font-size:13px;font-weight:850}
+@media(max-width:420px){
+ .noobs-room-code{font-size:19px;letter-spacing:.03em}
+ .noobs-room-label{font-size:11px!important}
+ .noobs-room-count{flex-basis:100%;margin-top:-2px}
+}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -298,7 +318,12 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
   <div id="noobsShell" class="noobs-shell" data-aura="ready">
     <div class="noobs-header">
       <div class="noobs-mark" aria-hidden="true">?</div>
-      <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span><span id="noobsRoomMeta" class="noobs-room-meta"></span></div>
+      <div class="noobs-heading"><b>DILEMA</b><span>POLÍTICA PARA NOOBS</span>
+        <div class="noobs-room-line"><span class="noobs-room-label">SALA</span>
+          <strong id="noobsRoomCode" class="noobs-room-code" aria-label="Código de la sala"></strong>
+          <span id="noobsRoomCount" class="noobs-room-count"></span>
+        </div>
+      </div>
       <nav class="noobs-icons" aria-label="Navegación">
         <button class="noobs-icon" type="button" data-open-tab="hotpoints" title="Elegir temática">TEMAS</button>
         <button class="noobs-icon" type="button" data-open-tab="mapa" title="Mapa de ideas">MAPA</button>
@@ -373,10 +398,11 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
               <label class="choice"><input type="radio" name="speakerChoice" value="B_ONLY"><span>Solo B: no apoyaría A</span></label>
               <label class="choice"><input type="radio" name="speakerChoice" value="N"><span>Depende / necesito más información</span></label>
             </div>
-            <label class="eyebrow" for="speakerArgument">¿POR QUÉ? (OPCIONAL)</label>
-            <textarea class="field" id="speakerArgument" maxlength="700" rows="2" placeholder="Resume tu argumento con tus palabras..."></textarea>
-            <button type="button" class="btn primary" id="nextTurn">REGISTRAR RESPUESTA Y PASAR TURNO</button>
-            <p class="fine">Tu respuesta se guarda con tu apodo y es visible solo para quienes participan en esta sala.</p>
+            <label class="eyebrow" for="speakerArgument">TU ARGUMENTO · OPCIONAL</label>
+            <textarea class="field" id="speakerArgument" maxlength="700" rows="2" placeholder="Puedes explicar tu elección... o dejarlo vacío."></textarea>
+            <p class="fine noobs-skip-note">NO necesitas escribir un argumento. Elige tu opción y pasa el turno directamente.</p>
+            <button type="button" class="btn primary" id="nextTurn">GUARDAR ELECCIÓN Y PASAR</button>
+            <p class="fine">La opción elegida se registra con tu apodo para los miembros de esta sala. El texto solo se guarda si decides escribirlo.</p>
           </div>
         </div>
         <div id="soloDialogue" class="box" hidden>
