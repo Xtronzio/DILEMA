@@ -283,6 +283,12 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
  .noobs-room-code{font-size:24px!important;letter-spacing:.045em!important}
  .noobs-room-count{flex-basis:auto!important}
 }
+
+/* R129: separado visualmente el registro personal del resumen del grupo */
+#privateOpinionsPanel{border-color:#64758c}
+#myRecordedChoices .result{padding:9px 0}
+#myRecordedChoices .my-private-choice{color:#e3e9f2;font-weight:800}
+#myRecordedChoices .private-note{color:#999;font-size:12px}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -449,9 +455,15 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
           <div id="sentenceText" class="small"></div>
           <button type="button" class="btn small" id="requestSentence">GENERAR SENTENCIA</button>
         </div>
-        <div class="box"><div class="eyebrow">FUENTES DOCUMENTALES</div>
+        <div class="box" id="privateOpinionsPanel">
+          <div class="eyebrow">CONSULTA PRIVADA</div>
+          <h2>MIS OPINIONES</h2>
+          <p class="small muted">Aquí verás únicamente tus elecciones. El resto de la mesa no puede ver esta lista.</p>
+          <div id="myRecordedChoices"></div>
+        </div>
+        <div class="box"><div class="eyebrow">PROPUESTAS DOCUMENTADAS</div>
           <h2>AHORA, LAS SIGLAS</h2>
-          <p class="small muted">Las siguientes posiciones proceden de documentos electorales identificados. No equivalen a una recomendación de voto.</p>
+          <p class="small muted">Consulta medidas publicadas por cada partido y sus fuentes. Las preguntas del juego no se corresponden automáticamente con una medida de un partido.</p>
           <div id="partySources"></div>
         </div>
         <div class="actions" id="another" hidden>
