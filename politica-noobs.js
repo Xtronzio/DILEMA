@@ -543,8 +543,8 @@ function renderDebate(){
     if(groupResult){
       const aggregate=el("div","detail");
       aggregate.append(el("div","label","RESULTADO CONJUNTO DE ESTA PREGUNTA"));
-      displayVoteSummary(aggregate,groupResult);
-      history.append(aggregate);
+      const summary=el("div");displayVoteSummary(summary,groupResult);
+      aggregate.append(summary);history.append(aggregate);
     }
    }
    $("moderatorQuestion").textContent=angle||state.twist||"¿Qué detalle te haría pensar de otra manera?";
@@ -677,7 +677,7 @@ async function refresh(){
  try{
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
-  if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
+  if(was!==s.cycle||questionCacheRoom!==roomId||(phase!=="reveal"&&s.phase==="reveal"))await loadQuestionHistory();
   const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence,s.answers_count,s.answers_total,s.response_complete]);
   if(was!==s.cycle)requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=0;});
   if(fp!==runFingerprint){
@@ -838,7 +838,7 @@ async function init(){
    if(!state?.closing_open)throw Error("La votación de cierre no está abierta.");
    state=await rpc("politics_close_vote",{p_room:roomId,p_accept:yes});
    render();
-   if(state.phase==="reveal")notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");
+   if(state.phase==="reveal"){await loadQuestionHistory();notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");}
    else if(!state.closing_open)notice("La mesa ha decidido continuar el debate.");
   });
  }
