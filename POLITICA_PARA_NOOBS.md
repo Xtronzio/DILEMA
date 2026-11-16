@@ -15,7 +15,7 @@ Módulo de debate cívico y comparativa documental del 29N 2026, desarrollado de
 
 - GitHub Pages aloja únicamente HTML/JS públicos; **sin claves secretas**.
 - La IA se llama mediante la función autenticada de Supabase, con clave OpenAI en los secretos del servidor.
-- Tablas separadas `private.politics_*`, RLS activo y permisos directos revocados. Los votos iniciales se muestran agregados. Los argumentos del debate se almacenan con apodos solo para las personas participantes en esa sala, y la IA puede usar fragmentos sin nombres para repreguntar.
+- Tablas separadas `private.politics_*`, RLS activo y permisos directos revocados. Los votos iniciales y las opiniones registradas son privados: cada participante recibe solo los suyos. El resto ve los turnos completados y resultados agregados al finalizar la pregunta. La IA puede utilizar temporalmente fragmentos sin nombres para repreguntar.
 - Creación/acceso requiere consentimiento explícito. No se pide DNI, correo, perfil político ni dirección.
 - El anfitrión al salir cierra y elimina sala, votos y respuestas. La salida de un invitado elimina sus registros y reajusta el orden pendiente.
 - Limpieza automática programada para no superar aproximadamente 72 horas. El texto registrado como respuesta sí se guarda temporalmente en Supabase; los mensajes del diálogo individual enviados a la IA no se guardan en la base de datos.
@@ -44,7 +44,7 @@ Módulo de debate cívico y comparativa documental del 29N 2026, desarrollado de
 - Comprobar que el proveedor IA responde realmente desde el entorno web y que la caída se resuelve con el banco editorial sin bloquear la sala.
 - Verificar accesibilidad visual y UX con menores bajo supervisión.
 
-**No se realizan tests de afinidad ideológica ni se ofrece recomendación de voto.**
+**No se predice el voto ni se asignan identidades ideológicas.** Los porcentajes personales de R129 se refieren a propuestas electorales explícitamente valoradas, no a afinidad electoral inferida.
 
 
 ## Actualización R125: primer pulso, edades y mesa por turnos
@@ -68,7 +68,7 @@ Módulo de debate cívico y comparativa documental del 29N 2026, desarrollado de
 - **Debate por preguntas:** cada nueva pregunta produce un orden aleatorio de todos los miembros. DILEMA llama al primero y muestra quién tiene la palabra.
 - **Una respuesta por miembro y pregunta:** elección A/B/Depende y texto opcional de hasta 700 caracteres. Solo el usuario autenticado que figura en ese turno puede guardarla. Los demás pueden participar oralmente, sin registrar una respuesta en su nombre.
 - **Turno automático:** después de guardar, cambia al siguiente integrante sorteado. Al completar todos, la última persona puede abrir otra pregunta o proponer que la mesa cierre mediante votación.
-- **Historial:** conserva cada pregunta con respuestas firmadas por el apodo y sus argumentos, visibles exclusivamente para los integrantes de esa sala. La información desaparece al cerrar la sala o con la limpieza automática.
+- **Historial:** conserva cada pregunta con sus resultados generales, mientras cada participante solo consulta su propia elección y explicación. El servidor ya no devuelve argumentos de otras personas en el historial de la sala. La información desaparece al cerrar la sala o con la limpieza automática.
 - **IA:** genera nuevas preguntas considerando únicamente extractos sin nombre de los argumentos voluntariamente registrados, además de la temática y las propuestas electorales verificadas. Nunca se presentan como hechos comprobados las afirmaciones personales.
 - **Protecciones:** funciones SQL autenticadas que revisan la pertenencia a sala, turno sorteado, unicidad por pregunta y estado de ronda; las tablas privadas tienen RLS y ningún acceso directo público.
 - **QA:** pruebas SQL transaccionales de cuatro participantes para sorteo completo, bloqueo de participación fuera de turno, registro único de cada respuesta, cierre por mayoría, historial y nueva ronda. También se probó la salida de un participante durante una pregunta.
@@ -118,3 +118,18 @@ El sorteo de participantes, la respuesta propia A/B/Depende con nuevas variantes
 - **Argumentar es opcional:** para pasar al siguiente participante solo se exige elegir una opción de prioridad. La explicación escrita puede quedar vacía, como ya permite el backend.
 - **Colores de estado:** el marco no hereda el último color de una intervención cuando esta termina. El estado va acompañado de un texto («VOTACIÓN ABIERTA», «PUNTO CIEGO», etc.) y hay un desplegable «¿POR QUÉ EL COLOR?» con leyenda de estados y herramientas. Nunca depende de la opción A/B elegida.
 - **QA pendiente de usuario:** comprobar Safari/navegador integrado en iPhone, que los nuevos botones no queden tapados por la barra del navegador y que la IA responda correctamente desde una sala real.
+
+
+## Actualización R129: OPINAR, privacidad y propuestas verificadas
+
+- En la cabecera del debate, **OPINAR** sustituye a TEMAS y regresa al área donde los participantes expresan sus posturas. La pregunta individual se titula **TU OPINIÓN** y el texto explicativo **EXPLICA TU OPINIÓN · OPCIONAL**.
+- El voto inicial y las elecciones posteriores son privados: las RPCs `politics_state` y `politics_questions_used` devuelven solo las opciones y argumentos del usuario autenticado, además de estadísticas agregadas cuando la ronda ha terminado. La lista de turnos indica quién ha terminado, no qué ha elegido.
+- SIGLAS muestra **MIS OPINIONES** únicamente al participante correspondiente; no se publica su historial de opciones ni sus argumentos a la mesa.
+- **Comparación opcional de medidas verificadas**: cada miembro puede activar una segunda valoración explícita de propuestas documentadas (APOYO / NO APOYO / NO SÉ). Se registra de forma privada, puede modificarse y se elimina íntegramente al desactivar o cerrar la sala. No se deduce del voto sobre preguntas generales.
+- El porcentaje personal se calcula solo entre propuestas documentadas que se hayan valorado como apoyo o rechazo: `100 × apoyos / (apoyos + rechazos)`. Dudas no se fuerzan a ser rechazo. Se muestra siempre el denominador y aviso de muestra reducida.
+- Los datos colectivos por partido son exclusivamente **porcentaje de valoraciones de propuestas favorables**, nunca «porcentaje de personas que votarían al partido». Se ocultan para mesas de menos de cinco participantes o cuando menos de cinco valoran ese partido o se registran menos de diez valoraciones concluyentes sobre sus medidas.
+- Se registran únicamente partidos/temáticas cuyo documento oficial figura en el catálogo; partidos sin propuesta verificada quedan como «pendiente», sin porcentaje inventado. Las preguntas generales no se mapean automáticamente a programas electorales.
+- Seguridad: consentimiento específico y revocable, tablas privadas con RLS y acceso directo revocado, RPCs autenticadas con comprobación de pertenencia a sala; caducidad al borrar la sala.
+- QA SQL con rollback: usuario A no puede consultar valoraciones de usuario B, intento de valoración sin consentimiento denegado, grupo de dos oculto, grupo de cuatro valoradores oculto y grupo de cinco valoradores (10 valoraciones concluyentes) solo muestra un agregado.
+- Prueba pendiente en Safari/iPhone: verificar opt-in, borrado de valoraciones, correspondencia de pantallas, salida y regreso al debate, y resumen colectivo sin identificación personal.
+

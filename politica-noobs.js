@@ -144,6 +144,7 @@ const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=
 let state=null,roomId=null,vote=null,angle=null,working=false,runFingerprint="";
 let soloMessages=[],soloRound=null,questionCache=[],questionCacheRoom=null,aura="ready";
 let sentencePending=false,sentenceAttemptedCycle=null,speakerQuestionCycle=null;
+let policyState=null;
 const expandedHistory=new Set();
 let noticeTimer=null;
 const session=()=>roomId?sessionStorage.setItem(KEY,roomId):sessionStorage.removeItem(KEY);
@@ -161,7 +162,7 @@ async function auth(){
 }
 async function rpc(fn,arg){
  const r=await sb.rpc(fn,arg);if(r.error)throw r.error;
- if(fn!=="politics_game_state"&&r.data?.room_id&&!Object.prototype.hasOwnProperty.call(r.data,"debate_mode")){
+ if(fn!=="politics_game_state"&&r.data?.room_id){
   const enriched=await sb.rpc("politics_game_state",{p_room:r.data.room_id});
   if(!enriched.error)return enriched.data;
  }
@@ -334,7 +335,7 @@ function renderQuestionHistory(){
   if(q.kind==="debate"){
    (q.answers||[]).forEach(a=>{
     const answer=el("div","result");
-    answer.append(el("b","",a.name+" · "+voteLabel(a.choice)));
+    answer.append(el("b","","TU OPINIÓN PRIVADA · "+voteLabel(a.choice)));
     if(a.argument)answer.append(el("p","",a.argument));
     body.append(answer);
    });
@@ -429,6 +430,7 @@ function renderDebate(){
  $("hostControls").hidden=!canInteract||!allAnswered;
  $("revote").textContent=state?.debate_mode==="mixed"?"OTRO TEMA":"OTRA PREGUNTA";
  $("revote").hidden=!canInteract||!allAnswered;
+ $("selectHotPoint").hidden=!canInteract||!allAnswered||state.debate_mode==="mixed";
  $("reveal").hidden=!canInteract||!allAnswered;
  $("another").hidden=!state?.host;
  $("nextTurn").hidden=!canInteract||!!state.my_answer_registered;
@@ -533,11 +535,20 @@ function renderDebate(){
    (state.answers||[]).forEach(item=>{
     const answer=el("div","result");
     const choice=voteLabel(item.choice);
-    answer.append(el("b","",item.name+" · "+choice));
+    answer.append(el("b","","TU OPINIÓN PRIVADA · "+choice));
     if(item.argument)answer.append(el("p","answer-text",item.argument));
     history.append(answer);
    });
-   if(!(state.answers||[]).length)history.append(el("p","fine","Aún no hay respuestas registradas."));
+   if(!(state.answers||[]).length)history.append(el("p","fine","Tu opinión todavía no está registrada. Las opiniones individuales de los demás son privadas."));
+   if(state.response_complete){
+    const groupResult=(state.history||[]).find(x=>Number(x.cycle)===Number(state.cycle));
+    if(groupResult){
+      const aggregate=el("div","detail");
+      aggregate.append(el("div","label","RESULTADO CONJUNTO DE ESTA PREGUNTA"));
+      const summary=el("div");displayVoteSummary(summary,groupResult);
+      aggregate.append(summary);history.append(aggregate);
+    }
+   }
    $("moderatorQuestion").textContent=angle||state.twist||"¿Qué detalle te haría pensar de otra manera?";
   }
   if(debating&&Number(state.count)===1){
@@ -551,12 +562,97 @@ function renderDebate(){
    state.sentence+"\n\n"+(state.sentence_question||""):
    (state.can_act?"DILEMA está preparando la sentencia...":"Esperando la sentencia del turno actual...");
   $("requestSentence").hidden=!!state.sentence||!onTurn;
-  renderSources();
+  renderMyRecordedChoices();
+  renderSources();renderPolicyComparison();
   if(onTurn&&!state.sentence&&sentenceAttemptedCycle!==state.cycle){
    sentenceAttemptedCycle=state.cycle;
    setTimeout(()=>requestSentence(),350);
   }
  }
+}
+function renderMyRecordedChoices(){
+ const root=$("myRecordedChoices");root.replaceChildren();
+ const questions=questionCacheRoom===roomId?questionCache:[];
+ if(!questions.length){
+  root.append(el("p","fine","No hay opiniones registradas."));
+  return;
+ }
+ questions.forEach(q=>{
+  if(!q.my_choice)return;
+  const item=el("div","result");
+  item.append(el("div","label",((TOPICS[q.topic]||{}).title||q.topic)+" · PREGUNTA "+q.cycle),
+    el("p","small",q.question));
+  item.append(el("p","my-private-choice",voteLabel(q.my_choice)));
+  const own=(q.answers||[])[0];
+  if(own?.argument)item.append(el("p","private-note",own.argument));
+  root.append(item);
+ });
+ if(!root.children.length)root.append(el("p","fine","Todavía no has registrado opiniones."));
+}
+function renderPolicyComparison(){
+ const root=$("myPolicyScores"),group=$("policyGroupScores");
+ if(!root||!group)return;
+ root.replaceChildren();group.replaceChildren();
+ const ready=!!state&&state.phase==="reveal",opted=ready&&!!policyState?.opted_in;
+ $("policyOptIn").hidden=!ready||opted;
+ $("policyOptOut").hidden=!ready||!opted;
+ root.hidden=!opted;
+ if(!ready)return;
+ if(opted){
+  root.append(el("div","label","MIS COINCIDENCIAS CON PROPUESTAS · SOLO YO"));
+  root.append(el("p","fine","El porcentaje indica cuántas medidas respaldarías de las que has valorado de cada partido. No mide afinidad electoral ni predice tu voto."));
+  (policyState.my_scores||[]).forEach(r=>{
+   const item=el("div","policy-stats-line");
+   const percent=r.support_percent===null?"—":r.support_percent+" %";
+   item.append(el("b","",r.party+" · "+percent));
+   item.append(el("p","","Apoyas "+r.support+" de "+r.evaluated+" propuestas valoradas. "+r.documented+" medidas documentadas disponibles."));
+   if(r.evaluated<3)item.append(el("p","fine","Muestra insuficiente para comparar: valora más medidas."));
+   root.append(item);
+  });
+ }
+ group.append(el("div","label","RESULTADOS CONJUNTOS · SOLO AGREGADOS"));
+ if(Number(state.count)<5){
+  group.append(el("p","small muted","Los porcentajes por partido no se muestran en mesas de menos de cinco personas: se podrían deducir opiniones individuales."));
+  return;
+ }
+ const scores=policyState?.group_scores||[];
+ if(!scores.length){
+  group.append(el("p","small muted","Aún no hay suficientes valoraciones voluntarias para mostrar resultados agregados sin identificar a nadie. Se necesitan al menos cinco participantes y diez valoraciones evaluadas por partido."));
+  return;
+ }
+ group.append(el("p","fine","Estos porcentajes representan la proporción de valoraciones favorables a propuestas de cada partido, no el porcentaje de personas que votaría a ese partido."));
+ scores.forEach(r=>{
+  const item=el("div","policy-stats-line");
+  item.append(el("b","",r.party+" · "+r.support_percent+" % de valoraciones favorables"));
+  item.append(el("p","",r.support+" apoyos de "+r.evaluated+" valoraciones de "+r.participants+" participantes."));
+  group.append(item);
+ });
+}
+async function fetchPolicyState(){
+ if(!roomId||state?.phase!=="reveal")return;
+ try{
+  policyState=await rpc("politics_policy_state",{p_room:roomId});
+  renderPolicyComparison();renderSources();
+ }catch(err){notice("No se pudo cargar la comparación de propuestas: "+String(err?.message||err));}
+}
+async function togglePolicyComparison(enable){
+ await execute(async()=>{
+  if(!state||state.phase!=="reveal")throw Error("Terminad antes el debate para comparar propuestas.");
+  policyState=await rpc("politics_policy_optin",{p_room:roomId,p_accept:enable});
+  renderPolicyComparison();renderSources();
+  notice(enable?"Comparación privada activada. Valora las propuestas que aparecen más abajo.":
+   "Se han eliminado tus valoraciones de programas.");
+ });
+}
+async function ratePolicy(topic,party,position){
+ await execute(async()=>{
+  if(!policyState?.opted_in)throw Error("Primero activa la comparación privada.");
+  policyState=await rpc("politics_policy_rate",{
+   p_room:roomId,p_party:party,p_topic:topic,p_position:position
+  });
+  renderPolicyComparison();renderSources();
+  notice("Tu opinión privada se ha registrado.");
+ });
 }
 function renderSources(){
  const root=$("partySources");root.replaceChildren();
@@ -575,6 +671,17 @@ function renderSources(){
     if(source.page)item.append(el("div","fine","Páginas: "+source.page));
     const link=el("a","","VER PROGRAMA OFICIAL");link.href=source.url;
     link.target="_blank";link.rel="noopener noreferrer";item.append(link);
+    if(policyState?.opted_in){
+     const actions=el("div","policy-stance-row");
+     const selected=(policyState.my_positions||[]).find(x=>x.party===p&&x.topic===topic)?.position;
+     [["support","LA APOYO"],["oppose","NO LA APOYO"],["unsure","NO SÉ"]].forEach(([value,caption])=>{
+      const btn=el("button","",caption);btn.type="button";
+      btn.setAttribute("aria-pressed",String(selected===value));
+      btn.onclick=()=>ratePolicy(topic,p,value);
+      actions.append(btn);
+     });
+     item.append(actions);
+    }
    }else item.append(el("p","","Esta propuesta todavía no está documentada para este tema. No se presupone ninguna postura."));
    body.append(item);
   });
@@ -648,7 +755,8 @@ async function refresh(){
  try{
   const s=await rpc("politics_state",{p_room:roomId}),was=state&&state.cycle,phase=state&&state.phase;
   state=s;
-  if(was!==s.cycle||questionCacheRoom!==roomId)await loadQuestionHistory();
+  if(was!==s.cycle||questionCacheRoom!==roomId||(phase!=="reveal"&&s.phase==="reveal"))await loadQuestionHistory();
+  if(phase!=="reveal"&&s.phase==="reveal")await fetchPolicyState();
   const fp=JSON.stringify([s.cycle,s.phase,s.stage,s.pulse_count,s.can_act,s.voted,s.count,s.turn,s.my_vote,s.topic,s.twist,s.closing_open,s.closing_voted,s.my_closing_vote,s.sentence,s.answers_count,s.answers_total,s.response_complete]);
   if(was!==s.cycle)requestAnimationFrame(()=>{const pane=$("noobsScroll");if(pane)pane.scrollTop=0;});
   if(fp!==runFingerprint){
@@ -657,6 +765,7 @@ async function refresh(){
  }catch(e){notice("No se pudo actualizar la sala: "+String(e&&e.message||"error"));}
 }
 function leave(){
+ policyState=null;
  roomId=null;state=null;questionCache=[];questionCacheRoom=null;expandedHistory.clear();aura="ready";sentenceAttemptedCycle=null;speakerQuestionCycle=null;
  document.body.classList.remove("noobs-fullscreen");
  session();history.replaceState(null,"",location.pathname);
@@ -800,6 +909,7 @@ async function init(){
  $("startMixedDebate").onclick=()=>beginDebateMode("mixed");
  $("launchMixed").onclick=()=>nextQuestion("vivienda");
  $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
+ $("selectHotPoint").onclick=()=>setTab("hotpoints");
  $("reveal").onclick=()=>execute(async()=>{
   if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
   state=await rpc("politics_propose_close",{p_room:roomId});render();
@@ -809,13 +919,15 @@ async function init(){
    if(!state?.closing_open)throw Error("La votación de cierre no está abierta.");
    state=await rpc("politics_close_vote",{p_room:roomId,p_accept:yes});
    render();
-   if(state.phase==="reveal")notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");
+   if(state.phase==="reveal"){await loadQuestionHistory();await fetchPolicyState();notice("La mesa ha decidido terminar. DILEMA dicta sentencia.");}
    else if(!state.closing_open)notice("La mesa ha decidido continuar el debate.");
   });
  }
  $("acceptClose").onclick=()=>closeVote(true);
  $("rejectClose").onclick=()=>closeVote(false);
  $("requestSentence").onclick=()=>requestSentence();
+ $("policyOptIn").onclick=()=>togglePolicyComparison(true);
+ $("policyOptOut").onclick=()=>togglePolicyComparison(false);
  $("anotherTopic").onclick=()=>setTab("hotpoints");
  $("finishRoom").onclick=()=>execute(async()=>{
   if(!confirm("¿Cerrar la sala y eliminar votos y respuestas registrados?"))return;
@@ -828,7 +940,7 @@ async function init(){
  render();
  const existing=sessionStorage.getItem(KEY);
  if(existing&&/^[\da-f-]{36}$/i.test(existing)){
-  try{await auth();roomId=existing;state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();render();setTab("debate");}
+  try{await auth();roomId=existing;state=await rpc("politics_state",{p_room:roomId});await loadQuestionHistory();if(state.phase==="reveal")await fetchPolicyState();render();setTab("debate");}
   catch{roomId=null;state=null;session();render();}
  }
  window.setInterval(refresh,4000);

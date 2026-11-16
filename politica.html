@@ -283,6 +283,27 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
  .noobs-room-code{font-size:24px!important;letter-spacing:.045em!important}
  .noobs-room-count{flex-basis:auto!important}
 }
+
+/* R129: separado visualmente el registro personal del resumen del grupo */
+#privateOpinionsPanel{border-color:#64758c}
+#myRecordedChoices .result{padding:9px 0}
+#myRecordedChoices .my-private-choice{color:#e3e9f2;font-weight:800}
+#myRecordedChoices .private-note{color:#999;font-size:12px}
+
+/* R129 · Comparación documentada, voluntaria y personal */
+#policyComparison{border-color:#64758c}
+#policyComparison .label{margin-top:12px}
+#policyComparison h2{font-size:20px}
+.policy-stance-row{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 2px}
+.policy-stance-row button{min-height:34px;min-width:70px;flex:1;
+ border:1px solid #656565;border-radius:9px;padding:7px 8px;
+ font-size:11px;font-weight:800;color:#eee;background:#141414}
+.policy-stance-row button[aria-pressed="true"]{border-color:#6ee7a0;color:#6ee7a0;background:#14231a}
+.policy-stats-line{padding:9px 0;border-top:1px solid #333}
+.policy-stats-line b{display:block;font-size:14px}
+.policy-stats-line p{margin:3px 0;font-size:12px;color:#aaa}
+#policyGroupScores{margin-top:12px}
+#myPolicyScores{margin-top:12px}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -301,7 +322,7 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
     <p class="fine" id="ageHint">Introduce 4 edades separadas por comas. Sirven para ajustar el lenguaje; no se guardarán las edades exactas.</p>
   </div>
   <label class="choice" style="font-size:12px"><input id="consent" type="checkbox">
-    <span>Acepto participar en una sala privada. El pulso inicial muestra solo votos agrupados. En el debate, <strong>mi elección y el argumento que escriba se mostrarán con mi apodo a las personas de la sala</strong>, para poder debatir y revisar cada pregunta. Las respuestas podrán utilizarse, sin nombres, para generar nuevas preguntas de IA. Se eliminarán al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
+    <span>Acepto participar en una sala privada. <strong>Mis elecciones y mis explicaciones escritas serán privadas</strong>. Los demás verán los turnos completados y los resultados conjuntos cuando todos respondan. DILEMA puede utilizar mis argumentos de forma temporal para ofrecerme nuevas preguntas, sin compartirlos con sus nombres. Se eliminarán al cerrar la sala o, como máximo, en 72 horas. Si eres menor de 14 años, participa con autorización de tu madre, padre o tutor.</span>
   </label>
   <div class="actions"><button class="btn" id="join">UNIRME</button><button class="btn primary" id="create">CREAR SALA</button></div>
 </section>
@@ -340,9 +361,9 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
         </div>
       </div>
       <nav class="noobs-icons" aria-label="Navegación">
-        <button class="noobs-icon" type="button" data-open-tab="hotpoints" title="Elegir temática">TEMAS</button>
+        <button class="noobs-icon" type="button" data-open-tab="debate" title="Volver a la conversación para opinar">OPINAR</button>
         <button class="noobs-icon" type="button" data-open-tab="mapa" title="Mapa de ideas">MAPA</button>
-        <a class="noobs-icon" href="./test-v0.1.16.html?refresh=R128" title="Volver al Hall de DILEMA">HALL</a>
+        <a class="noobs-icon" href="./test-v0.1.16.html?refresh=R129" title="Volver al Hall de DILEMA">HALL</a>
       </nav>
     </div>
     <div class="noobs-color-row">
@@ -392,7 +413,7 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
           <div id="voteResults"></div>
         </div>
         <div class="box" id="deepAnswerLog" hidden>
-          <div class="eyebrow">RESPUESTAS REGISTRADAS</div>
+          <div class="eyebrow">PARTICIPACIÓN EN ESTA PREGUNTA</div>
           <p class="small muted" id="answerProgress"></p>
           <div id="answerOrder" class="noobs-order"></div>
           <div id="registeredAnswers" role="log" aria-live="polite"></div>
@@ -400,9 +421,9 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
         <div class="box" id="discussionTurn">
           <div class="eyebrow">DILEMA SORTEA EL TURNO</div>
           <h3 id="speaker"></h3>
-          <p class="small muted" id="turnHint">Los demás podéis debatir oralmente. Solo quien tiene el turno puede registrar su respuesta.</p>
+          <p class="small muted" id="turnHint">Los demás podéis opinar oralmente. Solo quien tiene el turno registra su propia opinión.</p>
           <div id="speakerForm" hidden>
-            <div class="eyebrow">¿QUÉ RESPONDES TÚ?</div>
+            <div class="eyebrow">TU OPINIÓN</div>
             <div class="noobs-choice-list" id="speakerChoiceList">
               <p class="small muted">A · <span id="speakerA"></span></p>
               <p class="small muted">B · <span id="speakerB"></span></p>
@@ -413,11 +434,11 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
               <label class="choice"><input type="radio" name="speakerChoice" value="B_ONLY"><span>Solo B: no apoyaría A</span></label>
               <label class="choice"><input type="radio" name="speakerChoice" value="N"><span>Depende / necesito más información</span></label>
             </div>
-            <label class="eyebrow" for="speakerArgument">TU ARGUMENTO · OPCIONAL</label>
+            <label class="eyebrow" for="speakerArgument">EXPLICA TU OPINIÓN · OPCIONAL</label>
             <textarea class="field" id="speakerArgument" maxlength="700" rows="2" placeholder="Puedes explicar tu elección... o dejarlo vacío."></textarea>
-            <p class="fine noobs-skip-note">NO necesitas escribir un argumento. Elige tu opción y pasa el turno directamente.</p>
+            <p class="fine noobs-skip-note">Puedes registrar tu opinión sin escribir una explicación. Selecciona una opción y pasa el turno.</p>
             <button type="button" class="btn primary" id="nextTurn">GUARDAR ELECCIÓN Y PASAR</button>
-            <p class="fine">La opción elegida se registra con tu apodo para los miembros de esta sala. El texto solo se guarda si decides escribirlo.</p>
+            <p class="fine">Tu elección y tu explicación son privadas. La mesa ve que has participado y, al terminar todos, los porcentajes conjuntos.</p>
           </div>
         </div>
         <div id="soloDialogue" class="box" hidden>
@@ -449,9 +470,27 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
           <div id="sentenceText" class="small"></div>
           <button type="button" class="btn small" id="requestSentence">GENERAR SENTENCIA</button>
         </div>
-        <div class="box"><div class="eyebrow">FUENTES DOCUMENTALES</div>
+        <div class="box" id="privateOpinionsPanel">
+          <div class="eyebrow">CONSULTA PRIVADA</div>
+          <h2>MIS OPINIONES</h2>
+          <p class="small muted">Aquí verás únicamente tus elecciones. El resto de la mesa no puede ver esta lista.</p>
+          <div id="myRecordedChoices"></div>
+        </div>
+        <div class="box" id="policyComparison">
+          <div class="eyebrow">COMPARADOR OPCIONAL · PRIVADO</div>
+          <h2>¿CON QUÉ PROPUESTAS COINCIDES?</h2>
+          <p class="small muted">Valora directamente medidas de los programas oficiales: las preguntas generales del debate no sirven por sí solas para calcular tu afinidad electoral. El resultado indica únicamente qué porcentaje de las medidas evaluadas respaldarías.</p>
+          <p class="fine">Tus valoraciones no serán visibles para los demás. Solo contribuirán a estadísticas conjuntas si al menos cinco personas han valorado suficientes medidas. Puedes desactivar la comparación y eliminar todas tus respuestas.</p>
+          <div class="actions" id="policyOptInActions">
+            <button type="button" class="btn primary" id="policyOptIn">ACTIVAR COMPARACIÓN PRIVADA</button>
+            <button type="button" class="btn" id="policyOptOut" hidden>ELIMINAR MIS VALORACIONES</button>
+          </div>
+          <div id="myPolicyScores" hidden></div>
+          <div id="policyGroupScores"></div>
+        </div>
+        <div class="box"><div class="eyebrow">PROPUESTAS DOCUMENTADAS</div>
           <h2>AHORA, LAS SIGLAS</h2>
-          <p class="small muted">Las siguientes posiciones proceden de documentos electorales identificados. No equivalen a una recomendación de voto.</p>
+          <p class="small muted">Solo se pueden valorar las medidas con fuente oficial comprobada. Apoyar medidas de un partido no significa necesariamente que votarías a ese partido.</p>
           <div id="partySources"></div>
         </div>
         <div class="actions" id="another" hidden>
@@ -477,6 +516,7 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
       </div>
       <div class="noobs-round-actions" id="hostControls" hidden>
         <button type="button" class="noobs-another" id="revote"><span aria-hidden="true">⇢</span>OTRA PREGUNTA</button>
+        <button type="button" class="btn" id="selectHotPoint">CAMBIAR TEMA</button>
         <button type="button" class="btn noobs-reveal" id="reveal">PROPONER CIERRE</button>
       </div>
       <div id="soloComposer" class="noobs-composer" hidden>
@@ -492,14 +532,14 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
 </section>
 <section id="mapa" role="tabpanel" hidden>
   <h2>Mapa de ideas del grupo</h2>
-  <p class="muted small">El pulso muestra votos del grupo. En el debate, cada participante registra su elección y su argumento en su turno. El mapa describe las respuestas, no asigna afinidad con partidos.</p>
+  <p class="muted small">El pulso muestra votos agrupados. Cada persona registra privadamente su opinión cuando le toca, y el mapa muestra solo los resultados conjuntos. No atribuye filiaciones políticas.</p>
   <div id="ideaMap"></div>
   <button class="btn" id="copySummary">COPIAR RESUMEN</button>
   <p class="small muted">Las propuestas de los partidos se contrastan en la pestaña DEBATE al revelar las siglas.</p>
 </section>
 </main>
-<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos del pulso se presentan agrupados. Las respuestas del debate se guardan junto al apodo y solo pueden verlas los miembros de la sala. DILEMA puede analizar fragmentos sin nombres para generar nuevas preguntas. Las edades solo se usan para elegir el lenguaje y no se guardan por separado. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
-<footer>DILEMA · POLÍTICA PARA NOOBS · BETA R128</footer>
+<p class="important" style="margin-top:22px;border-top:1px solid #282828;padding-top:14px">Los votos y las opiniones registradas son privados para cada participante. Solo se muestran recuentos conjuntos tras completar la pregunta. DILEMA puede procesar temporalmente argumentos para formular repreguntas, sin publicarlos a la mesa. Las edades solo se usan para elegir el lenguaje y no se guardan por separado. Se borran al cerrar la sala o mediante limpieza automática tras 72 horas. Los textos de debate enviados a la IA no se guardan en la base de datos. Utiliza un apodo y evita datos personales. Este prototipo no sustituye una revisión jurídica y de protección de datos antes de uso público general.</p>
+<footer>DILEMA · POLÍTICA PARA NOOBS · BETA R129</footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./politica-noobs.js?v=R128" defer></script>
+<script src="./politica-noobs.js?v=R129" defer></script>
 </body></html>
