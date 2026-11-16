@@ -67,54 +67,77 @@ const PDF={
  PP:"https://www.pp.es/wp-content/uploads/2026/11/LA-RECONSTRUCCION-NACIONAL.pdf",
  Vox:"https://www.voxespana.es/wp-content/uploads/2026/11/Programa-completo-A5-1.pdf",
  PNV:"https://www.eaj-pnv.eus/es/adjuntos-documentos/21765/pdf/programa-electoral-29n",
- SALF:"https://www.seacabolafiesta.com/SALF_Contrato_Electoral_29N.pdf?v=073425b9522d"
+ SALF:"https://www.seacabolafiesta.com/SALF_Contrato_Electoral_29N.pdf?v=073425b9522d",
+ PSOE:"https://www.psoe.es/media-content/2026/11/PROGRAMAPSOE29N26.pdf",
+ FA:"https://frenteamplio.info/programa/todas/",
+ FAV:"https://frenteamplio.info/noticias/frente-amplio-propone-impuesto-acumulacion-vivienda/",
+ FAT:"https://frenteamplio.info/programa/tax-the-rich/",
+ PODEMOS:"https://pazcasaytrabajo.es/"
 };
 const EVIDENCE={
  vivienda:[
   {p:"PP",type:"Programa 29N 2026 · medidas 144–156",t:"Propone aumentar la construcción, agilizar licencias y facilitar la primera vivienda de los jóvenes mediante medidas fiscales y avales.",url:PDF.PP,page:"53–56"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 26–34",t:"Plantea ampliar suelo y vivienda protegida, derogar la Ley de Vivienda y establecer prioridad nacional en vivienda social y ayudas.",url:PDF.Vox,page:"23–25"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.1",t:"Propone facilitar nuevas viviendas, rehabilitar y movilizar viviendas vacías, y regular los alquileres temporales y turísticos.",url:PDF.PNV,page:"7–8"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 1",t:"Promete eliminar la carga fiscal de la primera vivienda, simplificar licencias y facilitar financiación hipotecaria; los efectos de ahorro son afirmaciones del propio partido.",url:PDF.SALF,page:"4–6"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 1",t:"Promete eliminar la carga fiscal de la primera vivienda, simplificar licencias y facilitar financiación hipotecaria; los efectos de ahorro son afirmaciones del propio partido.",url:PDF.SALF,page:"4–6"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 37–43 y 59–62",t:"Ampliar vivienda pública, construir y rehabilitar vivienda asequible, movilizar suelo y reforzar la estabilidad del alquiler.",url:PDF.PSOE,page:"28–32"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · vivienda",t:"Impuesto sobre acumulación de viviendas para favorecer su puesta en alquiler asequible, junto con más vivienda pública mediante construcción, compra y rehabilitación. Las estimaciones de resultados son del propio partido.",url:PDF.FAV},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 01",t:"Defiende precios de vivienda asequibles y limitar las compras de casas destinadas a especular. Documento de medidas, no programa completo.",url:PDF.PODEMOS}
  ],
  inmigracion:[
   {p:"PP",type:"Programa 29N 2026 · medida 35",t:"Propone una autoridad única para coordinar entrada, permanencia, retorno e integración y evaluar sus efectos.",url:PDF.PP,page:"21"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 9–17",t:"Plantea prohibir regularizaciones masivas, suprimir el arraigo y reforzar controles y repatriaciones.",url:PDF.Vox,page:"15–16"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 3.2",t:"Propone más competencias vascas en gestión migratoria, vías legales y ordenadas, acogida e integración laboral.",url:PDF.PNV,page:"24–25"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 4",t:"Plantea limitar la inmigración a vías legales y agilizar expulsiones en los supuestos que describe.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 4",t:"Plantea limitar la inmigración a vías legales y agilizar expulsiones en los supuestos que describe.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 388–391",t:"Simplificar trámites, ampliar vías legales de residencia y trabajo y reforzar la acogida, el asilo y la integración.",url:PDF.PSOE,page:"93–94"}
  ],
  sanidad:[
   {p:"PP",type:"Programa 29N 2026 · medidas 219–223",t:"Propone un plan de reducción de listas de espera, más personal de atención primaria, prevención y refuerzo de salud mental.",url:PDF.PP,page:"69–70"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 60–65",t:"Propone tarjeta sanitaria común, refuerzo de atención primaria y un plan nacional para reducir listas de espera.",url:PDF.Vox,page:"37–38"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 4.2",t:"Propone ajustar la formación de especialistas a las necesidades sanitarias y completar competencias sanitarias de Euskadi.",url:PDF.PNV,page:"31–32"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 6",t:"Propone una central de compras sanitarias, reducir la espera quirúrgica y revisar remuneraciones profesionales.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 6",t:"Propone una central de compras sanitarias, reducir la espera quirúrgica y revisar remuneraciones profesionales.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 136–144",t:"Reducir listas de espera, fortalecer centros de salud, ampliar atención dental pública y mejorar el acceso a la atención psicológica.",url:PDF.PSOE,page:"50–51"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · sanidad",t:"Incluir atención dental, gafas y audífonos entre las prestaciones sanitarias públicas.",url:PDF.FA},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 03 y 05",t:"Reforzar la sanidad pública, aumentando profesionales y mejorando sus condiciones; prioriza servicios públicos frente a más gasto militar.",url:PDF.PODEMOS}
  ],
  educacion:[
   {p:"PP",type:"Programa 29N 2026 · medidas 209–218",t:"Propone refuerzo temprano en lectura y cálculo, apoyo a alumnado con dificultades y una revisión del marco educativo.",url:PDF.PP,page:"67–69"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 66–69",t:"Propone currículo y evaluaciones comunes, libertad de elección de centro, cambios legislativos y refuerzo de becas.",url:PDF.Vox,page:"41"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.4",t:"Defiende las competencias educativas de Euskadi y una educación inclusiva, plurilingüe e intercultural.",url:PDF.PNV,page:"10"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 9",t:"Propone una ley educativa de larga duración, garantías de escolarización en castellano y financiación vinculada al alumno.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 9",t:"Propone una ley educativa de larga duración, garantías de escolarización en castellano y financiación vinculada al alumno.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 157–163",t:"Ampliar escuelas infantiles públicas de 0 a 3 años y becas, reducir tamaño de grupos escolares y reforzar la orientación educativa.",url:PDF.PSOE,page:"52–53"},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 05",t:"Dedicar más recursos a la educación pública y mejorar las condiciones de sus profesionales.",url:PDF.PODEMOS}
  ],
  impuestos:[
   {p:"PP",type:"Programa 29N 2026 · medidas 177–185",t:"Propone bajar el IRPF para rentas medias y bajas, actualizar mínimos personales y familiares y deflactar la tarifa.",url:PDF.PP,page:"61–62"},
   {p:"Vox",type:"Programa 29N 2026 · medida 2",t:"Propone simplificar y reducir el IRPF, bajar parte del IVA y cuotas de autónomos según ingresos.",url:PDF.Vox,page:"9–10"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 2.7",t:"Propone revisar el IVA de ciertos bienes esenciales y reforzar la autonomía fiscal y financiera de Euskadi.",url:PDF.PNV,page:"20–21"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 3",t:"Propone una exención de IRPF para los primeros 35.000 euros de renta.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 3",t:"Propone una exención de IRPF para los primeros 35.000 euros de renta.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 130–132",t:"Aumentar tributación de rentas del capital elevadas, gravar más a grandes tecnológicas y aplicar un impuesto a determinados viajes de lujo.",url:PDF.PSOE,page:"49–50"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · grandes fortunas",t:"Aumentar impuestos sobre grandes patrimonios, con una tributación mínima del 2 % a partir de ciertos importes y del 3 % por encima de 50 millones de euros.",url:PDF.FAT}
  ],
  empleo:[
   {p:"PP",type:"Programa 29N 2026 · medidas 170–174",t:"Propone incentivos para nuevos autónomos, beneficios a primeras contrataciones y menos cotización para empresas con estabilidad laboral.",url:PDF.PP,page:"59–60"},
   {p:"Vox",type:"Programa 29N 2026 · medidas 2 y 8",t:"Plantea menores cargas fiscales a empresas y autónomos, incentivos a la innovación y una política de reindustrialización.",url:PDF.Vox,page:"9–12"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 1.3",t:"Defiende un salario mínimo propio en Euskadi, negociación colectiva y la protección del empleo estable.",url:PDF.PNV,page:"9"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 8",t:"Plantea reducir cargas laborales, un contrato único con mochila y eliminar la cuota de autónomos.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 8",t:"Plantea reducir cargas laborales, un contrato único con mochila y eliminar la cuota de autónomos.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 112–118",t:"Reforzar la protección de becarios, autónomos y seguridad laboral y apoyar el primer empleo y emprendimiento juvenil.",url:PDF.PSOE,page:"42–44"},
+  {p:"Frente Amplio",type:"Propuestas oficiales de campaña 29N · pequeño comercio",t:"Simplificar trámites, dar más protección al alquiler de locales comerciales y bonificar cuotas de autónomos de ingresos bajos.",url:PDF.FA},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 04",t:"Establecer un salario mínimo de 1.800 euros mensuales y una jornada de trabajo de 30 horas semanales.",url:PDF.PODEMOS}
  ],
  medioambiente:[
   {p:"PP",type:"Programa 29N 2026 · medida 228",t:"Propone revisar el calendario de cierre nuclear y combinar nuclear, renovables, almacenamiento y respaldo eléctrico.",url:PDF.PP,page:"71"},
   {p:"Vox",type:"Programa 29N 2026 · medida 8",t:"Propone revisar normas del Pacto Verde, prorrogar centrales nucleares y reducir los impuestos sobre la energía.",url:PDF.Vox,page:"11–12"},
-  {p:"PNV",type:"Programa 29N 2026 · apartado 2.4",t:"Propone rehabilitación energética, autoconsumo compartido, electrificación y adaptación al cambio climático.",url:PDF.PNV,page:"16–17"}
+  {p:"PNV",type:"Programa 29N 2026 · apartado 2.4",t:"Propone rehabilitación energética, autoconsumo compartido, electrificación y adaptación al cambio climático.",url:PDF.PNV,page:"16–17"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 235–244",t:"Desplegar más renovables, autoconsumo y almacenamiento; mantener el cierre nuclear programado hasta 2035 y apoyar a hogares vulnerables.",url:PDF.PSOE,page:"66–67"},
+  {p:"Podemos",type:"Cinco medidas oficiales de campaña 29N · 05",t:"Incluye la lucha contra el cambio climático entre sus prioridades; su página de campaña no contiene un plan técnico completo.",url:PDF.PODEMOS}
  ],
  seguridad:[
   {p:"Vox",type:"Programa 29N 2026 · medidas 79–91",t:"Propone aumentar recursos policiales y de defensa, endurecer ciertas respuestas penales y reforzar ciberseguridad.",url:PDF.Vox,page:"45–47"},
   {p:"PNV",type:"Programa 29N 2026 · apartado 3.1",t:"Plantea más capacidad operativa para la Ertzaintza, cooperación policial europea y medidas contra la multirreincidencia.",url:PDF.PNV,page:"23–24"},
-  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"}
+  {p:"SALF",type:"Contrato electoral simplificado 29N · compromiso 2",t:"Propone una macrocárcel y medidas penales específicas contra corrupción y delitos graves.",url:PDF.SALF,page:"4"},
+  {p:"PSOE",type:"Programa 29N completo · compromisos 425–426",t:"Reforzar las plantillas y presencia territorial de Policía Nacional y Guardia Civil, mejorar respuesta a ciberdelitos y reformar la normativa de seguridad ciudadana.",url:PDF.PSOE,page:"99–100"},
+  {p:"Frente Amplio",type:"Nota oficial 13/11/2026 · contratación pública",t:"Impedir durante 20 años que empresas condenadas por corrupción contraten con administraciones públicas.",url:"https://frenteamplio.info/"}
  ]
 };
 const el=(tag,cls,txt)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;};
