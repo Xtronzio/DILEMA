@@ -289,6 +289,21 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
 #myRecordedChoices .result{padding:9px 0}
 #myRecordedChoices .my-private-choice{color:#e3e9f2;font-weight:800}
 #myRecordedChoices .private-note{color:#999;font-size:12px}
+
+/* R129 · Comparación documentada, voluntaria y personal */
+#policyComparison{border-color:#64758c}
+#policyComparison .label{margin-top:12px}
+#policyComparison h2{font-size:20px}
+.policy-stance-row{display:flex;gap:5px;flex-wrap:wrap;margin:9px 0 2px}
+.policy-stance-row button{min-height:34px;min-width:70px;flex:1;
+ border:1px solid #656565;border-radius:9px;padding:7px 8px;
+ font-size:11px;font-weight:800;color:#eee;background:#141414}
+.policy-stance-row button[aria-pressed="true"]{border-color:#6ee7a0;color:#6ee7a0;background:#14231a}
+.policy-stats-line{padding:9px 0;border-top:1px solid #333}
+.policy-stats-line b{display:block;font-size:14px}
+.policy-stats-line p{margin:3px 0;font-size:12px;color:#aaa}
+#policyGroupScores{margin-top:12px}
+#myPolicyScores{margin-top:12px}
 </style></head>
 <body>
 <a class="return" href="./test-v0.1.16.html">← VOLVER AL HALL DE DILEMA</a>
@@ -461,9 +476,21 @@ body.noobs-fullscreen .noobs-color-row{margin:4px 0 5px}
           <p class="small muted">Aquí verás únicamente tus elecciones. El resto de la mesa no puede ver esta lista.</p>
           <div id="myRecordedChoices"></div>
         </div>
+        <div class="box" id="policyComparison">
+          <div class="eyebrow">COMPARADOR OPCIONAL · PRIVADO</div>
+          <h2>¿CON QUÉ PROPUESTAS COINCIDES?</h2>
+          <p class="small muted">Valora directamente medidas de los programas oficiales: las preguntas generales del debate no sirven por sí solas para calcular tu afinidad electoral. El resultado indica únicamente qué porcentaje de las medidas evaluadas respaldarías.</p>
+          <p class="fine">Tus valoraciones no serán visibles para los demás. Puedes desactivar la comparación para eliminar todas tus respuestas a estas propuestas.</p>
+          <div class="actions" id="policyOptInActions">
+            <button type="button" class="btn primary" id="policyOptIn">ACTIVAR COMPARACIÓN PRIVADA</button>
+            <button type="button" class="btn" id="policyOptOut" hidden>ELIMINAR MIS VALORACIONES</button>
+          </div>
+          <div id="myPolicyScores" hidden></div>
+          <div id="policyGroupScores"></div>
+        </div>
         <div class="box"><div class="eyebrow">PROPUESTAS DOCUMENTADAS</div>
           <h2>AHORA, LAS SIGLAS</h2>
-          <p class="small muted">Consulta medidas publicadas por cada partido y sus fuentes. Las preguntas del juego no se corresponden automáticamente con una medida de un partido.</p>
+          <p class="small muted">Solo se pueden valorar las medidas con fuente oficial comprobada. Apoyar medidas de un partido no significa necesariamente que votarías a ese partido.</p>
           <div id="partySources"></div>
         </div>
         <div class="actions" id="another" hidden>
