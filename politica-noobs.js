@@ -430,6 +430,7 @@ function renderDebate(){
  $("hostControls").hidden=!canInteract||!allAnswered;
  $("revote").textContent=state?.debate_mode==="mixed"?"OTRO TEMA":"OTRA PREGUNTA";
  $("revote").hidden=!canInteract||!allAnswered;
+ $("selectHotPoint").hidden=!canInteract||!allAnswered||state.debate_mode==="mixed";
  $("reveal").hidden=!canInteract||!allAnswered;
  $("another").hidden=!state?.host;
  $("nextTurn").hidden=!canInteract||!!state.my_answer_registered;
@@ -908,6 +909,7 @@ async function init(){
  $("startMixedDebate").onclick=()=>beginDebateMode("mixed");
  $("launchMixed").onclick=()=>nextQuestion("vivienda");
  $("revote").onclick=()=>nextQuestion(state?.topic||"vivienda");
+ $("selectHotPoint").onclick=()=>setTab("hotpoints");
  $("reveal").onclick=()=>execute(async()=>{
   if(!state?.can_act)throw Error("Solo quien tiene el turno propone cerrar.");
   state=await rpc("politics_propose_close",{p_room:roomId});render();
